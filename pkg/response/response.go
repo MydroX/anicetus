@@ -32,5 +32,4 @@ func InvalidRequest(logger *logger.Logger, ctx *gin.Context) {
 // CreationSuccess is a function to handle success response for creation of any entity
 func CreationSuccess(ctx *gin.Context, message string) {
 	ctx.JSON(201, gin.H{"message": message})
-	return
 }

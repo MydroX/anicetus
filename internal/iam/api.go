@@ -2,7 +2,6 @@
 package iam
 
 import (
-	"MydroX/project-v/internal/iam/controller"
 	"MydroX/project-v/internal/iam/repository"
 	"MydroX/project-v/internal/iam/usecases"
 	"MydroX/project-v/pkg/logger"
@@ -14,20 +13,19 @@ import (
 	"gorm.io/gorm"
 )
 
-// NewServer is a function to start the server for the IAM service.
-func NewServer(config *Config, logger *logger.Logger, validate *validator.Validate, db *gorm.DB) {
+func Router(logger *logger.Logger, validate *validator.Validate, db *gorm.DB, controller ControllerInterface) *gin.Engine {
 	router := gin.Default()
-	router.SetTrustedProxies(nil)
+
+	err := router.SetTrustedProxies(nil)
+	if err != nil {
+		logger.Zap.Fatal("error setting trusted proxies", zap.Error(err))
+	}
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "ok",
 		})
 	})
-
-	repository := repository.NewRepository(logger, db)
-	usecases := usecases.NewUsecases(logger, repository)
-	controller := controller.NewController(logger, validate, usecases)
 
 	api := router.Group("api")
 
@@ -42,6 +40,17 @@ func NewServer(config *Config, logger *logger.Logger, validate *validator.Valida
 	// - Middleware authentification
 	// - UpdateUser
 	// - DeleteUser
+
+	return router
+}
+
+// NewServer is a function to start the server for the IAM service.
+func NewServer(config *Config, logger *logger.Logger, validate *validator.Validate, db *gorm.DB) {
+	repository := repository.NewRepository(logger, db)
+	usecases := usecases.NewUsecases(logger, repository)
+	controller := NewController(logger, validate, usecases)
+
+	router := Router(logger, validate, db, controller)
 
 	err := router.Run(fmt.Sprintf(":%s", config.Port))
 	if err != nil {

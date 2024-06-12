@@ -1,5 +1,34 @@
-job1:
+image: golang:1.22.4-alpine3.20
+
+stages:
+  - test
+  - build
+  # - deploy
+
+variables:
+  GOLANGCI_LINT_VERSION: 'v1.59.1'
+lint:
+  image: golangci/golangci-lint:$GOLANGCI_LINT_VERSION
+  stage: test
   script:
-    - echo "This job runs in merge request pipelines"
-  rules:
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    # Write the code coverage report to gl-code-quality-report.json
+    # and print linting issues to stdout in the format: path/to/file:line description
+    - golangci-lint run --print-issued-lines=false --out-format code-climate:gl-code-quality-report.json,line-number
+  artifacts:
+    reports:
+      codequality: gl-code-quality-report.json
+    paths:
+      - gl-code-quality-report.json
+
+go-test:
+    stage: test
+    script:
+      - go test -v ./... -cover
+    coverage: '/coverage: \d+.\d+% of statements/'
+build:
+  stage: build
+  script:
+    - go build -o iam cmd/iam/main.go
+  artifacts:
+    paths:
+      - iam

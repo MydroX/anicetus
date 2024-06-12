@@ -22,6 +22,12 @@ func New(env string) *Logger {
 			Zap:   zapLogger,
 			Debug: false,
 		}
+	case "TEST":
+		zapLogger, _ = zap.NewDevelopment()
+		return &Logger{
+			Zap:   zapLogger,
+			Debug: true,
+		}
 	default:
 		zapLogger = zap.NewNop()
 		zapLogger.Warn("logger is set unknown environment")

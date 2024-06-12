@@ -1,5 +1,5 @@
 // Package controller provides the implementation of the IAM controller.
-package controller
+package iam
 
 import (
 	"MydroX/project-v/internal/iam/usecases"
@@ -28,16 +28,16 @@ func NewController(l *logger.Logger, v *validator.Validate, u usecases.UsecasesI
 	}
 }
 
-type createUserRequest struct {
+type CreateUserRequest struct {
 	Username string `json:"username" validate:"required"`
-	Password string `json:"password" validate:"required"`
+	Password string `json:"password" validate:"required,min=14,max=72"`
 	Email    string `json:"email" validate:"required,email"`
 	Role     string `json:"role" validate:"required,oneof=ADMIN USER"`
 }
 
 func (c *controller) CreateUser(ctx *gin.Context) {
 
-	var request createUserRequest
+	var request CreateUserRequest
 
 	err := ctx.BindJSON(&request)
 	if err != nil {
@@ -67,17 +67,17 @@ func (c *controller) CreateUser(ctx *gin.Context) {
 }
 
 func (c *controller) GetUser(ctx *gin.Context) {
-	panic("not implemented") // TODO: Implement
+	// panic("not implemented") // TODO: Implement
 }
 
 func (c *controller) UpdateUser(ctx *gin.Context) {
-	panic("not implemented") // TODO: Implement
+	// panic("not implemented") // TODO: Implement
 }
 
 func (c *controller) DeleteUser(ctx *gin.Context) {
-	panic("not implemented") // TODO: Implement
+	// panic("not implemented") // TODO: Implement
 }
 
 func (c *controller) AuthenticateUser(ctx *gin.Context) {
-	panic("not implemented") // TODO: Implement
+	// panic("not implemented") // TODO: Implement
 }
