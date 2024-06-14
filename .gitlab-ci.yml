@@ -23,8 +23,11 @@ lint:
 go-test:
     stage: test
     script:
-      - go test -v ./... -cover
-    coverage: '/coverage: \d+.\d+% of statements/'
+      - go test -coverpkg=all -coverprofile=coverage.out ./...
+    artifacts:
+      paths:
+        - coverage.out
+        
 build:
   stage: build
   script:
