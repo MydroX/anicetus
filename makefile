@@ -24,3 +24,11 @@ migrate-up:
 migrate-reset:
 	@echo "Reset database..."
 	@GOOSE_DRIVER=postgres GOOSE_MIGRATION_DIR=migrations GOOSE_DBSTRING="postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable" goose reset
+
+lint:
+	@echo "Linting..."
+	@golangci-lint -v run
+
+go-generate:
+	@echo "Generating code..."
+	@go generate ./...

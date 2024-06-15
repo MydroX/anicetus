@@ -5,8 +5,6 @@ import (
 	"MydroX/project-v/pkg/db"
 	"MydroX/project-v/pkg/logger"
 	"log"
-
-	"github.com/go-playground/validator/v10"
 )
 
 const serviceName = "iam"
@@ -19,10 +17,8 @@ func main() {
 
 	logger := logger.New(cfg.Env)
 
-	validator := validator.New()
-
 	db := db.Connect(cfg.DB.Host, cfg.DB.Username, cfg.DB.Password, cfg.DB.Name, cfg.DB.Port)
 
 	logger.Zap.Info("starting server...")
-	iam.NewServer(cfg, logger, validator, db)
+	iam.NewServer(cfg, logger, db)
 }
