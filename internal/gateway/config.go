@@ -1,4 +1,4 @@
-package iam
+package gateway
 
 import (
 	"MydroX/project-v/pkg/config"

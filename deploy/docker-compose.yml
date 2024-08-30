@@ -1,6 +1,6 @@
 services:
-  iam:
-    container_name: iam
+  gateway:
+    container_name: gateway
     build:
       context: ..
       dockerfile: deploy/Dockerfile
@@ -9,11 +9,11 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - db-iam
+      - db-gateway
     networks:
       - project-v
-  db-iam:
-    container_name: db-iam
+  db-gateway:
+    container_name: db-gateway
     image: postgres:16.3-alpine3.20
     environment:
       POSTGRES_USER: postgres

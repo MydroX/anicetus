@@ -2,7 +2,7 @@
 package repository
 
 import (
-	"MydroX/project-v/internal/iam/users/models"
+	"MydroX/project-v/internal/gateway/users/models"
 	apiError "MydroX/project-v/pkg/errors"
 	"MydroX/project-v/pkg/logger"
 	"fmt"

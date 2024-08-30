@@ -1,8 +1,8 @@
-serviceName: iam
+serviceName: gateway
 env: DEV
 port: 3000
 database:
-  host: db-iam
+  host: db-gateway
   port: 5432
   user: postgres
   password: postgres

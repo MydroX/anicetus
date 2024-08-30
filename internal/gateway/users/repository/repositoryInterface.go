@@ -1,12 +1,12 @@
 package repository
 
 import (
-	"MydroX/project-v/internal/iam/users/models"
+	"MydroX/project-v/internal/gateway/users/models"
 
 	"github.com/google/uuid"
 )
 
-//go:generate mockgen -destination=../mocks/mock_repository.go -imports=models=MydroX/project-v/internal/users/models -package=mocks MydroX/project-v/internal/iam/users/repository UsersRepository
+//go:generate mockgen -destination=../mocks/mock_repository.go -imports=models=MydroX/project-v/internal/users/models -package=mocks MydroX/project-v/internal/gateway/users/repository UsersRepository
 
 // Repository is the interface to all the implemented db queries
 type UsersRepository interface {

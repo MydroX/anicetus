@@ -1,12 +1,12 @@
 package usecases
 
 import (
-	"MydroX/project-v/internal/iam/users/dto"
+	"MydroX/project-v/internal/gateway/users/dto"
 
 	"github.com/google/uuid"
 )
 
-//go:generate mockgen -destination=../mocks/mock_usecases.go -package=mocks MydroX/project-v/internal/iam/users/usecases UsersUsecases
+//go:generate mockgen -destination=../mocks/mock_usecases.go -package=mocks MydroX/project-v/internal/gateway/users/usecases UsersUsecases
 
 // Usecases is the interface to all the implemented usecases
 type UsersUsecases interface {

@@ -1,10 +1,10 @@
-// Package iam is the entry point for the IAM service. It starts the server and defines the routes for the service.
-package iam
+// Package gateway is the entry point for the gateway service. It starts the server and defines the routes for the service.
+package gateway
 
 import (
-	"MydroX/project-v/internal/iam/users"
-	"MydroX/project-v/internal/iam/users/repository"
-	"MydroX/project-v/internal/iam/users/usecases"
+	"MydroX/project-v/internal/gateway/users"
+	"MydroX/project-v/internal/gateway/users/repository"
+	"MydroX/project-v/internal/gateway/users/usecases"
 	"MydroX/project-v/pkg/logger"
 	"fmt"
 
@@ -17,7 +17,7 @@ type service struct {
 	usersController *users.Controller
 }
 
-// Router is a function to define the routes for the IAM service.
+// Router is a function to define the routes for the gateway service.
 func Router(logger *logger.Logger, service service) *gin.Engine {
 	router := gin.Default()
 
@@ -37,23 +37,25 @@ func Router(logger *logger.Logger, service service) *gin.Engine {
 	// - Middleware SECRET KEY API for every endpoint in headers
 
 	v1 := api.Group("/v1")
-
 	users := v1.Group("/users")
+
+	// Public routes
 	users.POST("/register", service.usersController.CreateUser)
 	users.POST("/auth", service.usersController.AuthenticateUser)
-	users.GET("/:uuid", service.usersController.GetUser)
 
-	// TODO: Middleware authentification
+	// Logged in routes
 	users.PUT("/:uuid", service.usersController.UpdateUser)
 	users.PATCH("/:uuid/email", service.usersController.UpdateEmail)
 	users.PATCH("/:uuid/password", service.usersController.UpdatePassword)
 
+	// Admin routes
+	users.GET("/:uuid", service.usersController.GetUser)
 	users.DELETE("/:uuid", service.usersController.DeleteUser)
 
 	return router
 }
 
-// NewServer is a function to start the server for the IAM service.
+// NewServer is a function to start the server for the gateway service.
 func NewServer(config *Config, logger *logger.Logger, db *gorm.DB) {
 	usersRepository := repository.NewRepository(logger, db)
 

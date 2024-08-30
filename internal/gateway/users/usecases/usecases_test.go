@@ -1,9 +1,9 @@
 package usecases
 
 import (
-	"MydroX/project-v/internal/iam/users/dto"
-	"MydroX/project-v/internal/iam/users/mocks"
-	"MydroX/project-v/internal/iam/users/models"
+	"MydroX/project-v/internal/gateway/users/dto"
+	"MydroX/project-v/internal/gateway/users/mocks"
+	"MydroX/project-v/internal/gateway/users/models"
 	"MydroX/project-v/pkg/logger"
 	"fmt"
 	"testing"

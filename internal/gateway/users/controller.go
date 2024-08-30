@@ -2,8 +2,8 @@
 package users
 
 import (
-	"MydroX/project-v/internal/iam/users/dto"
-	"MydroX/project-v/internal/iam/users/usecases"
+	"MydroX/project-v/internal/gateway/users/dto"
+	"MydroX/project-v/internal/gateway/users/usecases"
 	apiError "MydroX/project-v/pkg/errors"
 	"MydroX/project-v/pkg/logger"
 	"MydroX/project-v/pkg/response"

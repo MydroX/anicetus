@@ -3,9 +3,9 @@
 package usecases
 
 import (
-	"MydroX/project-v/internal/iam/users/dto"
-	"MydroX/project-v/internal/iam/users/models"
-	"MydroX/project-v/internal/iam/users/repository"
+	"MydroX/project-v/internal/gateway/users/dto"
+	"MydroX/project-v/internal/gateway/users/models"
+	"MydroX/project-v/internal/gateway/users/repository"
 	"MydroX/project-v/pkg/logger"
 	"MydroX/project-v/pkg/password"
 	"fmt"
