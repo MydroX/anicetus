@@ -3,11 +3,11 @@ init:
 
 up:
 	@echo "Starting..."
-	@docker-compose -f deploy/docker-compose.yml up --build
+	@docker compose -f deploy/docker-compose.yml up --build
 
 down:
 	@echo "Stopping..."
-	@docker-compose -f deploy/docker-compose.yml down
+	@docker compose -f deploy/docker-compose.yml down
 	
 build:
 	@echo "Building..."
@@ -24,6 +24,7 @@ migrate-up:
 migrate-reset:
 	@echo "Reset database..."
 	@GOOSE_DRIVER=postgres GOOSE_MIGRATION_DIR=migrations GOOSE_DBSTRING="postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable" goose reset
+	@GOOSE_DRIVER=postgres GOOSE_MIGRATION_DIR=migrations GOOSE_DBSTRING="postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable" goose up
 
 lint:
 	@echo "Linting..."

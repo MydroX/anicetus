@@ -2,6 +2,7 @@ package main
 
 import (
 	"MydroX/project-v/internal/gateway"
+	"MydroX/project-v/internal/gateway/users/config"
 	"MydroX/project-v/pkg/db"
 	"MydroX/project-v/pkg/logger"
 	"log"
@@ -10,7 +11,7 @@ import (
 const serviceName = "gateway"
 
 func main() {
-	cfg, err := gateway.LoadConfig(serviceName)
+	cfg, err := config.LoadConfig(serviceName)
 	if err != nil {
 		log.Fatalf("error loading config: %v", err)
 	}

@@ -3,6 +3,7 @@ package gateway
 
 import (
 	"MydroX/project-v/internal/gateway/users"
+	"MydroX/project-v/internal/gateway/users/config"
 	"MydroX/project-v/internal/gateway/users/repository"
 	"MydroX/project-v/internal/gateway/users/usecases"
 	"MydroX/project-v/pkg/logger"
@@ -41,7 +42,7 @@ func Router(logger *logger.Logger, service service) *gin.Engine {
 
 	// Public routes
 	users.POST("/register", service.usersController.CreateUser)
-	users.POST("/auth", service.usersController.AuthenticateUser)
+	users.POST("/login", service.usersController.Login)
 
 	// Logged in routes
 	users.PUT("/:uuid", service.usersController.UpdateUser)
@@ -56,12 +57,12 @@ func Router(logger *logger.Logger, service service) *gin.Engine {
 }
 
 // NewServer is a function to start the server for the gateway service.
-func NewServer(config *Config, logger *logger.Logger, db *gorm.DB) {
+func NewServer(config *config.Config, logger *logger.Logger, db *gorm.DB) {
 	usersRepository := repository.NewRepository(logger, db)
 
-	usersUsecase := usecases.NewUsecases(logger, usersRepository)
+	usersUsecase := usecases.NewUsecases(logger, usersRepository, &config.JWT)
 
-	usersController := users.NewController(logger, usersUsecase)
+	usersController := users.NewController(logger, usersUsecase, config)
 
 	service := service{
 		usersController: usersController,

@@ -7,9 +7,10 @@ import (
 	"MydroX/project-v/pkg/logger"
 	"fmt"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
+
+var prefix = "user-"
 
 type repository struct {
 	logger *logger.Logger
@@ -37,7 +38,7 @@ func (r *repository) CreateUser(user *models.User) error {
 	return nil
 }
 
-func (r *repository) GetUser(uuid uuid.UUID) (*models.User, error) {
+func (r *repository) GetUser(uuid string) (*models.User, error) {
 	var user models.User
 
 	res := r.db.First(&user, uuid)
@@ -62,7 +63,7 @@ func (r *repository) UpdateUser(user *models.User) error {
 	return nil
 }
 
-func (r *repository) UpdatePassword(uuid uuid.UUID, password string) error {
+func (r *repository) UpdatePassword(uuid string, password string) error {
 	user := models.User{
 		UUID: uuid,
 	}
@@ -74,7 +75,7 @@ func (r *repository) UpdatePassword(uuid uuid.UUID, password string) error {
 	return nil
 }
 
-func (r *repository) UpdateEmail(uuid uuid.UUID, email string) error {
+func (r *repository) UpdateEmail(uuid string, email string) error {
 	user := models.User{
 		UUID: uuid,
 	}
@@ -86,7 +87,7 @@ func (r *repository) UpdateEmail(uuid uuid.UUID, email string) error {
 	return nil
 }
 
-func (r *repository) DeleteUser(uuid uuid.UUID) error {
+func (r *repository) DeleteUser(uuid string) error {
 	res := r.db.Delete(&models.User{}, uuid)
 	if res.Error != nil {
 		r.logger.Zap.Sugar().Errorf("error deleting user: %v", res.Error)
@@ -94,4 +95,39 @@ func (r *repository) DeleteUser(uuid uuid.UUID) error {
 	}
 
 	return nil
+}
+
+func (r *repository) GetUserByEmail(email string) (*models.User, error) {
+	user := models.User{
+		Email: email,
+	}
+
+	res := r.db.Where("email = ?", email).First(&user)
+	if res.Error != nil {
+		if res.Error == gorm.ErrRecordNotFound {
+			return nil, apiError.ErrNotFound
+		}
+		r.logger.Zap.Sugar().Errorf("error getting user by email: %v", res.Error)
+		return nil, res.Error
+	}
+
+	return &user, nil
+}
+
+func (r *repository) GetUserByUsername(username string) (*models.User, error) {
+	user := models.User{
+		Username: username,
+	}
+
+	res := r.db.Where("username = ?", username).First(&user)
+
+	if res.Error != nil {
+		if res.Error == gorm.ErrRecordNotFound {
+			return nil, apiError.ErrNotFound
+		}
+		r.logger.Zap.Sugar().Errorf("error getting user by username: %v", res.Error)
+		return nil, res.Error
+	}
+
+	return &user, nil
 }

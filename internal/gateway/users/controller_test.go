@@ -1,10 +1,13 @@
 package users
 
 import (
+	"MydroX/project-v/internal/gateway/users/config"
 	"MydroX/project-v/internal/gateway/users/dto"
 	"MydroX/project-v/internal/gateway/users/mocks"
+	"MydroX/project-v/internal/gateway/users/models"
 	"MydroX/project-v/pkg/errors"
 	"MydroX/project-v/pkg/logger"
+	"MydroX/project-v/pkg/uuid"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -13,7 +16,6 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
@@ -44,7 +46,7 @@ func testRouter(logger *logger.Logger, _ *gorm.DB, controller Controller) *gin.E
 
 	users := v1.Group("/users")
 	users.POST("/register", controller.CreateUser)
-	users.POST("/auth", controller.AuthenticateUser)
+	users.POST("/auth", controller.Login)
 	users.GET("/:uuid", controller.GetUser)
 
 	// TODO: Middleware authentification
@@ -63,7 +65,7 @@ func newServerTest(t *testing.T) testServer {
 	ctrl := gomock.NewController(t)
 	usecasesMock := mocks.NewMockUsersUsecases(ctrl)
 
-	c := NewController(logger, usecasesMock)
+	c := NewController(logger, usecasesMock, &config.Config{})
 	router := testRouter(logger, nil, *c)
 
 	return testServer{
@@ -86,7 +88,14 @@ func Test_Create(t *testing.T) {
 
 		req, _ := http.NewRequest("POST", v1+create, strings.NewReader(string(userJSON)))
 
-		s.mockUsecase.EXPECT().Create(gomock.Any()).Return(nil)
+		user := &models.User{
+			Username: input.Username,
+			Email:    input.Email,
+			Password: input.Password,
+			Role:     input.Role,
+		}
+
+		s.mockUsecase.EXPECT().Create(user).Return(nil)
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -128,7 +137,14 @@ func Test_Create(t *testing.T) {
 
 		req, _ := http.NewRequest("POST", v1+create, strings.NewReader(string(userJSON)))
 
-		s.mockUsecase.EXPECT().Create(gomock.Any()).Return(fmt.Errorf("test error"))
+		user := &models.User{
+			Username: input.Username,
+			Email:    input.Email,
+			Password: input.Password,
+			Role:     input.Role,
+		}
+
+		s.mockUsecase.EXPECT().Create(user).Return(fmt.Errorf("test error"))
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -139,8 +155,8 @@ func Test_Create(t *testing.T) {
 func Test_Get(t *testing.T) {
 	s := newServerTest(t)
 
-	uuid := uuid.New()
-	user := dto.GetUserResponse{
+	uuid := uuid.NewWithPrefix("testuser")
+	user := models.User{
 		UUID:     uuid,
 		Username: "testusername",
 		Email:    "test@test.com",
@@ -148,7 +164,7 @@ func Test_Get(t *testing.T) {
 	}
 
 	t.Run("[V1] Get with success", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", v1+"/"+uuid.String(), nil)
+		req, _ := http.NewRequest("GET", v1+"/"+uuid, nil)
 
 		s.mockUsecase.EXPECT().Get(uuid).Return(&user, nil)
 
@@ -166,7 +182,7 @@ func Test_Get(t *testing.T) {
 	})
 
 	t.Run("[V1] Failed to find user", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", v1+"/"+uuid.String(), nil)
+		req, _ := http.NewRequest("GET", v1+"/"+uuid, nil)
 
 		s.mockUsecase.EXPECT().Get(uuid).Return(nil, errors.ErrNotFound)
 
@@ -176,7 +192,7 @@ func Test_Get(t *testing.T) {
 	})
 
 	t.Run("[V1] Usecase error", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", v1+"/"+uuid.String(), nil)
+		req, _ := http.NewRequest("GET", v1+"/"+uuid, nil)
 
 		s.mockUsecase.EXPECT().Get(uuid).Return(nil, fmt.Errorf("test error"))
 
@@ -189,10 +205,10 @@ func Test_Get(t *testing.T) {
 func Test_Update(t *testing.T) {
 	s := newServerTest(t)
 
-	uuid := uuid.New()
+	uuid := uuid.NewWithPrefix("testuser")
 
 	t.Run("[V1] Update with success", func(t *testing.T) {
-		user := dto.UpdateUserRequest{
+		user := models.User{
 			Username: "testusername",
 			Email:    "test@test.com",
 			Role:     "USER",
@@ -200,9 +216,9 @@ func Test_Update(t *testing.T) {
 		}
 		userJSON, _ := json.Marshal(user)
 
-		req, _ := http.NewRequest("PUT", v1+"/"+uuid.String(), strings.NewReader(string(userJSON)))
+		req, _ := http.NewRequest("PUT", v1+"/"+uuid, strings.NewReader(string(userJSON)))
 
-		s.mockUsecase.EXPECT().Update(user).Return(nil)
+		s.mockUsecase.EXPECT().Update(&user).Return(nil)
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -210,7 +226,7 @@ func Test_Update(t *testing.T) {
 	})
 
 	t.Run("[V1] Failed to bind JSON", func(t *testing.T) {
-		req, _ := http.NewRequest("PUT", v1+"/"+uuid.String(), strings.NewReader(""))
+		req, _ := http.NewRequest("PUT", v1+"/"+uuid, strings.NewReader(""))
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -218,7 +234,7 @@ func Test_Update(t *testing.T) {
 	})
 
 	t.Run("[V1] Failed to validate JSON", func(t *testing.T) {
-		user := dto.UpdateUserRequest{
+		user := models.User{
 			Username: "testusername",
 			Email:    "",
 			Role:     "USER",
@@ -226,7 +242,7 @@ func Test_Update(t *testing.T) {
 		}
 		userJSON, _ := json.Marshal(user)
 
-		req, _ := http.NewRequest("PUT", v1+"/"+uuid.String(), strings.NewReader(string(userJSON)))
+		req, _ := http.NewRequest("PUT", v1+"/"+uuid, strings.NewReader(string(userJSON)))
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -234,7 +250,7 @@ func Test_Update(t *testing.T) {
 	})
 
 	t.Run("[V1] Usecase error", func(t *testing.T) {
-		user := dto.UpdateUserRequest{
+		user := models.User{
 			Username: "testusername",
 			Email:    "test@test.com",
 			Role:     "USER",
@@ -242,9 +258,9 @@ func Test_Update(t *testing.T) {
 		}
 		userJSON, _ := json.Marshal(user)
 
-		req, _ := http.NewRequest("PUT", v1+"/"+uuid.String(), strings.NewReader(string(userJSON)))
+		req, _ := http.NewRequest("PUT", v1+"/"+uuid, strings.NewReader(string(userJSON)))
 
-		s.mockUsecase.EXPECT().Update(gomock.Any()).Return(fmt.Errorf("test error"))
+		s.mockUsecase.EXPECT().Update(&user).Return(fmt.Errorf("test error"))
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -256,7 +272,7 @@ func Test_Update(t *testing.T) {
 func Test_UpdateEmail(t *testing.T) {
 	s := newServerTest(t)
 
-	uuid := uuid.New()
+	uuid := uuid.NewWithPrefix("testuser")
 
 	t.Run("[V1] Update email with success", func(t *testing.T) {
 		user := dto.UpdateEmailRequest{
@@ -264,7 +280,7 @@ func Test_UpdateEmail(t *testing.T) {
 		}
 		userJSON, _ := json.Marshal(user)
 
-		req, _ := http.NewRequest("PATCH", v1+"/"+uuid.String()+"/email", strings.NewReader(string(userJSON)))
+		req, _ := http.NewRequest("PATCH", v1+"/"+uuid+"/email", strings.NewReader(string(userJSON)))
 
 		s.mockUsecase.EXPECT().UpdateEmail(uuid, user.Email).Return(nil)
 
@@ -274,7 +290,7 @@ func Test_UpdateEmail(t *testing.T) {
 	})
 
 	t.Run("[V1] Failed to bind JSON", func(t *testing.T) {
-		req, _ := http.NewRequest("PATCH", v1+"/"+uuid.String()+"/email", strings.NewReader(""))
+		req, _ := http.NewRequest("PATCH", v1+"/"+uuid+"/email", strings.NewReader(""))
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -287,7 +303,7 @@ func Test_UpdateEmail(t *testing.T) {
 		}
 		userJSON, _ := json.Marshal(user)
 
-		req, _ := http.NewRequest("PATCH", v1+"/"+uuid.String()+"/email", strings.NewReader(string(userJSON)))
+		req, _ := http.NewRequest("PATCH", v1+"/"+uuid+"/email", strings.NewReader(string(userJSON)))
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -308,7 +324,7 @@ func Test_UpdateEmail(t *testing.T) {
 		}
 		userJSON, _ := json.Marshal(user)
 
-		req, _ := http.NewRequest("PATCH", v1+"/"+uuid.String()+"/email", strings.NewReader(string(userJSON)))
+		req, _ := http.NewRequest("PATCH", v1+"/"+uuid+"/email", strings.NewReader(string(userJSON)))
 
 		s.mockUsecase.EXPECT().UpdateEmail(uuid, user.Email).Return(fmt.Errorf("test error"))
 
@@ -321,7 +337,7 @@ func Test_UpdateEmail(t *testing.T) {
 func Test_UpdatePassword(t *testing.T) {
 	s := newServerTest(t)
 
-	uuid := uuid.New()
+	uuid := uuid.NewWithPrefix("testuser")
 
 	t.Run("[V1] Update password with success", func(t *testing.T) {
 		user := dto.UpdatePasswordRequest{
@@ -329,7 +345,7 @@ func Test_UpdatePassword(t *testing.T) {
 		}
 		userJSON, _ := json.Marshal(user)
 
-		req, _ := http.NewRequest("PATCH", v1+"/"+uuid.String()+"/password", strings.NewReader(string(userJSON)))
+		req, _ := http.NewRequest("PATCH", v1+"/"+uuid+"/password", strings.NewReader(string(userJSON)))
 
 		s.mockUsecase.EXPECT().UpdatePassword(uuid, user.Password).Return(nil)
 
@@ -339,7 +355,7 @@ func Test_UpdatePassword(t *testing.T) {
 	})
 
 	t.Run("[V1] Failed to bind JSON", func(t *testing.T) {
-		req, _ := http.NewRequest("PATCH", v1+"/"+uuid.String()+"/password", strings.NewReader(""))
+		req, _ := http.NewRequest("PATCH", v1+"/"+uuid+"/password", strings.NewReader(""))
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -352,7 +368,7 @@ func Test_UpdatePassword(t *testing.T) {
 		}
 		userJSON, _ := json.Marshal(user)
 
-		req, _ := http.NewRequest("PATCH", v1+"/"+uuid.String()+"/password", strings.NewReader(string(userJSON)))
+		req, _ := http.NewRequest("PATCH", v1+"/"+uuid+"/password", strings.NewReader(string(userJSON)))
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -373,7 +389,7 @@ func Test_UpdatePassword(t *testing.T) {
 		}
 		userJSON, _ := json.Marshal(user)
 
-		req, _ := http.NewRequest("PATCH", v1+"/"+uuid.String()+"/password", strings.NewReader(string(userJSON)))
+		req, _ := http.NewRequest("PATCH", v1+"/"+uuid+"/password", strings.NewReader(string(userJSON)))
 
 		s.mockUsecase.EXPECT().UpdatePassword(uuid, user.Password).Return(fmt.Errorf("test error"))
 
@@ -386,10 +402,10 @@ func Test_UpdatePassword(t *testing.T) {
 func Test_Delete(t *testing.T) {
 	s := newServerTest(t)
 
-	uuid := uuid.New()
+	uuid := uuid.NewWithPrefix("testuser")
 
 	t.Run("[V1] Delete with success", func(t *testing.T) {
-		req, _ := http.NewRequest("DELETE", v1+"/"+uuid.String(), nil)
+		req, _ := http.NewRequest("DELETE", v1+"/"+uuid, nil)
 
 		s.mockUsecase.EXPECT().Delete(uuid).Return(nil)
 
@@ -407,7 +423,7 @@ func Test_Delete(t *testing.T) {
 	})
 
 	t.Run("[V1] Usecase error", func(t *testing.T) {
-		req, _ := http.NewRequest("DELETE", v1+"/"+uuid.String(), nil)
+		req, _ := http.NewRequest("DELETE", v1+"/"+uuid, nil)
 
 		s.mockUsecase.EXPECT().Delete(uuid).Return(fmt.Errorf("test error"))
 

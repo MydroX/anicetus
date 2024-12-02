@@ -2,12 +2,15 @@
 package users
 
 import (
+	"MydroX/project-v/internal/gateway/users/config"
 	"MydroX/project-v/internal/gateway/users/dto"
+	"MydroX/project-v/internal/gateway/users/models"
 	"MydroX/project-v/internal/gateway/users/usecases"
 	apiError "MydroX/project-v/pkg/errors"
 	"MydroX/project-v/pkg/logger"
 	"MydroX/project-v/pkg/response"
 	"MydroX/project-v/pkg/uuid"
+	"regexp"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -17,16 +20,18 @@ type Controller struct {
 	logger   *logger.Logger
 	validate *validator.Validate
 	usecases usecases.UsersUsecases
+	config   *config.Config
 }
 
 // NewController is the interface for the controller.
-func NewController(l *logger.Logger, u usecases.UsersUsecases) *Controller {
+func NewController(l *logger.Logger, u usecases.UsersUsecases, c *config.Config) *Controller {
 	validator := validator.New()
 
 	return &Controller{
 		validate: validator,
 		logger:   l,
 		usecases: u,
+		config:   c,
 	}
 }
 
@@ -46,8 +51,21 @@ func (c *Controller) CreateUser(ctx *gin.Context) {
 	}
 
 	// ^[A-Za-z0-9._-]{4,18}$  // username
+	usernameRegex, _ := regexp.Compile("[A-Za-z0-9._-]{4,18}$")
+	match := usernameRegex.MatchString(request.Username)
+	if !match {
+		response.InvalidRequest(c.logger, ctx)
+		return
+	}
 
-	err = c.usecases.Create(request)
+	user := models.User{
+		Username: request.Username,
+		Email:    request.Email,
+		Role:     request.Role,
+		Password: request.Password,
+	}
+
+	err = c.usecases.Create(&user)
 	if err != nil {
 		response.InternalError(c.logger, ctx, err)
 		return
@@ -57,13 +75,13 @@ func (c *Controller) CreateUser(ctx *gin.Context) {
 }
 
 func (c *Controller) GetUser(ctx *gin.Context) {
-	uuidStr := ctx.Param("uuid")
-	if uuidStr == "" {
+	userUUID := ctx.Param("uuid")
+	if userUUID == "" {
 		response.InvalidRequest(c.logger, ctx)
 		return
 	}
 
-	userUUID, err := uuid.ValidateAndParse(uuidStr)
+	err := uuid.ValidateWithPrefix(userUUID)
 	if err != nil {
 		response.InvalidRequest(c.logger, ctx)
 		return
@@ -97,7 +115,15 @@ func (c *Controller) UpdateUser(ctx *gin.Context) {
 		return
 	}
 
-	err = c.usecases.Update(request)
+	user := models.User{
+		UUID:     request.UUID,
+		Username: request.Username,
+		Password: request.Password,
+		Email:    request.Email,
+		Role:     request.Role,
+	}
+
+	err = c.usecases.Update(&user)
 	if err != nil {
 		response.InternalError(c.logger, ctx, err)
 		return
@@ -109,12 +135,12 @@ func (c *Controller) UpdateUser(ctx *gin.Context) {
 func (c *Controller) UpdateEmail(ctx *gin.Context) {
 	var request dto.UpdateEmailRequest
 
-	uuidStr := ctx.Param("uuid")
-	if uuidStr == "" {
+	userUUID := ctx.Param("uuid")
+	if userUUID == "" {
 		response.InvalidRequest(c.logger, ctx)
 		return
 	}
-	userUUID, err := uuid.ValidateAndParse(uuidStr)
+	err := uuid.ValidateWithPrefix(userUUID)
 	if err != nil {
 		response.InvalidRequest(c.logger, ctx)
 		return
@@ -144,12 +170,12 @@ func (c *Controller) UpdateEmail(ctx *gin.Context) {
 func (c *Controller) UpdatePassword(ctx *gin.Context) {
 	var request dto.UpdatePasswordRequest
 
-	uuidStr := ctx.Param("uuid")
-	if uuidStr == "" {
+	userUUID := ctx.Param("uuid")
+	if userUUID == "" {
 		response.InvalidRequest(c.logger, ctx)
 		return
 	}
-	userUUID, err := uuid.ValidateAndParse(uuidStr)
+	err := uuid.ValidateWithPrefix(userUUID)
 	if err != nil {
 		response.InvalidRequest(c.logger, ctx)
 		return
@@ -178,12 +204,12 @@ func (c *Controller) UpdatePassword(ctx *gin.Context) {
 }
 
 func (c *Controller) DeleteUser(ctx *gin.Context) {
-	uuidStr := ctx.Param("uuid")
-	if uuidStr == "" {
+	userUUID := ctx.Param("uuid")
+	if userUUID == "" {
 		response.InvalidRequest(c.logger, ctx)
 		return
 	}
-	userUUID, err := uuid.ValidateAndParse(uuidStr)
+	err := uuid.ValidateWithPrefix(userUUID)
 	if err != nil {
 		response.InvalidRequest(c.logger, ctx)
 		return
@@ -198,6 +224,28 @@ func (c *Controller) DeleteUser(ctx *gin.Context) {
 	ctx.JSON(200, gin.H{"message": "user deleted"})
 }
 
-func (c *Controller) AuthenticateUser(ctx *gin.Context) {
-	// panic("not implemented") // TODO: Implement
+func (c *Controller) Login(ctx *gin.Context) {
+	var request dto.LoginRequest
+	if err := ctx.BindJSON(&request); err != nil {
+		response.InvalidRequest(c.logger, ctx)
+		return
+	}
+
+	if request.Username == "" && request.Email == "" {
+		response.InvalidRequest(c.logger, ctx)
+		return
+	}
+
+	token, err := c.usecases.Login(request.Username, request.Email, request.Password)
+	if err != nil {
+		response.InternalError(c.logger, ctx, err)
+		return
+	}
+
+	ctx.SetCookie("auth_token", token, 3600, "/", c.config.App.Domain, true, true)
+
+	resp := dto.LoginResponse{
+		Token: token,
+	}
+	ctx.JSON(200, resp)
 }

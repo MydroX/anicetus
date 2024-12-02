@@ -13,7 +13,6 @@ import (
 	models "MydroX/project-v/internal/gateway/users/models"
 	reflect "reflect"
 
-	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -55,7 +54,7 @@ func (mr *MockUsersRepositoryMockRecorder) CreateUser(arg0 any) *gomock.Call {
 }
 
 // DeleteUser mocks base method.
-func (m *MockUsersRepository) DeleteUser(arg0 uuid.UUID) error {
+func (m *MockUsersRepository) DeleteUser(arg0 string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteUser", arg0)
 	ret0, _ := ret[0].(error)
@@ -69,7 +68,7 @@ func (mr *MockUsersRepositoryMockRecorder) DeleteUser(arg0 any) *gomock.Call {
 }
 
 // GetUser mocks base method.
-func (m *MockUsersRepository) GetUser(arg0 uuid.UUID) (*models.User, error) {
+func (m *MockUsersRepository) GetUser(arg0 string) (*models.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUser", arg0)
 	ret0, _ := ret[0].(*models.User)
@@ -83,8 +82,38 @@ func (mr *MockUsersRepositoryMockRecorder) GetUser(arg0 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockUsersRepository)(nil).GetUser), arg0)
 }
 
+// GetUserByEmail mocks base method.
+func (m *MockUsersRepository) GetUserByEmail(arg0 string) (*models.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserByEmail", arg0)
+	ret0, _ := ret[0].(*models.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserByEmail indicates an expected call of GetUserByEmail.
+func (mr *MockUsersRepositoryMockRecorder) GetUserByEmail(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByEmail", reflect.TypeOf((*MockUsersRepository)(nil).GetUserByEmail), arg0)
+}
+
+// GetUserByUsername mocks base method.
+func (m *MockUsersRepository) GetUserByUsername(arg0 string) (*models.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserByUsername", arg0)
+	ret0, _ := ret[0].(*models.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserByUsername indicates an expected call of GetUserByUsername.
+func (mr *MockUsersRepositoryMockRecorder) GetUserByUsername(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByUsername", reflect.TypeOf((*MockUsersRepository)(nil).GetUserByUsername), arg0)
+}
+
 // UpdateEmail mocks base method.
-func (m *MockUsersRepository) UpdateEmail(arg0 uuid.UUID, arg1 string) error {
+func (m *MockUsersRepository) UpdateEmail(arg0, arg1 string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateEmail", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -98,7 +127,7 @@ func (mr *MockUsersRepositoryMockRecorder) UpdateEmail(arg0, arg1 any) *gomock.C
 }
 
 // UpdatePassword mocks base method.
-func (m *MockUsersRepository) UpdatePassword(arg0 uuid.UUID, arg1 string) error {
+func (m *MockUsersRepository) UpdatePassword(arg0, arg1 string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdatePassword", arg0, arg1)
 	ret0, _ := ret[0].(error)

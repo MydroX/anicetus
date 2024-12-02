@@ -10,10 +10,9 @@
 package mocks
 
 import (
-	dto "MydroX/project-v/internal/gateway/users/dto"
+	models "MydroX/project-v/internal/gateway/users/models"
 	reflect "reflect"
 
-	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -40,23 +39,8 @@ func (m *MockUsersUsecases) EXPECT() *MockUsersUsecasesMockRecorder {
 	return m.recorder
 }
 
-// Auth mocks base method.
-func (m *MockUsersUsecases) Auth(arg0, arg1, arg2 string) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Auth", arg0, arg1, arg2)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Auth indicates an expected call of Auth.
-func (mr *MockUsersUsecasesMockRecorder) Auth(arg0, arg1, arg2 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Auth", reflect.TypeOf((*MockUsersUsecases)(nil).Auth), arg0, arg1, arg2)
-}
-
 // Create mocks base method.
-func (m *MockUsersUsecases) Create(arg0 dto.CreateUserRequest) error {
+func (m *MockUsersUsecases) Create(arg0 *models.User) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", arg0)
 	ret0, _ := ret[0].(error)
@@ -70,7 +54,7 @@ func (mr *MockUsersUsecasesMockRecorder) Create(arg0 any) *gomock.Call {
 }
 
 // Delete mocks base method.
-func (m *MockUsersUsecases) Delete(arg0 uuid.UUID) error {
+func (m *MockUsersUsecases) Delete(arg0 string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", arg0)
 	ret0, _ := ret[0].(error)
@@ -84,10 +68,10 @@ func (mr *MockUsersUsecasesMockRecorder) Delete(arg0 any) *gomock.Call {
 }
 
 // Get mocks base method.
-func (m *MockUsersUsecases) Get(arg0 uuid.UUID) (*dto.GetUserResponse, error) {
+func (m *MockUsersUsecases) Get(arg0 string) (*models.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", arg0)
-	ret0, _ := ret[0].(*dto.GetUserResponse)
+	ret0, _ := ret[0].(*models.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -98,8 +82,23 @@ func (mr *MockUsersUsecasesMockRecorder) Get(arg0 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockUsersUsecases)(nil).Get), arg0)
 }
 
+// Login mocks base method.
+func (m *MockUsersUsecases) Login(arg0, arg1, arg2 string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Login", arg0, arg1, arg2)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Login indicates an expected call of Login.
+func (mr *MockUsersUsecasesMockRecorder) Login(arg0, arg1, arg2 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockUsersUsecases)(nil).Login), arg0, arg1, arg2)
+}
+
 // Update mocks base method.
-func (m *MockUsersUsecases) Update(arg0 dto.UpdateUserRequest) error {
+func (m *MockUsersUsecases) Update(arg0 *models.User) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", arg0)
 	ret0, _ := ret[0].(error)
@@ -113,7 +112,7 @@ func (mr *MockUsersUsecasesMockRecorder) Update(arg0 any) *gomock.Call {
 }
 
 // UpdateEmail mocks base method.
-func (m *MockUsersUsecases) UpdateEmail(arg0 uuid.UUID, arg1 string) error {
+func (m *MockUsersUsecases) UpdateEmail(arg0, arg1 string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateEmail", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -127,7 +126,7 @@ func (mr *MockUsersUsecasesMockRecorder) UpdateEmail(arg0, arg1 any) *gomock.Cal
 }
 
 // UpdatePassword mocks base method.
-func (m *MockUsersUsecases) UpdatePassword(arg0 uuid.UUID, arg1 string) error {
+func (m *MockUsersUsecases) UpdatePassword(arg0, arg1 string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdatePassword", arg0, arg1)
 	ret0, _ := ret[0].(error)

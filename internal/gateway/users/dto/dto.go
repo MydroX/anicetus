@@ -1,7 +1,5 @@
 package dto
 
-import "github.com/google/uuid"
-
 type CreateUserRequest struct {
 	Username string `json:"username" validate:"required,min=4,max=18"`
 	Password string `json:"password" validate:"required,min=14,max=72"`
@@ -10,18 +8,18 @@ type CreateUserRequest struct {
 }
 
 type GetUserResponse struct {
-	UUID     uuid.UUID `json:"uuid"`
-	Username string    `json:"username"`
-	Email    string    `json:"email"`
-	Role     string    `json:"role"`
+	UUID     string `json:"uuid"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Role     string `json:"role"`
 }
 
 type UpdateUserRequest struct {
-	UUID     uuid.UUID `json:"uuid"`
-	Username string    `json:"username" validate:"required,min=4,max=18"`
-	Password string    `json:"password" validate:"required,min=14,max=72"`
-	Email    string    `json:"email" validate:"required,email"`
-	Role     string    `json:"role" validate:"required,oneof=ADMIN USER"`
+	UUID     string `json:"uuid, validate:"required,min=36,max=46"`
+	Username string `json:"username" validate:"required,min=4,max=18"`
+	Password string `json:"password" validate:"required,min=14,max=72"`
+	Email    string `json:"email" validate:"required,email"`
+	Role     string `json:"role" validate:"required,oneof=ADMIN USER"`
 }
 
 type UpdatePasswordRequest struct {
@@ -30,4 +28,14 @@ type UpdatePasswordRequest struct {
 
 type UpdateEmailRequest struct {
 	Email string `json:"email" validate:"required,email"`
+}
+
+type LoginRequest struct {
+	Username string `json:"username" validate:"min=4,max=18"`
+	Email    string `json:"email" validate:"email"`
+	Password string `json:"password" validate:"required,min=14,max=72"`
+}
+
+type LoginResponse struct {
+	Token string `json:"token"`
 }

@@ -1,19 +1,28 @@
 package uuid
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/google/uuid"
 )
 
-func ValidateAndParse(uuidStr string) (uuid.UUID, error) {
+func NewWithPrefix(prefix string) string {
+	return fmt.Sprintf("%s-%s", prefix, uuid.New().String())
+}
+
+func ValidateWithPrefix(uuidWithPrefix string) error {
+	str := strings.Split(uuidWithPrefix, "-")
+	if len(str) < 5 {
+		return fmt.Errorf("invalid uuid")
+	}
+
+	uuidSliced := str[1:]
+	uuidStr := strings.Join(uuidSliced, "-")
+
 	err := uuid.Validate(uuidStr)
 	if err != nil {
-		return uuid.UUID{}, err
+		return err
 	}
-
-	userUUID, err := uuid.Parse(uuidStr)
-	if err != nil {
-		return uuid.UUID{}, err
-	}
-
-	return userUUID, nil
+	return nil
 }
