@@ -209,6 +209,7 @@ func Test_Update(t *testing.T) {
 
 	t.Run("[V1] Update with success", func(t *testing.T) {
 		user := models.User{
+			UUID:     uuid,
 			Username: "testusername",
 			Email:    "test@test.com",
 			Role:     "USER",
@@ -235,6 +236,7 @@ func Test_Update(t *testing.T) {
 
 	t.Run("[V1] Failed to validate JSON", func(t *testing.T) {
 		user := models.User{
+			UUID:     uuid,
 			Username: "testusername",
 			Email:    "",
 			Role:     "USER",
@@ -251,6 +253,7 @@ func Test_Update(t *testing.T) {
 
 	t.Run("[V1] Usecase error", func(t *testing.T) {
 		user := models.User{
+			UUID:     uuid,
 			Username: "testusername",
 			Email:    "test@test.com",
 			Role:     "USER",
@@ -265,7 +268,6 @@ func Test_Update(t *testing.T) {
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
-
 	})
 }
 
