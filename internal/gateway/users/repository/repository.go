@@ -10,8 +10,6 @@ import (
 	"gorm.io/gorm"
 )
 
-var prefix = "user-"
-
 type repository struct {
 	logger *logger.Logger
 	db     *gorm.DB
