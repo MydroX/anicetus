@@ -11,6 +11,7 @@ package mocks
 
 import (
 	models "MydroX/project-v/internal/gateway/users/models"
+	context "context"
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
@@ -40,101 +41,101 @@ func (m *MockUsersUsecases) EXPECT() *MockUsersUsecasesMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockUsersUsecases) Create(arg0 *models.User) error {
+func (m *MockUsersUsecases) Create(arg0 *context.Context, arg1 *models.User) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", arg0)
+	ret := m.ctrl.Call(m, "Create", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockUsersUsecasesMockRecorder) Create(arg0 any) *gomock.Call {
+func (mr *MockUsersUsecasesMockRecorder) Create(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockUsersUsecases)(nil).Create), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockUsersUsecases)(nil).Create), arg0, arg1)
 }
 
 // Delete mocks base method.
-func (m *MockUsersUsecases) Delete(arg0 string) error {
+func (m *MockUsersUsecases) Delete(arg0 *context.Context, arg1 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", arg0)
+	ret := m.ctrl.Call(m, "Delete", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockUsersUsecasesMockRecorder) Delete(arg0 any) *gomock.Call {
+func (mr *MockUsersUsecasesMockRecorder) Delete(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockUsersUsecases)(nil).Delete), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockUsersUsecases)(nil).Delete), arg0, arg1)
 }
 
 // Get mocks base method.
-func (m *MockUsersUsecases) Get(arg0 string) (*models.User, error) {
+func (m *MockUsersUsecases) Get(arg0 *context.Context, arg1 string) (*models.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", arg0)
+	ret := m.ctrl.Call(m, "Get", arg0, arg1)
 	ret0, _ := ret[0].(*models.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockUsersUsecasesMockRecorder) Get(arg0 any) *gomock.Call {
+func (mr *MockUsersUsecasesMockRecorder) Get(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockUsersUsecases)(nil).Get), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockUsersUsecases)(nil).Get), arg0, arg1)
 }
 
 // Login mocks base method.
-func (m *MockUsersUsecases) Login(arg0, arg1, arg2 string) (string, error) {
+func (m *MockUsersUsecases) Login(arg0 *context.Context, arg1, arg2, arg3 string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Login", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "Login", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Login indicates an expected call of Login.
-func (mr *MockUsersUsecasesMockRecorder) Login(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockUsersUsecasesMockRecorder) Login(arg0, arg1, arg2, arg3 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockUsersUsecases)(nil).Login), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockUsersUsecases)(nil).Login), arg0, arg1, arg2, arg3)
 }
 
 // Update mocks base method.
-func (m *MockUsersUsecases) Update(arg0 *models.User) error {
+func (m *MockUsersUsecases) Update(arg0 *context.Context, arg1 *models.User) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", arg0)
+	ret := m.ctrl.Call(m, "Update", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockUsersUsecasesMockRecorder) Update(arg0 any) *gomock.Call {
+func (mr *MockUsersUsecasesMockRecorder) Update(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockUsersUsecases)(nil).Update), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockUsersUsecases)(nil).Update), arg0, arg1)
 }
 
 // UpdateEmail mocks base method.
-func (m *MockUsersUsecases) UpdateEmail(arg0, arg1 string) error {
+func (m *MockUsersUsecases) UpdateEmail(arg0 *context.Context, arg1, arg2 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateEmail", arg0, arg1)
+	ret := m.ctrl.Call(m, "UpdateEmail", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateEmail indicates an expected call of UpdateEmail.
-func (mr *MockUsersUsecasesMockRecorder) UpdateEmail(arg0, arg1 any) *gomock.Call {
+func (mr *MockUsersUsecasesMockRecorder) UpdateEmail(arg0, arg1, arg2 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEmail", reflect.TypeOf((*MockUsersUsecases)(nil).UpdateEmail), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEmail", reflect.TypeOf((*MockUsersUsecases)(nil).UpdateEmail), arg0, arg1, arg2)
 }
 
 // UpdatePassword mocks base method.
-func (m *MockUsersUsecases) UpdatePassword(arg0, arg1 string) error {
+func (m *MockUsersUsecases) UpdatePassword(arg0 *context.Context, arg1, arg2 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdatePassword", arg0, arg1)
+	ret := m.ctrl.Call(m, "UpdatePassword", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdatePassword indicates an expected call of UpdatePassword.
-func (mr *MockUsersUsecasesMockRecorder) UpdatePassword(arg0, arg1 any) *gomock.Call {
+func (mr *MockUsersUsecasesMockRecorder) UpdatePassword(arg0, arg1, arg2 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePassword", reflect.TypeOf((*MockUsersUsecases)(nil).UpdatePassword), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePassword", reflect.TypeOf((*MockUsersUsecases)(nil).UpdatePassword), arg0, arg1, arg2)
 }

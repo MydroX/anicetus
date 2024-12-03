@@ -1,10 +1,10 @@
-// Package repository provides every implementation of database operations.
 package repository
 
 import (
+	"MydroX/project-v/internal/common/errors"
 	"MydroX/project-v/internal/gateway/users/models"
-	apiError "MydroX/project-v/pkg/errors"
 	"MydroX/project-v/pkg/logger"
+	"context"
 	"fmt"
 
 	"gorm.io/gorm"
@@ -23,11 +23,12 @@ func NewRepository(l *logger.Logger, db *gorm.DB) UsersRepository {
 	}
 }
 
-func (r *repository) CreateUser(user *models.User) error {
+func (r *repository) CreateUser(ctx *context.Context, user *models.User) error {
 	res := r.db.Create(&user)
 	if res.Error != nil {
 		if res.Error == gorm.ErrDuplicatedKey {
-			fmt.Println(res.Error)
+			*ctx = context.WithValue(*ctx, errors.CtxErrorCodeKey, errors.CODE_DUPLICATE_ENTITY)
+			return fmt.Errorf("user already exists")
 		}
 		r.logger.Zap.Sugar().Errorf("error creating user: %v", res.Error)
 		return res.Error
@@ -36,13 +37,14 @@ func (r *repository) CreateUser(user *models.User) error {
 	return nil
 }
 
-func (r *repository) GetUser(uuid string) (*models.User, error) {
+func (r *repository) GetUserByUUID(ctx *context.Context, uuid string) (*models.User, error) {
 	var user models.User
 
 	res := r.db.First(&user, uuid)
 	if res.Error != nil {
 		if res.Error == gorm.ErrRecordNotFound {
-			return nil, apiError.ErrNotFound
+			*ctx = context.WithValue(*ctx, errors.CtxErrorCodeKey, errors.CODE_ENTITY_NOT_FOUND)
+			return nil, errors.ErrNotFound
 		}
 		r.logger.Zap.Sugar().Errorf("error getting user: %v", res.Error)
 		return nil, res.Error
@@ -51,7 +53,7 @@ func (r *repository) GetUser(uuid string) (*models.User, error) {
 	return &user, nil
 }
 
-func (r *repository) UpdateUser(user *models.User) error {
+func (r *repository) UpdateUser(_ *context.Context, user *models.User) error {
 	res := r.db.Save(&user)
 	if res.Error != nil {
 		r.logger.Zap.Sugar().Errorf("error updating user: %v", res.Error)
@@ -61,7 +63,7 @@ func (r *repository) UpdateUser(user *models.User) error {
 	return nil
 }
 
-func (r *repository) UpdatePassword(uuid string, password string) error {
+func (r *repository) UpdatePassword(_ *context.Context, uuid, password string) error {
 	user := models.User{
 		UUID: uuid,
 	}
@@ -73,7 +75,7 @@ func (r *repository) UpdatePassword(uuid string, password string) error {
 	return nil
 }
 
-func (r *repository) UpdateEmail(uuid string, email string) error {
+func (r *repository) UpdateEmail(_ *context.Context, uuid, email string) error {
 	user := models.User{
 		UUID: uuid,
 	}
@@ -85,7 +87,7 @@ func (r *repository) UpdateEmail(uuid string, email string) error {
 	return nil
 }
 
-func (r *repository) DeleteUser(uuid string) error {
+func (r *repository) DeleteUser(_ *context.Context, uuid string) error {
 	res := r.db.Delete(&models.User{}, uuid)
 	if res.Error != nil {
 		r.logger.Zap.Sugar().Errorf("error deleting user: %v", res.Error)
@@ -95,7 +97,7 @@ func (r *repository) DeleteUser(uuid string) error {
 	return nil
 }
 
-func (r *repository) GetUserByEmail(email string) (*models.User, error) {
+func (r *repository) GetUserByEmail(ctx *context.Context, email string) (*models.User, error) {
 	user := models.User{
 		Email: email,
 	}
@@ -103,7 +105,8 @@ func (r *repository) GetUserByEmail(email string) (*models.User, error) {
 	res := r.db.Where("email = ?", email).First(&user)
 	if res.Error != nil {
 		if res.Error == gorm.ErrRecordNotFound {
-			return nil, apiError.ErrNotFound
+			*ctx = context.WithValue(*ctx, errors.CtxErrorCodeKey, errors.CODE_ENTITY_NOT_FOUND)
+			return nil, errors.ErrNotFound
 		}
 		r.logger.Zap.Sugar().Errorf("error getting user by email: %v", res.Error)
 		return nil, res.Error
@@ -112,16 +115,16 @@ func (r *repository) GetUserByEmail(email string) (*models.User, error) {
 	return &user, nil
 }
 
-func (r *repository) GetUserByUsername(username string) (*models.User, error) {
+func (r *repository) GetUserByUsername(ctx *context.Context, username string) (*models.User, error) {
 	user := models.User{
 		Username: username,
 	}
 
 	res := r.db.Where("username = ?", username).First(&user)
-
 	if res.Error != nil {
 		if res.Error == gorm.ErrRecordNotFound {
-			return nil, apiError.ErrNotFound
+			*ctx = context.WithValue(*ctx, errors.CtxErrorCodeKey, errors.CODE_ENTITY_NOT_FOUND)
+			return nil, errors.ErrNotFound
 		}
 		r.logger.Zap.Sugar().Errorf("error getting user by username: %v", res.Error)
 		return nil, res.Error

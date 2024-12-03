@@ -6,7 +6,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func CreateToken(expirationTime time.Time, secretKey string, userID string) (string, error) {
+func CreateToken(expirationTime time.Time, secretKey, userID string) (string, error) {
 	expT := jwt.NewNumericDate(expirationTime)
 
 	claims := jwt.RegisteredClaims{
@@ -21,15 +21,15 @@ func CreateToken(expirationTime time.Time, secretKey string, userID string) (str
 	return ss, nil
 }
 
-func VerifyToken(tokenString string) error {
-	token, err := jwt.Parse("token", func(token *jwt.Token) (interface{}, error) {
-		return []byte("secret"), nil
-	})
-	if err != nil {
-		return err
-	}
-	if !token.Valid {
-		return jwt.ErrSignatureInvalid
-	}
-	return nil
-}
+// func VerifyToken(tokenString string) error {
+// 	token, err := jwt.Parse("token", func(token *jwt.Token) (interface{}, error) {
+// 		return []byte("secret"), nil
+// 	})
+// 	if err != nil {
+// 		return err
+// 	}
+// 	if !token.Valid {
+// 		return jwt.ErrSignatureInvalid
+// 	}
+// 	return nil
+// }

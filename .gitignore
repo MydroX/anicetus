@@ -1,2 +1,4 @@
 bin
 tmp
+cmd/**/config.yml
+cmd/**/config.yaml

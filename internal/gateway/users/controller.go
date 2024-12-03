@@ -1,20 +1,22 @@
-// Package users is the outside layer of the service, make the link between the API and the internal logic
 package users
 
 import (
+	"MydroX/project-v/internal/common/errors"
+	"MydroX/project-v/internal/common/response"
 	"MydroX/project-v/internal/gateway/users/config"
 	"MydroX/project-v/internal/gateway/users/dto"
 	"MydroX/project-v/internal/gateway/users/models"
 	"MydroX/project-v/internal/gateway/users/usecases"
-	apiError "MydroX/project-v/pkg/errors"
 	"MydroX/project-v/pkg/logger"
-	"MydroX/project-v/pkg/response"
 	"MydroX/project-v/pkg/uuid"
+	"net/http"
 	"regexp"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 )
+
+const UUID = "uuid"
 
 type Controller struct {
 	logger   *logger.Logger
@@ -35,18 +37,19 @@ func NewController(l *logger.Logger, u usecases.UsersUsecases, c *config.Config)
 	}
 }
 
-func (c *Controller) CreateUser(ctx *gin.Context) {
+func (c *Controller) CreateUser(ginCtx *gin.Context) {
 	var request dto.CreateUserRequest
+	ctx := ginCtx.Request.Context()
 
-	err := ctx.BindJSON(&request)
+	err := ginCtx.BindJSON(&request)
 	if err != nil {
-		response.InvalidRequest(c.logger, ctx)
+		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
 		return
 	}
 
 	err = c.validate.Struct(request)
 	if err != nil {
-		response.InvalidRequest(c.logger, ctx)
+		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
 		return
 	}
 
@@ -54,7 +57,7 @@ func (c *Controller) CreateUser(ctx *gin.Context) {
 	usernameRegex, _ := regexp.Compile("[A-Za-z0-9._-]{4,18}$")
 	match := usernameRegex.MatchString(request.Username)
 	if !match {
-		response.InvalidRequest(c.logger, ctx)
+		response.BadRequestWithMessage(c.logger, ginCtx, errors.CODE_INVALID_USERNAME, "invalid username")
 		return
 	}
 
@@ -65,53 +68,56 @@ func (c *Controller) CreateUser(ctx *gin.Context) {
 		Password: request.Password,
 	}
 
-	err = c.usecases.Create(&user)
+	err = c.usecases.Create(&ctx, &user)
 	if err != nil {
-		response.InternalError(c.logger, ctx, err)
+		response.InternalError(c.logger, ginCtx, err, ginCtx.GetString(string(errors.CtxErrorCodeKey)))
 		return
 	}
 
-	ctx.JSON(201, gin.H{"message": "user created"})
+	ginCtx.JSON(http.StatusCreated, gin.H{"message": "user created"})
 }
 
-func (c *Controller) GetUser(ctx *gin.Context) {
-	userUUID := ctx.Param("uuid")
+func (c *Controller) GetUser(ginCtx *gin.Context) {
+	ctx := ginCtx.Request.Context()
+
+	userUUID := ginCtx.Param(UUID)
 	if userUUID == "" {
-		response.InvalidRequest(c.logger, ctx)
+		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
 		return
 	}
 
 	err := uuid.ValidateWithPrefix(userUUID)
 	if err != nil {
-		response.InvalidRequest(c.logger, ctx)
+		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_UUID)
 		return
 	}
 
-	resp, err := c.usecases.Get(userUUID)
+	resp, err := c.usecases.Get(&ctx, userUUID)
 	if err != nil {
-		if err == apiError.ErrNotFound {
-			response.NotFound(c.logger, ctx)
+		if err == errors.ErrNotFound {
+			response.NotFound(c.logger, ginCtx, errors.CODE_ENTITY_NOT_FOUND)
 			return
 		}
-		response.InternalError(c.logger, ctx, err)
+		response.InternalError(c.logger, ginCtx, err, ginCtx.GetString(string(errors.CtxErrorCodeKey)))
 		return
 	}
 
-	ctx.JSON(200, resp)
+	ginCtx.JSON(http.StatusOK, resp)
 }
 
-func (c *Controller) UpdateUser(ctx *gin.Context) {
+func (c *Controller) UpdateUser(ginCtx *gin.Context) {
 	var request dto.UpdateUserRequest
+	ctx := ginCtx.Request.Context()
 
-	err := ctx.BindJSON(&request)
+	err := ginCtx.BindJSON(&request)
 	if err != nil {
-		response.InvalidRequest(c.logger, ctx)
+		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
 		return
 	}
 
 	err = c.validate.Struct(request)
 	if err != nil {
-		response.InvalidRequest(c.logger, ctx)
+		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
 		return
 	}
 
@@ -123,129 +129,135 @@ func (c *Controller) UpdateUser(ctx *gin.Context) {
 		Role:     request.Role,
 	}
 
-	err = c.usecases.Update(&user)
+	err = c.usecases.Update(&ctx, &user)
 	if err != nil {
-		response.InternalError(c.logger, ctx, err)
+		response.InternalError(c.logger, ginCtx, err, ginCtx.GetString(string(errors.CtxErrorCodeKey)))
 		return
 	}
 
-	ctx.JSON(200, gin.H{"message": "user updated"})
+	ginCtx.JSON(http.StatusOK, gin.H{"message": "user updated"})
 }
 
-func (c *Controller) UpdateEmail(ctx *gin.Context) {
+func (c *Controller) UpdateEmail(ginCtx *gin.Context) {
 	var request dto.UpdateEmailRequest
+	ctx := ginCtx.Request.Context()
 
-	userUUID := ctx.Param("uuid")
+	userUUID := ginCtx.Param(UUID)
 	if userUUID == "" {
-		response.InvalidRequest(c.logger, ctx)
+		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
 		return
 	}
 	err := uuid.ValidateWithPrefix(userUUID)
 	if err != nil {
-		response.InvalidRequest(c.logger, ctx)
+		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_UUID)
 		return
 	}
 
-	err = ctx.BindJSON(&request)
+	err = ginCtx.BindJSON(&request)
 	if err != nil {
-		response.InvalidRequest(c.logger, ctx)
+		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
 		return
 	}
 
 	err = c.validate.Struct(request)
 	if err != nil {
-		response.InvalidRequest(c.logger, ctx)
+		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
 		return
 	}
 
-	err = c.usecases.UpdateEmail(userUUID, request.Email)
+	err = c.usecases.UpdateEmail(&ctx, userUUID, request.Email)
 	if err != nil {
-		response.InternalError(c.logger, ctx, err)
+		response.InternalError(c.logger, ginCtx, err, ginCtx.GetString(string(errors.CtxErrorCodeKey)))
 		return
 	}
 
-	ctx.JSON(200, gin.H{"message": "email updated"})
+	ginCtx.JSON(http.StatusOK, gin.H{"message": "email updated"})
 }
 
-func (c *Controller) UpdatePassword(ctx *gin.Context) {
+func (c *Controller) UpdatePassword(ginCtx *gin.Context) {
 	var request dto.UpdatePasswordRequest
+	ctx := ginCtx.Request.Context()
 
-	userUUID := ctx.Param("uuid")
+	userUUID := ginCtx.Param(UUID)
 	if userUUID == "" {
-		response.InvalidRequest(c.logger, ctx)
+		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
 		return
 	}
 	err := uuid.ValidateWithPrefix(userUUID)
 	if err != nil {
-		response.InvalidRequest(c.logger, ctx)
+		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_UUID)
 		return
 	}
 
-	err = ctx.BindJSON(&request)
+	err = ginCtx.BindJSON(&request)
 	if err != nil {
-		response.InvalidRequest(c.logger, ctx)
+		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
 		return
 	}
 
 	err = c.validate.Struct(request)
 	if err != nil {
-		response.InvalidRequest(c.logger, ctx)
+		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
 		return
 	}
 
-	err = c.usecases.UpdatePassword(userUUID, request.Password)
+	err = c.usecases.UpdatePassword(&ctx, userUUID, request.Password)
 
 	if err != nil {
-		response.InternalError(c.logger, ctx, err)
+		response.InternalError(c.logger, ginCtx, err, ginCtx.GetString(string(errors.CtxErrorCodeKey)))
 		return
 	}
 
-	ctx.JSON(200, gin.H{"message": "password updated"})
+	ginCtx.JSON(http.StatusOK, gin.H{"message": "password updated"})
 }
 
-func (c *Controller) DeleteUser(ctx *gin.Context) {
-	userUUID := ctx.Param("uuid")
+func (c *Controller) DeleteUser(ginCtx *gin.Context) {
+	ctx := ginCtx.Request.Context()
+
+	userUUID := ginCtx.Param(UUID)
 	if userUUID == "" {
-		response.InvalidRequest(c.logger, ctx)
+		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
 		return
 	}
 	err := uuid.ValidateWithPrefix(userUUID)
 	if err != nil {
-		response.InvalidRequest(c.logger, ctx)
+		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_UUID)
 		return
 	}
 
-	err = c.usecases.Delete(userUUID)
+	err = c.usecases.Delete(&ctx, userUUID)
 	if err != nil {
-		response.InternalError(c.logger, ctx, err)
+		response.InternalError(c.logger, ginCtx, err, ginCtx.GetString(string(errors.CtxErrorCodeKey)))
 		return
 	}
 
-	ctx.JSON(200, gin.H{"message": "user deleted"})
+	ginCtx.JSON(http.StatusOK, gin.H{"message": "user deleted"})
 }
 
-func (c *Controller) Login(ctx *gin.Context) {
+func (c *Controller) Login(ginCtx *gin.Context) {
 	var request dto.LoginRequest
-	if err := ctx.BindJSON(&request); err != nil {
-		response.InvalidRequest(c.logger, ctx)
+	ctx := ginCtx.Request.Context()
+
+	if err := ginCtx.BindJSON(&request); err != nil {
+		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
 		return
 	}
 
 	if request.Username == "" && request.Email == "" {
-		response.InvalidRequest(c.logger, ctx)
+		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
 		return
 	}
 
-	token, err := c.usecases.Login(request.Username, request.Email, request.Password)
+	token, err := c.usecases.Login(&ctx, request.Username, request.Email, request.Password)
 	if err != nil {
-		response.InternalError(c.logger, ctx, err)
+		response.InternalError(c.logger, ginCtx, err, ginCtx.GetString(string(errors.CtxErrorCodeKey)))
 		return
 	}
 
-	ctx.SetCookie("auth_token", token, 3600, "/", c.config.App.Domain, true, true)
+	ginCtx.SetCookie("auth_token", token, c.config.JWT.ExpirationTime, "/", c.config.App.Domain, true, true)
 
 	resp := dto.LoginResponse{
 		Token: token,
 	}
-	ctx.JSON(200, resp)
+	ginCtx.JSON(http.StatusOK, resp)
 }

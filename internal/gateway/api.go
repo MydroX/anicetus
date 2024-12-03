@@ -1,12 +1,11 @@
-// Package gateway is the entry point for the gateway service. It starts the server and defines the routes for the service.
 package gateway
 
 import (
-	"MydroX/project-v/internal/gateway/users"
+	usersservice "MydroX/project-v/internal/gateway/users"
 	"MydroX/project-v/internal/gateway/users/config"
 	"MydroX/project-v/internal/gateway/users/repository"
 	"MydroX/project-v/internal/gateway/users/usecases"
-	"MydroX/project-v/pkg/logger"
+	loggerpkg "MydroX/project-v/pkg/logger"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
@@ -15,11 +14,11 @@ import (
 )
 
 type service struct {
-	usersController *users.Controller
+	usersController *usersservice.Controller
 }
 
 // Router is a function to define the routes for the gateway service.
-func Router(logger *logger.Logger, service service) *gin.Engine {
+func Router(logger *loggerpkg.Logger, service service) *gin.Engine {
 	router := gin.Default()
 
 	err := router.SetTrustedProxies(nil)
@@ -57,12 +56,12 @@ func Router(logger *logger.Logger, service service) *gin.Engine {
 }
 
 // NewServer is a function to start the server for the gateway service.
-func NewServer(config *config.Config, logger *logger.Logger, db *gorm.DB) {
+func NewServer(c *config.Config, logger *loggerpkg.Logger, db *gorm.DB) {
 	usersRepository := repository.NewRepository(logger, db)
 
-	usersUsecase := usecases.NewUsecases(logger, usersRepository, &config.JWT)
+	usersUsecase := usecases.NewUsecases(logger, usersRepository, &c.JWT)
 
-	usersController := users.NewController(logger, usersUsecase, config)
+	usersController := usersservice.NewController(logger, usersUsecase, c)
 
 	service := service{
 		usersController: usersController,
@@ -70,7 +69,7 @@ func NewServer(config *config.Config, logger *logger.Logger, db *gorm.DB) {
 
 	router := Router(logger, service)
 
-	err := router.Run(fmt.Sprintf(":%s", config.Port))
+	err := router.Run(fmt.Sprintf(":%s", c.Port))
 	if err != nil {
 		logger.Zap.Fatal("error starting server", zap.Error(err))
 	}

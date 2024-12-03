@@ -1,4 +1,3 @@
-// Package db contains the database connection
 package db
 
 import (
@@ -13,7 +12,7 @@ import (
 )
 
 // Connect is a function to connect to the postgresql database
-func Connect(host, user, password, dbName, port string) *gorm.DB {
+func Connect(host, user, password, dbName, port string) (*gorm.DB, error) {
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s",
 		host,
 		user,
@@ -39,8 +38,8 @@ func Connect(host, user, password, dbName, port string) *gorm.DB {
 	})
 
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	return db
+	return db, nil
 }

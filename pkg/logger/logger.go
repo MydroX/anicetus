@@ -26,7 +26,7 @@ func New(env string) *Logger {
 		zapLogger, _ = zap.NewDevelopment()
 		return &Logger{
 			Zap:   zapLogger,
-			Debug: true,
+			Debug: false,
 		}
 	default:
 		zapLogger = zap.NewNop()

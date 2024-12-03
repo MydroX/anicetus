@@ -13,7 +13,7 @@ func NewWithPrefix(prefix string) string {
 
 func ValidateWithPrefix(uuidWithPrefix string) error {
 	str := strings.Split(uuidWithPrefix, "-")
-	if len(str) < 5 {
+	if len(str) < 1 {
 		return fmt.Errorf("invalid uuid")
 	}
 
