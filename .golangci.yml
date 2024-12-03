@@ -202,13 +202,6 @@ linters-settings:
           - "disableStutteringCheck"
           - "checkPublicInterface"
           - "disableChecksOnFunctions"
-      # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#filename-format
-      - name: filename-format
-        severity: warning
-        disabled: false
-        exclude: [""]
-        arguments:
-          - "^[_a-z][_a-z0-9]*.go$"
       # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#flag-parameter
       - name: flag-parameter
         severity: warning

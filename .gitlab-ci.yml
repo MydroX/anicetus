@@ -6,7 +6,7 @@ stages:
   # - deploy
 
 variables:
-  GOLANGCI_LINT_VERSION: 'v1.59.1'
+  GOLANGCI_LINT_VERSION: 'v1.62.2-alpine'
 lint:
   image: golangci/golangci-lint:$GOLANGCI_LINT_VERSION
   stage: test
