@@ -2,6 +2,7 @@ package users
 
 import (
 	"MydroX/project-v/internal/common/errors"
+	"MydroX/project-v/internal/common/response"
 	"MydroX/project-v/internal/gateway/users/config"
 	"MydroX/project-v/internal/gateway/users/dto"
 	"MydroX/project-v/internal/gateway/users/mocks"
@@ -49,7 +50,7 @@ func testRouter(logger *loggerpkg.Logger, _ *gorm.DB, controller Controller) *gi
 
 	users := v1.Group("/users")
 	users.POST("/register", controller.CreateUser)
-	users.POST("/auth", controller.Login)
+	users.POST("/login", controller.Login)
 	users.GET("/:uuid", controller.GetUser)
 
 	// TODO: Middleware authentification
@@ -131,6 +132,28 @@ func Test_Create(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 	})
 
+	t.Run("[V1] Create - Invalid username", func(t *testing.T) {
+		input := dto.CreateUserRequest{
+			Username: "test@@@",
+			Email:    "test@test.com",
+			Password: "thisisatestpassword1234!@#$",
+			Role:     "USER",
+		}
+
+		userJSON, _ := json.Marshal(input)
+
+		req, _ := http.NewRequest("POST", v1+create, strings.NewReader(string(userJSON)))
+
+		w := httptest.NewRecorder()
+		s.router.ServeHTTP(w, req)
+
+		var resp response.ErrorResponse
+		_ = json.Unmarshal(w.Body.Bytes(), &resp)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Equal(t, errors.CODE_INVALID_USERNAME, resp.Code)
+	})
+
 	t.Run("[V1] Create - Usecase error", func(t *testing.T) {
 		ctx := context.Background()
 
@@ -195,11 +218,20 @@ func Test_Get(t *testing.T) {
 
 		req, _ := http.NewRequest("GET", v1+"/"+uuid, nil)
 
-		s.mockUsecase.EXPECT().Get(&ctx, uuid).Return(nil, errors.ErrNotFound)
+		s.mockUsecase.EXPECT().Get(&ctx, uuid).DoAndReturn(
+			func(ctx *context.Context, _ string) (*models.User, error) {
+				*ctx = context.WithValue(*ctx, errors.CtxErrorCodeKey, errors.CODE_ENTITY_NOT_FOUND)
+				return nil, fmt.Errorf("user not found")
+			})
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
+
+		resp := response.ErrorResponse{}
+		_ = json.Unmarshal(w.Body.Bytes(), &resp)
+
 		assert.Equal(t, http.StatusNotFound, w.Code)
+		assert.Equal(t, errors.CODE_ENTITY_NOT_FOUND, resp.Code)
 	})
 
 	t.Run("[V1] Get -  Usecase error", func(t *testing.T) {
@@ -460,6 +492,139 @@ func Test_Delete(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+}
+
+func Test_Login(t *testing.T) {
+	s := newServerTest(t)
+
+	t.Run("[V1] Login with success", func(t *testing.T) {
+		ctx := context.Background()
+
+		input := dto.LoginRequest{
+			Username: "test",
+			Password: "thisisatest123",
+		}
+
+		user := models.User{
+			Username: input.Username,
+			Email:    input.Email,
+			Password: input.Password,
+		}
+
+		userJSON, _ := json.Marshal(input)
+
+		fmt.Println(v1 + "/login")
+		req, _ := http.NewRequest("POST", v1+"/login", strings.NewReader(string(userJSON)))
+
+		s.mockUsecase.EXPECT().Login(&ctx, user.Username, user.Email, user.Password).Return("token", nil)
+
+		w := httptest.NewRecorder()
+		s.router.ServeHTTP(w, req)
+
+		var resp dto.LoginResponse
+		_ = json.Unmarshal(w.Body.Bytes(), &resp)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.NotEmpty(t, resp.Token)
+	})
+
+	t.Run("[V1] Login - Failed to bind JSON", func(t *testing.T) {
+		req, _ := http.NewRequest("POST", v1+"/login", strings.NewReader(""))
+
+		w := httptest.NewRecorder()
+		s.router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("[V1] Login - Failed to validate JSON", func(t *testing.T) {
+		input := dto.LoginRequest{
+			Username: "tes",
+			Password: "thisisatest123",
+		}
+
+		userJSON, _ := json.Marshal(input)
+
+		req, _ := http.NewRequest("POST", v1+"/login", strings.NewReader(string(userJSON)))
+
+		w := httptest.NewRecorder()
+		s.router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("[V1] Login - No username and email in body", func(t *testing.T) {
+		input := dto.LoginRequest{
+			Password: "thisisatest123",
+		}
+
+		userJSON, _ := json.Marshal(input)
+
+		req, _ := http.NewRequest("POST", v1+"/login", strings.NewReader(string(userJSON)))
+
+		w := httptest.NewRecorder()
+		s.router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("[V1] Login - Failed to find user", func(t *testing.T) {
+		ctx := context.Background()
+
+		input := dto.LoginRequest{
+			Username: "test",
+			Password: "thisisatest123",
+		}
+
+		user := models.User{
+			Username: input.Username,
+			Email:    input.Email,
+			Password: input.Password,
+		}
+
+		userJSON, _ := json.Marshal(input)
+
+		req, _ := http.NewRequest("POST", v1+"/login", strings.NewReader(string(userJSON)))
+
+		s.mockUsecase.EXPECT().Login(&ctx, user.Username, user.Email, user.Password).DoAndReturn(
+			func(ctx *context.Context, _ string, _ string, _ string) (string, error) {
+				*ctx = context.WithValue(*ctx, errors.CtxErrorCodeKey, errors.CODE_ENTITY_NOT_FOUND)
+				return "", fmt.Errorf("user not found")
+			})
+
+		w := httptest.NewRecorder()
+		s.router.ServeHTTP(w, req)
+
+		resp := response.ErrorResponse{}
+		_ = json.Unmarshal(w.Body.Bytes(), &resp)
+
+		assert.Equal(t, http.StatusNotFound, w.Code)
+		assert.Equal(t, errors.CODE_ENTITY_NOT_FOUND, resp.Code)
+	})
+
+	t.Run("[V1] Login - Usecase error", func(t *testing.T) {
+		ctx := context.Background()
+
+		input := dto.LoginRequest{
+			Username: "test",
+			Password: "thisisatest123",
+		}
+
+		user := models.User{
+			Username: input.Username,
+			Email:    input.Email,
+			Password: input.Password,
+		}
+
+		userJSON, _ := json.Marshal(input)
+
+		req, _ := http.NewRequest("POST", v1+"/login", strings.NewReader(string(userJSON)))
+
+		s.mockUsecase.EXPECT().Login(&ctx, user.Username, user.Email, user.Password).Return("", fmt.Errorf("test error"))
+
+		w := httptest.NewRecorder()
+		s.router.ServeHTTP(w, req)
+
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 	})
 }

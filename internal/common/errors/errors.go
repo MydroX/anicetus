@@ -1,7 +1,5 @@
 package errors
 
-import "errors"
-
 type errorCodesKey string
 
 const (
@@ -19,6 +17,4 @@ const (
 
 var (
 	CtxErrorCodeKey = errorCodesKey("error_code")
-
-	ErrNotFound = errors.New("entity not found")
 )

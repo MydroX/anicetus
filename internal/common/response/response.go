@@ -9,6 +9,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type ErrorResponse struct {
+	Message string `json:"message"`
+	Code    string `json:"code"`
+}
+
 // logAndError is a function to handle logAndError response
 // The function will log the logAndError message and return the logAndError message to the client.
 // In the case of debug mode, the logAndError message will be shown, otherwise, a generic logAndError message will be shown.
@@ -26,7 +31,11 @@ func logAndError(logger *loggerpkg.Logger, ctx *gin.Context, httpCode int, error
 		ctx.JSON(httpCode, gin.H{"error": errorMessage})
 		return
 	}
-	ctx.JSON(httpCode, gin.H{"error": messageAPI})
+
+	ctx.JSON(httpCode, ErrorResponse{
+		Message: messageAPI,
+		Code:    errorCode,
+	})
 }
 
 // InternalError is a function to handle error response for internal server error

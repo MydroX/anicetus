@@ -44,7 +44,7 @@ func (r *repository) GetUserByUUID(ctx *context.Context, uuid string) (*models.U
 	if res.Error != nil {
 		if res.Error == gorm.ErrRecordNotFound {
 			*ctx = context.WithValue(*ctx, errors.CtxErrorCodeKey, errors.CODE_ENTITY_NOT_FOUND)
-			return nil, errors.ErrNotFound
+			return nil, fmt.Errorf("user not found")
 		}
 		r.logger.Zap.Sugar().Errorf("error getting user: %v", res.Error)
 		return nil, res.Error
@@ -106,7 +106,7 @@ func (r *repository) GetUserByEmail(ctx *context.Context, email string) (*models
 	if res.Error != nil {
 		if res.Error == gorm.ErrRecordNotFound {
 			*ctx = context.WithValue(*ctx, errors.CtxErrorCodeKey, errors.CODE_ENTITY_NOT_FOUND)
-			return nil, errors.ErrNotFound
+			return nil, fmt.Errorf("user not found")
 		}
 		r.logger.Zap.Sugar().Errorf("error getting user by email: %v", res.Error)
 		return nil, res.Error
@@ -124,7 +124,7 @@ func (r *repository) GetUserByUsername(ctx *context.Context, username string) (*
 	if res.Error != nil {
 		if res.Error == gorm.ErrRecordNotFound {
 			*ctx = context.WithValue(*ctx, errors.CtxErrorCodeKey, errors.CODE_ENTITY_NOT_FOUND)
-			return nil, errors.ErrNotFound
+			return nil, fmt.Errorf("user not found")
 		}
 		r.logger.Zap.Sugar().Errorf("error getting user by username: %v", res.Error)
 		return nil, res.Error

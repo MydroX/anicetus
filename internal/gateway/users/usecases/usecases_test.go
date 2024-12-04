@@ -56,6 +56,22 @@ func Test_Create(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
+	t.Run("[V1] Create user, failed to hash password", func(t *testing.T) {
+		ctx := context.Background()
+
+		request := models.User{
+			Username: "test",
+			Email:    "test@test.com",
+			Password: "WcYVkLZaCHH5AjzVyyhPaZ0Ny1j8Yqxqu0zYHz8YtvKDzQ7cEx8cXG7VTBq55RmLUFubXPhHgaqwGyQn",
+			Role:     "USER",
+		}
+
+		err := u.Create(&ctx, &request)
+
+		assert.Error(t, err)
+		assert.Equal(t, errors.CODE_FAILED_TO_HASH_PASSWORD, ctx.Value(errors.CtxErrorCodeKey))
+	})
+
 	t.Run("[V1] Create user repository error", func(t *testing.T) {
 		ctx := context.Background()
 
@@ -150,10 +166,10 @@ func Test_UpdatePassword(t *testing.T) {
 	r, u := createTestUsecase(t)
 
 	userUUID := uuid.NewWithPrefix(userPrefix)
-	password := "passwordtest123!?"
 
 	t.Run("[V1] Update password", func(t *testing.T) {
 		ctx := context.Background()
+		password := "passwordtest123!?"
 
 		r.EXPECT().UpdatePassword(&ctx, userUUID, gomock.Any()).DoAndReturn(func(_ *context.Context, _ string, p string) error {
 			assert.NotEmpty(t, p)
@@ -166,8 +182,20 @@ func Test_UpdatePassword(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
+	t.Run("[V1] Update password, failed to hash password", func(t *testing.T) {
+		ctx := context.Background()
+
+		password := "WcYVkLZaCHH5AjzVyyhPaZ0Ny1j8Yqxqu0zYHz8YtvKDzQ7cEx8cXG7VTBq55RmLUFubXPhHgaqwGyQn"
+
+		err := u.UpdatePassword(&ctx, userUUID, password)
+
+		assert.Error(t, err)
+		assert.Equal(t, errors.CODE_FAILED_TO_HASH_PASSWORD, ctx.Value(errors.CtxErrorCodeKey))
+	})
+
 	t.Run("[V1] Update Repository error", func(t *testing.T) {
 		ctx := context.Background()
+		password := "passwordtest123!?"
 
 		r.EXPECT().UpdatePassword(&ctx, userUUID, gomock.Any()).Return(fmt.Errorf("error"))
 
@@ -314,7 +342,7 @@ func Test_Login(t *testing.T) {
 		r.EXPECT().GetUserByEmail(&ctx, req.Email).DoAndReturn(
 			func(ctx *context.Context, _ string) (*models.User, error) {
 				*ctx = context.WithValue(*ctx, errors.CtxErrorCodeKey, errors.CODE_ENTITY_NOT_FOUND)
-				return nil, errors.ErrNotFound
+				return nil, fmt.Errorf("user not found")
 			})
 
 		_, err := u.Login(&ctx, "", req.Email, req.Password)
@@ -322,7 +350,29 @@ func Test_Login(t *testing.T) {
 		errorCode := ctx.Value(errors.CtxErrorCodeKey)
 
 		assert.Equal(t, errors.CODE_ENTITY_NOT_FOUND, errorCode)
-		assert.Equal(t, errors.ErrNotFound, err)
+		assert.Error(t, err)
+	})
+
+	t.Run("[V1] Login user, username not found", func(t *testing.T) {
+		ctx := context.Background()
+
+		req := dto.LoginRequest{
+			Username: "test",
+			Password: "thisisapassword123",
+		}
+
+		r.EXPECT().GetUserByUsername(&ctx, req.Username).DoAndReturn(
+			func(ctx *context.Context, _ string) (*models.User, error) {
+				*ctx = context.WithValue(*ctx, errors.CtxErrorCodeKey, errors.CODE_ENTITY_NOT_FOUND)
+				return nil, fmt.Errorf("user not found")
+			})
+
+		_, err := u.Login(&ctx, req.Username, "", req.Password)
+
+		errorCode := ctx.Value(errors.CtxErrorCodeKey)
+
+		assert.Equal(t, errors.CODE_ENTITY_NOT_FOUND, errorCode)
+		assert.Error(t, err)
 	})
 
 	t.Run("[V1] Login user, wrong password", func(t *testing.T) {

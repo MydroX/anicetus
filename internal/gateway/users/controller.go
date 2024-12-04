@@ -81,10 +81,6 @@ func (c *Controller) GetUser(ginCtx *gin.Context) {
 	ctx := ginCtx.Request.Context()
 
 	userUUID := ginCtx.Param(UUID)
-	if userUUID == "" {
-		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
-		return
-	}
 
 	err := uuid.ValidateWithPrefix(userUUID)
 	if err != nil {
@@ -94,7 +90,7 @@ func (c *Controller) GetUser(ginCtx *gin.Context) {
 
 	resp, err := c.usecases.Get(&ctx, userUUID)
 	if err != nil {
-		if err == errors.ErrNotFound {
+		if ctx.Value(errors.CtxErrorCodeKey) == errors.CODE_ENTITY_NOT_FOUND {
 			response.NotFound(c.logger, ginCtx, errors.CODE_ENTITY_NOT_FOUND)
 			return
 		}
@@ -143,10 +139,7 @@ func (c *Controller) UpdateEmail(ginCtx *gin.Context) {
 	ctx := ginCtx.Request.Context()
 
 	userUUID := ginCtx.Param(UUID)
-	if userUUID == "" {
-		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
-		return
-	}
+
 	err := uuid.ValidateWithPrefix(userUUID)
 	if err != nil {
 		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_UUID)
@@ -179,10 +172,7 @@ func (c *Controller) UpdatePassword(ginCtx *gin.Context) {
 	ctx := ginCtx.Request.Context()
 
 	userUUID := ginCtx.Param(UUID)
-	if userUUID == "" {
-		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
-		return
-	}
+
 	err := uuid.ValidateWithPrefix(userUUID)
 	if err != nil {
 		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_UUID)
@@ -215,10 +205,7 @@ func (c *Controller) DeleteUser(ginCtx *gin.Context) {
 	ctx := ginCtx.Request.Context()
 
 	userUUID := ginCtx.Param(UUID)
-	if userUUID == "" {
-		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
-		return
-	}
+
 	err := uuid.ValidateWithPrefix(userUUID)
 	if err != nil {
 		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_UUID)
@@ -243,6 +230,12 @@ func (c *Controller) Login(ginCtx *gin.Context) {
 		return
 	}
 
+	err := c.validate.Struct(request)
+	if err != nil {
+		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
+		return
+	}
+
 	if request.Username == "" && request.Email == "" {
 		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
 		return
@@ -250,6 +243,10 @@ func (c *Controller) Login(ginCtx *gin.Context) {
 
 	token, err := c.usecases.Login(&ctx, request.Username, request.Email, request.Password)
 	if err != nil {
+		if ctx.Value(errors.CtxErrorCodeKey) == errors.CODE_ENTITY_NOT_FOUND {
+			response.NotFound(c.logger, ginCtx, errors.CODE_ENTITY_NOT_FOUND)
+			return
+		}
 		response.InternalError(c.logger, ginCtx, err, ginCtx.GetString(string(errors.CtxErrorCodeKey)))
 		return
 	}

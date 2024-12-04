@@ -31,8 +31,8 @@ type UpdateEmailRequest struct {
 }
 
 type LoginRequest struct {
-	Username string `json:"username" validate:"min=4,max=18"`
-	Email    string `json:"email" validate:"email"`
+	Username string `json:"username,omitempty" validate:"omitempty,min=4,max=18"`
+	Email    string `json:"email,omitempty" validate:"omitempty,email"`
 	Password string `json:"password" validate:"required,min=14,max=72"`
 }
 

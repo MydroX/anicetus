@@ -41,6 +41,7 @@ func (u *usecases) Create(ctx *context.Context, req *models.User) error {
 	passwordHashed, err := passwordpkg.Hash(req.Password)
 	if err != nil {
 		*ctx = context.WithValue(*ctx, errors.CtxErrorCodeKey, errors.CODE_FAILED_TO_HASH_PASSWORD)
+		return err
 	}
 	user.Password = passwordHashed
 
@@ -124,14 +125,11 @@ func login(jwtConfig *config.JWT, userUUID, password, passwordCrypted string) (s
 	}
 	expirationTime := time.Now().Add(time.Second * time.Duration(jwtConfig.ExpirationTime))
 
-	token, err := jwt.CreateToken(
+	token, _ := jwt.CreateToken(
 		expirationTime,
 		jwtConfig.Secret,
 		userUUID,
 	)
-	if err != nil {
-		return "", fmt.Errorf("error creating token: %v", err)
-	}
 
 	return token, nil
 }
