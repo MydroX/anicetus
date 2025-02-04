@@ -3,3 +3,6 @@ tmp
 cmd/**/config.yml
 cmd/**/config.yaml
 vendor
+
+#temporary
+internal/gateway/users/repository/repository_test.go

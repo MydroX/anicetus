@@ -1,8 +1,9 @@
 package usecases
 
 import (
-	"MydroX/project-v/internal/common/errors"
-	"MydroX/project-v/internal/gateway/users/config"
+	"MydroX/project-v/internal/common/errorscode"
+	"MydroX/project-v/internal/gateway/config"
+	"MydroX/project-v/internal/gateway/users/dto"
 	"MydroX/project-v/internal/gateway/users/models"
 	"MydroX/project-v/internal/gateway/users/repository"
 	"MydroX/project-v/pkg/jwt"
@@ -31,34 +32,33 @@ func NewUsecases(l *logger.Logger, r repository.UsersRepository, jwtConfig *conf
 	}
 }
 
-func (u *usecases) Create(ctx *context.Context, req *models.User) error {
-	user := models.User{
-		Username: req.Username,
-		Email:    req.Email,
-		Role:     req.Role,
-	}
-
+func (u *usecases) Create(ctx *context.Context, req *dto.CreateUserRequest) error {
 	passwordHashed, err := passwordpkg.Hash(req.Password)
 	if err != nil {
-		*ctx = context.WithValue(*ctx, errors.CtxErrorCodeKey, errors.CODE_FAILED_TO_HASH_PASSWORD)
+		*ctx = context.WithValue(*ctx, errorscode.CtxErrorCodeKey, errorscode.CODE_FAILED_TO_HASH_PASSWORD)
 		return err
 	}
-	user.Password = passwordHashed
 
-	user.UUID = uuidpkg.NewWithPrefix(prefix)
+	user := models.User{
+		UUID:     uuidpkg.NewWithPrefix(prefix),
+		Username: req.Username,
+		Email:    req.Email,
+		Password: passwordHashed,
+		Role:     req.Role,
+	}
 
 	err = u.repository.CreateUser(ctx, &user)
 
 	return err
 }
 
-func (u *usecases) Get(ctx *context.Context, uuid string) (*models.User, error) {
+func (u *usecases) Get(ctx *context.Context, uuid string) (*dto.GetUserResponse, error) {
 	user, err := u.repository.GetUserByUUID(ctx, uuid)
 	if err != nil {
 		return nil, err
 	}
 
-	res := models.User{
+	res := dto.GetUserResponse{
 		UUID:     user.UUID,
 		Username: user.Username,
 		Email:    user.Email,
@@ -68,15 +68,23 @@ func (u *usecases) Get(ctx *context.Context, uuid string) (*models.User, error) 
 	return &res, err
 }
 
-func (u *usecases) Update(ctx *context.Context, user *models.User) error {
-	err := u.repository.UpdateUser(ctx, user)
+func (u *usecases) Update(ctx *context.Context, userParams *dto.UpdateUserRequest) error {
+	user := models.User{
+		UUID:     userParams.UUID,
+		Username: userParams.Username,
+		Email:    userParams.Email,
+		Role:     userParams.Role,
+	}
+
+	_, err := u.repository.UpdateUser(ctx, &user)
+
 	return err
 }
 
 func (u *usecases) UpdatePassword(ctx *context.Context, uuid, newPassword string) error {
 	newPasswordCrypted, err := passwordpkg.Hash(newPassword)
 	if err != nil {
-		*ctx = context.WithValue(*ctx, errors.CtxErrorCodeKey, errors.CODE_FAILED_TO_HASH_PASSWORD)
+		*ctx = context.WithValue(*ctx, errorscode.CtxErrorCodeKey, errorscode.CODE_FAILED_TO_HASH_PASSWORD)
 		return err
 	}
 

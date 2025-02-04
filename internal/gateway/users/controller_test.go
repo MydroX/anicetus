@@ -1,12 +1,11 @@
 package users
 
 import (
-	"MydroX/project-v/internal/common/errors"
+	"MydroX/project-v/internal/common/errorscode"
 	"MydroX/project-v/internal/common/response"
-	"MydroX/project-v/internal/gateway/users/config"
+	"MydroX/project-v/internal/gateway/config"
 	"MydroX/project-v/internal/gateway/users/dto"
 	"MydroX/project-v/internal/gateway/users/mocks"
-	"MydroX/project-v/internal/gateway/users/models"
 	loggerpkg "MydroX/project-v/pkg/logger"
 	uuidpkg "MydroX/project-v/pkg/uuid"
 	"context"
@@ -21,7 +20,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
-	"gorm.io/gorm"
 )
 
 const (
@@ -37,7 +35,7 @@ type testServer struct {
 	mockUsecase *mocks.MockUsersUsecases
 }
 
-func testRouter(logger *loggerpkg.Logger, _ *gorm.DB, controller Controller) *gin.Engine {
+func testRouter(logger *loggerpkg.Logger, controller Controller) *gin.Engine {
 	router := gin.Default()
 
 	err := router.SetTrustedProxies(nil)
@@ -70,7 +68,7 @@ func newServerTest(t *testing.T) testServer {
 	usecasesMock := mocks.NewMockUsersUsecases(ctrl)
 
 	c := NewController(logger, usecasesMock, &config.Config{})
-	router := testRouter(logger, nil, *c)
+	router := testRouter(logger, *c)
 
 	return testServer{
 		router:      router,
@@ -94,7 +92,7 @@ func Test_Create(t *testing.T) {
 
 		req, _ := http.NewRequest("POST", v1+create, strings.NewReader(string(userJSON)))
 
-		user := &models.User{
+		user := &dto.CreateUserRequest{
 			Username: input.Username,
 			Email:    input.Email,
 			Password: input.Password,
@@ -151,7 +149,7 @@ func Test_Create(t *testing.T) {
 		_ = json.Unmarshal(w.Body.Bytes(), &resp)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
-		assert.Equal(t, errors.CODE_INVALID_USERNAME, resp.Code)
+		assert.Equal(t, errorscode.CODE_INVALID_USERNAME, resp.Code)
 	})
 
 	t.Run("[V1] Create - Usecase error", func(t *testing.T) {
@@ -167,7 +165,7 @@ func Test_Create(t *testing.T) {
 
 		req, _ := http.NewRequest("POST", v1+create, strings.NewReader(string(userJSON)))
 
-		user := &models.User{
+		user := &dto.CreateUserRequest{
 			Username: input.Username,
 			Email:    input.Email,
 			Password: input.Password,
@@ -186,7 +184,7 @@ func Test_Get(t *testing.T) {
 	s := newServerTest(t)
 
 	uuid := uuidpkg.NewWithPrefix(prefix)
-	user := models.User{
+	user := dto.GetUserResponse{
 		UUID:     uuid,
 		Username: "testusername",
 		Email:    "test@test.com",
@@ -219,8 +217,8 @@ func Test_Get(t *testing.T) {
 		req, _ := http.NewRequest("GET", v1+"/"+uuid, nil)
 
 		s.mockUsecase.EXPECT().Get(&ctx, uuid).DoAndReturn(
-			func(ctx *context.Context, _ string) (*models.User, error) {
-				*ctx = context.WithValue(*ctx, errors.CtxErrorCodeKey, errors.CODE_ENTITY_NOT_FOUND)
+			func(ctx *context.Context, _ string) (*dto.GetUserResponse, error) {
+				*ctx = context.WithValue(*ctx, errorscode.CtxErrorCodeKey, errorscode.CODE_ENTITY_NOT_FOUND)
 				return nil, fmt.Errorf("user not found")
 			})
 
@@ -231,7 +229,7 @@ func Test_Get(t *testing.T) {
 		_ = json.Unmarshal(w.Body.Bytes(), &resp)
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
-		assert.Equal(t, errors.CODE_ENTITY_NOT_FOUND, resp.Code)
+		assert.Equal(t, errorscode.CODE_ENTITY_NOT_FOUND, resp.Code)
 	})
 
 	t.Run("[V1] Get -  Usecase error", func(t *testing.T) {
@@ -255,7 +253,7 @@ func Test_Update(t *testing.T) {
 	t.Run("[V1] Update with success", func(t *testing.T) {
 		ctx := context.Background()
 
-		user := models.User{
+		user := dto.UpdateUserRequest{
 			UUID:     uuid,
 			Username: "testusername",
 			Email:    "test@test.com",
@@ -282,7 +280,7 @@ func Test_Update(t *testing.T) {
 	})
 
 	t.Run("[V1] Failed to validate JSON", func(t *testing.T) {
-		user := models.User{
+		user := dto.UpdateUserRequest{
 			UUID:     uuid,
 			Username: "testusername",
 			Email:    "",
@@ -301,7 +299,7 @@ func Test_Update(t *testing.T) {
 	t.Run("[V1] Usecase error", func(t *testing.T) {
 		ctx := context.Background()
 
-		user := models.User{
+		user := dto.UpdateUserRequest{
 			UUID:     uuid,
 			Username: "testusername",
 			Email:    "test@test.com",
@@ -507,18 +505,12 @@ func Test_Login(t *testing.T) {
 			Password: "thisisatest123",
 		}
 
-		user := models.User{
-			Username: input.Username,
-			Email:    input.Email,
-			Password: input.Password,
-		}
-
 		userJSON, _ := json.Marshal(input)
 
 		fmt.Println(v1 + "/login")
 		req, _ := http.NewRequest("POST", v1+"/login", strings.NewReader(string(userJSON)))
 
-		s.mockUsecase.EXPECT().Login(&ctx, user.Username, user.Email, user.Password).Return("token", nil)
+		s.mockUsecase.EXPECT().Login(&ctx, input.Username, input.Email, input.Password).Return("token", nil)
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -576,19 +568,13 @@ func Test_Login(t *testing.T) {
 			Password: "thisisatest123",
 		}
 
-		user := models.User{
-			Username: input.Username,
-			Email:    input.Email,
-			Password: input.Password,
-		}
-
 		userJSON, _ := json.Marshal(input)
 
 		req, _ := http.NewRequest("POST", v1+"/login", strings.NewReader(string(userJSON)))
 
-		s.mockUsecase.EXPECT().Login(&ctx, user.Username, user.Email, user.Password).DoAndReturn(
+		s.mockUsecase.EXPECT().Login(&ctx, input.Username, input.Email, input.Password).DoAndReturn(
 			func(ctx *context.Context, _ string, _ string, _ string) (string, error) {
-				*ctx = context.WithValue(*ctx, errors.CtxErrorCodeKey, errors.CODE_ENTITY_NOT_FOUND)
+				*ctx = context.WithValue(*ctx, errorscode.CtxErrorCodeKey, errorscode.CODE_ENTITY_NOT_FOUND)
 				return "", fmt.Errorf("user not found")
 			})
 
@@ -599,7 +585,7 @@ func Test_Login(t *testing.T) {
 		_ = json.Unmarshal(w.Body.Bytes(), &resp)
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
-		assert.Equal(t, errors.CODE_ENTITY_NOT_FOUND, resp.Code)
+		assert.Equal(t, errorscode.CODE_ENTITY_NOT_FOUND, resp.Code)
 	})
 
 	t.Run("[V1] Login - Usecase error", func(t *testing.T) {
@@ -610,17 +596,11 @@ func Test_Login(t *testing.T) {
 			Password: "thisisatest123",
 		}
 
-		user := models.User{
-			Username: input.Username,
-			Email:    input.Email,
-			Password: input.Password,
-		}
-
 		userJSON, _ := json.Marshal(input)
 
 		req, _ := http.NewRequest("POST", v1+"/login", strings.NewReader(string(userJSON)))
 
-		s.mockUsecase.EXPECT().Login(&ctx, user.Username, user.Email, user.Password).Return("", fmt.Errorf("test error"))
+		s.mockUsecase.EXPECT().Login(&ctx, input.Username, input.Email, input.Password).Return("", fmt.Errorf("test error"))
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)

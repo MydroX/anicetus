@@ -1,7 +1,7 @@
 package usecases
 
 import (
-	"MydroX/project-v/internal/gateway/users/models"
+	"MydroX/project-v/internal/gateway/users/dto"
 	"context"
 )
 
@@ -10,13 +10,13 @@ import (
 // UsersUsecases is the interface to all the implemented usecases for the users entity
 type UsersUsecases interface {
 	// Create is the usecase to create a new user
-	Create(ctx *context.Context, user *models.User) error
+	Create(ctx *context.Context, user *dto.CreateUserRequest) error
 
 	// Get is the usecase to get a user by its uuid
-	Get(ctx *context.Context, uuid string) (*models.User, error)
+	Get(ctx *context.Context, uuid string) (*dto.GetUserResponse, error)
 
 	// Update is the usecase to update a user
-	Update(ctx *context.Context, user *models.User) error
+	Update(ctx *context.Context, user *dto.UpdateUserRequest) error
 
 	// UpdatePassword is the usecase to update the password of a user
 	UpdatePassword(ctx *context.Context, uuid string, password string) error

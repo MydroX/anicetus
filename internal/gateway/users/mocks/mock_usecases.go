@@ -10,7 +10,7 @@
 package mocks
 
 import (
-	models "MydroX/project-v/internal/gateway/users/models"
+	dto "MydroX/project-v/internal/gateway/users/dto"
 	context "context"
 	reflect "reflect"
 
@@ -41,7 +41,7 @@ func (m *MockUsersUsecases) EXPECT() *MockUsersUsecasesMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockUsersUsecases) Create(arg0 *context.Context, arg1 *models.User) error {
+func (m *MockUsersUsecases) Create(arg0 *context.Context, arg1 *dto.CreateUserRequest) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -69,10 +69,10 @@ func (mr *MockUsersUsecasesMockRecorder) Delete(arg0, arg1 any) *gomock.Call {
 }
 
 // Get mocks base method.
-func (m *MockUsersUsecases) Get(arg0 *context.Context, arg1 string) (*models.User, error) {
+func (m *MockUsersUsecases) Get(arg0 *context.Context, arg1 string) (*dto.GetUserResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", arg0, arg1)
-	ret0, _ := ret[0].(*models.User)
+	ret0, _ := ret[0].(*dto.GetUserResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -99,7 +99,7 @@ func (mr *MockUsersUsecasesMockRecorder) Login(arg0, arg1, arg2, arg3 any) *gomo
 }
 
 // Update mocks base method.
-func (m *MockUsersUsecases) Update(arg0 *context.Context, arg1 *models.User) error {
+func (m *MockUsersUsecases) Update(arg0 *context.Context, arg1 *dto.UpdateUserRequest) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", arg0, arg1)
 	ret0, _ := ret[0].(error)

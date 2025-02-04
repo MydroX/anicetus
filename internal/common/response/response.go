@@ -1,7 +1,7 @@
 package response
 
 import (
-	"MydroX/project-v/internal/common/errors"
+	"MydroX/project-v/internal/common/errorscode"
 	loggerpkg "MydroX/project-v/pkg/logger"
 	"fmt"
 	"net/http"
@@ -21,7 +21,7 @@ func logAndError(logger *loggerpkg.Logger, ctx *gin.Context, httpCode int, error
 	var errorCode string
 
 	if apiErrorCode == "" {
-		errorCode = errors.CODE_UNKNOWN_ERROR
+		errorCode = errorscode.CODE_UNKNOWN_ERROR
 	} else {
 		errorCode = apiErrorCode
 	}

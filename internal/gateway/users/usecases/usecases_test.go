@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"MydroX/project-v/internal/common/errors"
-	"MydroX/project-v/internal/gateway/users/config"
+	"MydroX/project-v/internal/common/errorscode"
+	"MydroX/project-v/internal/gateway/config"
 	"MydroX/project-v/internal/gateway/users/dto"
 	"MydroX/project-v/internal/gateway/users/mocks"
 	"MydroX/project-v/internal/gateway/users/models"
@@ -37,7 +37,7 @@ func Test_Create(t *testing.T) {
 	t.Run("[V1] Create user", func(t *testing.T) {
 		ctx := context.Background()
 
-		request := models.User{
+		request := dto.CreateUserRequest{
 			Username: "test",
 			Email:    "test@test.com",
 			Password: "thisisapassword123",
@@ -59,7 +59,7 @@ func Test_Create(t *testing.T) {
 	t.Run("[V1] Create user, failed to hash password", func(t *testing.T) {
 		ctx := context.Background()
 
-		request := models.User{
+		request := dto.CreateUserRequest{
 			Username: "test",
 			Email:    "test@test.com",
 			Password: "WcYVkLZaCHH5AjzVyyhPaZ0Ny1j8Yqxqu0zYHz8YtvKDzQ7cEx8cXG7VTBq55RmLUFubXPhHgaqwGyQn",
@@ -69,13 +69,13 @@ func Test_Create(t *testing.T) {
 		err := u.Create(&ctx, &request)
 
 		assert.Error(t, err)
-		assert.Equal(t, errors.CODE_FAILED_TO_HASH_PASSWORD, ctx.Value(errors.CtxErrorCodeKey))
+		assert.Equal(t, errorscode.CODE_FAILED_TO_HASH_PASSWORD, ctx.Value(errorscode.CtxErrorCodeKey))
 	})
 
 	t.Run("[V1] Create user repository error", func(t *testing.T) {
 		ctx := context.Background()
 
-		request := models.User{
+		request := dto.CreateUserRequest{
 			Username: "test",
 			Email:    "test@test.com",
 			Password: "thisisapassword123",
@@ -129,16 +129,21 @@ func Test_Update(t *testing.T) {
 	t.Run("[V1] Update user", func(t *testing.T) {
 		ctx := context.Background()
 
+		request := dto.UpdateUserRequest{
+			UUID:     userUUID,
+			Username: "test",
+			Email:    "test@test.com",
+		}
+
 		user := &models.User{
 			UUID:     userUUID,
 			Username: "test",
 			Email:    "test@test.com",
-			Role:     "USER",
 		}
 
-		r.EXPECT().UpdateUser(&ctx, user).Return(nil)
+		r.EXPECT().UpdateUser(&ctx, user).Return(&models.User{}, nil)
 
-		err := u.Update(&ctx, user)
+		err := u.Update(&ctx, &request)
 
 		assert.NoError(t, err)
 	})
@@ -146,17 +151,21 @@ func Test_Update(t *testing.T) {
 	t.Run("[V1] Update user repository error", func(t *testing.T) {
 		ctx := context.Background()
 
+		request := dto.UpdateUserRequest{
+			UUID:     userUUID,
+			Username: "test",
+			Email:    "test@test.com",
+		}
+
 		user := &models.User{
 			UUID:     userUUID,
 			Username: "test",
-			Password: "password",
 			Email:    "test@test.com",
-			Role:     "USER",
 		}
 
-		r.EXPECT().UpdateUser(&ctx, user).Return(fmt.Errorf("error"))
+		r.EXPECT().UpdateUser(&ctx, user).Return(nil, fmt.Errorf("error"))
 
-		err := u.Update(&ctx, user)
+		err := u.Update(&ctx, &request)
 
 		assert.Error(t, err)
 	})
@@ -190,7 +199,7 @@ func Test_UpdatePassword(t *testing.T) {
 		err := u.UpdatePassword(&ctx, userUUID, password)
 
 		assert.Error(t, err)
-		assert.Equal(t, errors.CODE_FAILED_TO_HASH_PASSWORD, ctx.Value(errors.CtxErrorCodeKey))
+		assert.Equal(t, errorscode.CODE_FAILED_TO_HASH_PASSWORD, ctx.Value(errorscode.CtxErrorCodeKey))
 	})
 
 	t.Run("[V1] Update Repository error", func(t *testing.T) {
@@ -341,15 +350,15 @@ func Test_Login(t *testing.T) {
 
 		r.EXPECT().GetUserByEmail(&ctx, req.Email).DoAndReturn(
 			func(ctx *context.Context, _ string) (*models.User, error) {
-				*ctx = context.WithValue(*ctx, errors.CtxErrorCodeKey, errors.CODE_ENTITY_NOT_FOUND)
+				*ctx = context.WithValue(*ctx, errorscode.CtxErrorCodeKey, errorscode.CODE_ENTITY_NOT_FOUND)
 				return nil, fmt.Errorf("user not found")
 			})
 
 		_, err := u.Login(&ctx, "", req.Email, req.Password)
 
-		errorCode := ctx.Value(errors.CtxErrorCodeKey)
+		errorCode := ctx.Value(errorscode.CtxErrorCodeKey)
 
-		assert.Equal(t, errors.CODE_ENTITY_NOT_FOUND, errorCode)
+		assert.Equal(t, errorscode.CODE_ENTITY_NOT_FOUND, errorCode)
 		assert.Error(t, err)
 	})
 
@@ -363,15 +372,15 @@ func Test_Login(t *testing.T) {
 
 		r.EXPECT().GetUserByUsername(&ctx, req.Username).DoAndReturn(
 			func(ctx *context.Context, _ string) (*models.User, error) {
-				*ctx = context.WithValue(*ctx, errors.CtxErrorCodeKey, errors.CODE_ENTITY_NOT_FOUND)
+				*ctx = context.WithValue(*ctx, errorscode.CtxErrorCodeKey, errorscode.CODE_ENTITY_NOT_FOUND)
 				return nil, fmt.Errorf("user not found")
 			})
 
 		_, err := u.Login(&ctx, req.Username, "", req.Password)
 
-		errorCode := ctx.Value(errors.CtxErrorCodeKey)
+		errorCode := ctx.Value(errorscode.CtxErrorCodeKey)
 
-		assert.Equal(t, errors.CODE_ENTITY_NOT_FOUND, errorCode)
+		assert.Equal(t, errorscode.CODE_ENTITY_NOT_FOUND, errorCode)
 		assert.Error(t, err)
 	})
 

@@ -1,11 +1,10 @@
 package users
 
 import (
-	"MydroX/project-v/internal/common/errors"
+	"MydroX/project-v/internal/common/errorscode"
 	"MydroX/project-v/internal/common/response"
-	"MydroX/project-v/internal/gateway/users/config"
+	"MydroX/project-v/internal/gateway/config"
 	"MydroX/project-v/internal/gateway/users/dto"
-	"MydroX/project-v/internal/gateway/users/models"
 	"MydroX/project-v/internal/gateway/users/usecases"
 	"MydroX/project-v/pkg/logger"
 	"MydroX/project-v/pkg/uuid"
@@ -43,13 +42,13 @@ func (c *Controller) CreateUser(ginCtx *gin.Context) {
 
 	err := ginCtx.BindJSON(&request)
 	if err != nil {
-		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
+		response.BadRequest(c.logger, ginCtx, errorscode.CODE_INVALID_REQUEST)
 		return
 	}
 
 	err = c.validate.Struct(request)
 	if err != nil {
-		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
+		response.BadRequest(c.logger, ginCtx, errorscode.CODE_INVALID_REQUEST)
 		return
 	}
 
@@ -57,20 +56,17 @@ func (c *Controller) CreateUser(ginCtx *gin.Context) {
 	usernameRegex, _ := regexp.Compile("[A-Za-z0-9._-]{4,18}$")
 	match := usernameRegex.MatchString(request.Username)
 	if !match {
-		response.BadRequestWithMessage(c.logger, ginCtx, errors.CODE_INVALID_USERNAME, "invalid username")
+		response.BadRequestWithMessage(c.logger, ginCtx, errorscode.CODE_INVALID_USERNAME, "invalid username")
 		return
 	}
 
-	user := models.User{
-		Username: request.Username,
-		Email:    request.Email,
-		Role:     request.Role,
-		Password: request.Password,
-	}
-
-	err = c.usecases.Create(&ctx, &user)
+	err = c.usecases.Create(&ctx, &request)
 	if err != nil {
-		response.InternalError(c.logger, ginCtx, err, ginCtx.GetString(string(errors.CtxErrorCodeKey)))
+		if ctx.Value(errorscode.CtxErrorCodeKey) == errorscode.CODE_DUPLICATE_ENTITY {
+			response.BadRequestWithMessage(c.logger, ginCtx, errorscode.CODE_DUPLICATE_ENTITY, "user already exists")
+			return
+		}
+		response.InternalError(c.logger, ginCtx, err, ginCtx.GetString(string(errorscode.CtxErrorCodeKey)))
 		return
 	}
 
@@ -84,17 +80,17 @@ func (c *Controller) GetUser(ginCtx *gin.Context) {
 
 	err := uuid.ValidateWithPrefix(userUUID)
 	if err != nil {
-		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_UUID)
+		response.BadRequest(c.logger, ginCtx, errorscode.CODE_INVALID_UUID)
 		return
 	}
 
 	resp, err := c.usecases.Get(&ctx, userUUID)
 	if err != nil {
-		if ctx.Value(errors.CtxErrorCodeKey) == errors.CODE_ENTITY_NOT_FOUND {
-			response.NotFound(c.logger, ginCtx, errors.CODE_ENTITY_NOT_FOUND)
+		if ctx.Value(errorscode.CtxErrorCodeKey) == errorscode.CODE_ENTITY_NOT_FOUND {
+			response.NotFound(c.logger, ginCtx, errorscode.CODE_ENTITY_NOT_FOUND)
 			return
 		}
-		response.InternalError(c.logger, ginCtx, err, ginCtx.GetString(string(errors.CtxErrorCodeKey)))
+		response.InternalError(c.logger, ginCtx, err, ginCtx.GetString(string(errorscode.CtxErrorCodeKey)))
 		return
 	}
 
@@ -107,27 +103,19 @@ func (c *Controller) UpdateUser(ginCtx *gin.Context) {
 
 	err := ginCtx.BindJSON(&request)
 	if err != nil {
-		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
+		response.BadRequest(c.logger, ginCtx, errorscode.CODE_INVALID_REQUEST)
 		return
 	}
 
 	err = c.validate.Struct(request)
 	if err != nil {
-		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
+		response.BadRequest(c.logger, ginCtx, errorscode.CODE_INVALID_REQUEST)
 		return
 	}
 
-	user := models.User{
-		UUID:     request.UUID,
-		Username: request.Username,
-		Password: request.Password,
-		Email:    request.Email,
-		Role:     request.Role,
-	}
-
-	err = c.usecases.Update(&ctx, &user)
+	err = c.usecases.Update(&ctx, &request)
 	if err != nil {
-		response.InternalError(c.logger, ginCtx, err, ginCtx.GetString(string(errors.CtxErrorCodeKey)))
+		response.InternalError(c.logger, ginCtx, err, ginCtx.GetString(string(errorscode.CtxErrorCodeKey)))
 		return
 	}
 
@@ -142,25 +130,25 @@ func (c *Controller) UpdateEmail(ginCtx *gin.Context) {
 
 	err := uuid.ValidateWithPrefix(userUUID)
 	if err != nil {
-		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_UUID)
+		response.BadRequest(c.logger, ginCtx, errorscode.CODE_INVALID_UUID)
 		return
 	}
 
 	err = ginCtx.BindJSON(&request)
 	if err != nil {
-		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
+		response.BadRequest(c.logger, ginCtx, errorscode.CODE_INVALID_REQUEST)
 		return
 	}
 
 	err = c.validate.Struct(request)
 	if err != nil {
-		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
+		response.BadRequest(c.logger, ginCtx, errorscode.CODE_INVALID_REQUEST)
 		return
 	}
 
 	err = c.usecases.UpdateEmail(&ctx, userUUID, request.Email)
 	if err != nil {
-		response.InternalError(c.logger, ginCtx, err, ginCtx.GetString(string(errors.CtxErrorCodeKey)))
+		response.InternalError(c.logger, ginCtx, err, ginCtx.GetString(string(errorscode.CtxErrorCodeKey)))
 		return
 	}
 
@@ -175,26 +163,26 @@ func (c *Controller) UpdatePassword(ginCtx *gin.Context) {
 
 	err := uuid.ValidateWithPrefix(userUUID)
 	if err != nil {
-		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_UUID)
+		response.BadRequest(c.logger, ginCtx, errorscode.CODE_INVALID_UUID)
 		return
 	}
 
 	err = ginCtx.BindJSON(&request)
 	if err != nil {
-		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
+		response.BadRequest(c.logger, ginCtx, errorscode.CODE_INVALID_REQUEST)
 		return
 	}
 
 	err = c.validate.Struct(request)
 	if err != nil {
-		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
+		response.BadRequest(c.logger, ginCtx, errorscode.CODE_INVALID_REQUEST)
 		return
 	}
 
 	err = c.usecases.UpdatePassword(&ctx, userUUID, request.Password)
 
 	if err != nil {
-		response.InternalError(c.logger, ginCtx, err, ginCtx.GetString(string(errors.CtxErrorCodeKey)))
+		response.InternalError(c.logger, ginCtx, err, ginCtx.GetString(string(errorscode.CtxErrorCodeKey)))
 		return
 	}
 
@@ -208,13 +196,13 @@ func (c *Controller) DeleteUser(ginCtx *gin.Context) {
 
 	err := uuid.ValidateWithPrefix(userUUID)
 	if err != nil {
-		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_UUID)
+		response.BadRequest(c.logger, ginCtx, errorscode.CODE_INVALID_UUID)
 		return
 	}
 
 	err = c.usecases.Delete(&ctx, userUUID)
 	if err != nil {
-		response.InternalError(c.logger, ginCtx, err, ginCtx.GetString(string(errors.CtxErrorCodeKey)))
+		response.InternalError(c.logger, ginCtx, err, ginCtx.GetString(string(errorscode.CtxErrorCodeKey)))
 		return
 	}
 
@@ -226,28 +214,28 @@ func (c *Controller) Login(ginCtx *gin.Context) {
 	ctx := ginCtx.Request.Context()
 
 	if err := ginCtx.BindJSON(&request); err != nil {
-		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
+		response.BadRequest(c.logger, ginCtx, errorscode.CODE_INVALID_REQUEST)
 		return
 	}
 
 	err := c.validate.Struct(request)
 	if err != nil {
-		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
+		response.BadRequest(c.logger, ginCtx, errorscode.CODE_INVALID_REQUEST)
 		return
 	}
 
 	if request.Username == "" && request.Email == "" {
-		response.BadRequest(c.logger, ginCtx, errors.CODE_INVALID_REQUEST)
+		response.BadRequest(c.logger, ginCtx, errorscode.CODE_INVALID_REQUEST)
 		return
 	}
 
 	token, err := c.usecases.Login(&ctx, request.Username, request.Email, request.Password)
 	if err != nil {
-		if ctx.Value(errors.CtxErrorCodeKey) == errors.CODE_ENTITY_NOT_FOUND {
-			response.NotFound(c.logger, ginCtx, errors.CODE_ENTITY_NOT_FOUND)
+		if ctx.Value(errorscode.CtxErrorCodeKey) == errorscode.CODE_ENTITY_NOT_FOUND {
+			response.NotFound(c.logger, ginCtx, errorscode.CODE_ENTITY_NOT_FOUND)
 			return
 		}
-		response.InternalError(c.logger, ginCtx, err, ginCtx.GetString(string(errors.CtxErrorCodeKey)))
+		response.InternalError(c.logger, ginCtx, err, ginCtx.GetString(string(errorscode.CtxErrorCodeKey)))
 		return
 	}
 

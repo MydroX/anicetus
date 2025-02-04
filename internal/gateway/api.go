@@ -1,16 +1,16 @@
 package gateway
 
 import (
+	"MydroX/project-v/internal/gateway/config"
 	usersservice "MydroX/project-v/internal/gateway/users"
-	"MydroX/project-v/internal/gateway/users/config"
 	"MydroX/project-v/internal/gateway/users/repository"
 	"MydroX/project-v/internal/gateway/users/usecases"
 	loggerpkg "MydroX/project-v/pkg/logger"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
-	"gorm.io/gorm"
 )
 
 type service struct {
@@ -56,7 +56,7 @@ func Router(logger *loggerpkg.Logger, service service) *gin.Engine {
 }
 
 // NewServer is a function to start the server for the gateway service.
-func NewServer(c *config.Config, logger *loggerpkg.Logger, db *gorm.DB) {
+func NewServer(c *config.Config, logger *loggerpkg.Logger, db *pgxpool.Pool) {
 	usersRepository := repository.NewRepository(logger, db)
 
 	usersUsecase := usecases.NewUsecases(logger, usersRepository, &c.JWT)

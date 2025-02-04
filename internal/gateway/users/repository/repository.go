@@ -1,133 +1,171 @@
 package repository
 
 import (
-	"MydroX/project-v/internal/common/errors"
+	"MydroX/project-v/internal/common/errorscode"
 	"MydroX/project-v/internal/gateway/users/models"
 	"MydroX/project-v/pkg/logger"
 	"context"
+	"errors"
 	"fmt"
 
-	"gorm.io/gorm"
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+var (
+	errorUserAlreadyExists = errors.New("user already exists")
+	errorUserNotFound      = errors.New("user not found")
 )
 
 type repository struct {
 	logger *logger.Logger
-	db     *gorm.DB
+	dbPool *pgxpool.Pool
 }
 
 // NewRepository is creating an interface for every method of the repository
-func NewRepository(l *logger.Logger, db *gorm.DB) UsersRepository {
+func NewRepository(l *logger.Logger, dbPool *pgxpool.Pool) UsersRepository {
 	return &repository{
 		logger: l,
-		db:     db,
+		dbPool: dbPool,
 	}
 }
 
 func (r *repository) CreateUser(ctx *context.Context, user *models.User) error {
-	res := r.db.Create(&user)
-	if res.Error != nil {
-		if res.Error == gorm.ErrDuplicatedKey {
-			*ctx = context.WithValue(*ctx, errors.CtxErrorCodeKey, errors.CODE_DUPLICATE_ENTITY)
-			return fmt.Errorf("user already exists")
+	query := `INSERT INTO users (uuid, username, email, password, role) VALUES ($1, $2, $3, $4, $5)`
+
+	_, err := r.dbPool.Exec(*ctx, query, user.UUID, user.Username, user.Email, user.Password, user.Role)
+
+	if err != nil {
+		var pgErr *pgconn.PgError
+		errors.As(err, &pgErr)
+
+		if pgErr.Code == pgerrcode.UniqueViolation {
+			*ctx = context.WithValue(*ctx, errorscode.CtxErrorCodeKey, errorscode.CODE_DUPLICATE_ENTITY)
+			return errorUserAlreadyExists
 		}
-		r.logger.Zap.Sugar().Errorf("error creating user: %v", res.Error)
-		return res.Error
+
+		r.logger.Zap.Sugar().Errorf("error creating user: %v", err)
+		return fmt.Errorf("error creating user: %v", err)
 	}
 
 	return nil
 }
 
 func (r *repository) GetUserByUUID(ctx *context.Context, uuid string) (*models.User, error) {
-	var user models.User
+	query := `SELECT uuid, username, email, password, role, created_at, updated_at FROM users WHERE uuid = $1`
 
-	res := r.db.First(&user, uuid)
-	if res.Error != nil {
-		if res.Error == gorm.ErrRecordNotFound {
-			*ctx = context.WithValue(*ctx, errors.CtxErrorCodeKey, errors.CODE_ENTITY_NOT_FOUND)
-			return nil, fmt.Errorf("user not found")
+	var user models.User
+	err := r.dbPool.QueryRow(*ctx, query, uuid).Scan(&user.UUID, &user.Username, &user.Email, &user.Password, &user.Role, &user.CreatedAt, &user.UpdatedAt)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			*ctx = context.WithValue(*ctx, errorscode.CtxErrorCodeKey, errorscode.CODE_ENTITY_NOT_FOUND)
+			return nil, errorUserNotFound
 		}
-		r.logger.Zap.Sugar().Errorf("error getting user: %v", res.Error)
-		return nil, res.Error
+
+		r.logger.Zap.Sugar().Errorf("error getting user by uuid: %v", err)
+		return nil, fmt.Errorf("error getting user by uuid: %v", err)
 	}
 
 	return &user, nil
 }
 
-func (r *repository) UpdateUser(_ *context.Context, user *models.User) error {
-	res := r.db.Save(&user)
-	if res.Error != nil {
-		r.logger.Zap.Sugar().Errorf("error updating user: %v", res.Error)
-		return res.Error
+func (r *repository) UpdateUser(ctx *context.Context, user *models.User) (*models.User, error) {
+	query := `UPDATE users SET username = $1, email = $2, role = $3 WHERE uuid = $4 RETURNING uuid, username, email, password, role, created_at, updated_at`
+
+	err := r.dbPool.QueryRow(*ctx, query, user.Username, user.Email, user.Role, user.UUID).Scan(&user.UUID, &user.Username, &user.Email, &user.Password, &user.Role, &user.CreatedAt, &user.UpdatedAt)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			*ctx = context.WithValue(*ctx, errorscode.CtxErrorCodeKey, errorscode.CODE_ENTITY_NOT_FOUND)
+			return nil, errorUserNotFound
+		}
+		r.logger.Zap.Sugar().Errorf("error updating user: %v", err)
+		return nil, fmt.Errorf("error updating user: %v", err)
+	}
+	return user, nil
+}
+
+func (r *repository) UpdatePassword(ctx *context.Context, uuid, password string) error {
+	query := `UPDATE users SET password = $1 WHERE uuid = $2`
+
+	res, err := r.dbPool.Exec(*ctx, query, password, uuid)
+	if err != nil {
+		r.logger.Zap.Sugar().Errorf("error updating password: %v", err)
+		return fmt.Errorf("error updating password: %v", err)
+	}
+
+	if res.RowsAffected() == 0 {
+		*ctx = context.WithValue(*ctx, errorscode.CtxErrorCodeKey, errorscode.CODE_ENTITY_NOT_FOUND)
+		return errorUserNotFound
 	}
 
 	return nil
 }
 
-func (r *repository) UpdatePassword(_ *context.Context, uuid, password string) error {
-	user := models.User{
-		UUID: uuid,
+func (r *repository) UpdateEmail(ctx *context.Context, uuid, email string) error {
+	query := `UPDATE users SET email = $1 WHERE uuid = $2`
+
+	res, err := r.dbPool.Exec(*ctx, query, email, uuid)
+	if err != nil {
+		r.logger.Zap.Sugar().Errorf("error updating email: %v", err)
+		return fmt.Errorf("error updating email: %v", err)
 	}
-	res := r.db.Model(&user).Update("password", password)
-	if res.Error != nil {
-		r.logger.Zap.Sugar().Errorf("error updating user password: %v", res.Error)
-		return res.Error
+
+	if res.RowsAffected() == 0 {
+		*ctx = context.WithValue(*ctx, errorscode.CtxErrorCodeKey, errorscode.CODE_ENTITY_NOT_FOUND)
+		return errorUserNotFound
 	}
+
 	return nil
 }
 
-func (r *repository) UpdateEmail(_ *context.Context, uuid, email string) error {
-	user := models.User{
-		UUID: uuid,
-	}
-	res := r.db.Model(&user).Update("email", email)
-	if res.Error != nil {
-		r.logger.Zap.Sugar().Errorf("error updating user email: %v", res.Error)
-		return res.Error
-	}
-	return nil
-}
+func (r *repository) DeleteUser(ctx *context.Context, uuid string) error {
+	query := `DELETE FROM users WHERE uuid = $1`
 
-func (r *repository) DeleteUser(_ *context.Context, uuid string) error {
-	res := r.db.Delete(&models.User{}, uuid)
-	if res.Error != nil {
-		r.logger.Zap.Sugar().Errorf("error deleting user: %v", res.Error)
-		return res.Error
+	res, err := r.dbPool.Exec(*ctx, query, uuid)
+	if err != nil {
+		r.logger.Zap.Sugar().Errorf("error deleting user: %v", err)
+		return fmt.Errorf("error deleting user: %v", err)
+	}
+
+	if res.RowsAffected() == 0 {
+		*ctx = context.WithValue(*ctx, errorscode.CtxErrorCodeKey, errorscode.CODE_ENTITY_NOT_FOUND)
+		return errorUserNotFound
 	}
 
 	return nil
 }
 
 func (r *repository) GetUserByEmail(ctx *context.Context, email string) (*models.User, error) {
-	user := models.User{
-		Email: email,
-	}
+	query := `SELECT uuid, username, email, password, role, created_at, updated_at FROM users WHERE email = $1`
 
-	res := r.db.Where("email = ?", email).First(&user)
-	if res.Error != nil {
-		if res.Error == gorm.ErrRecordNotFound {
-			*ctx = context.WithValue(*ctx, errors.CtxErrorCodeKey, errors.CODE_ENTITY_NOT_FOUND)
-			return nil, fmt.Errorf("user not found")
+	var user models.User
+	err := r.dbPool.QueryRow(*ctx, query, email).Scan(&user.UUID, &user.Username, &user.Email, &user.Password, &user.Role, &user.CreatedAt, &user.UpdatedAt)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			*ctx = context.WithValue(*ctx, errorscode.CtxErrorCodeKey, errorscode.CODE_ENTITY_NOT_FOUND)
+			return nil, errorUserNotFound
 		}
-		r.logger.Zap.Sugar().Errorf("error getting user by email: %v", res.Error)
-		return nil, res.Error
+		r.logger.Zap.Sugar().Errorf("error getting user by email: %v", err)
+		return nil, fmt.Errorf("error getting user by email: %v", err)
 	}
 
 	return &user, nil
 }
 
 func (r *repository) GetUserByUsername(ctx *context.Context, username string) (*models.User, error) {
-	user := models.User{
-		Username: username,
-	}
+	query := `SELECT uuid, username, email, password, role, created_at, updated_at FROM users WHERE username = $1`
 
-	res := r.db.Where("username = ?", username).First(&user)
-	if res.Error != nil {
-		if res.Error == gorm.ErrRecordNotFound {
-			*ctx = context.WithValue(*ctx, errors.CtxErrorCodeKey, errors.CODE_ENTITY_NOT_FOUND)
-			return nil, fmt.Errorf("user not found")
+	var user models.User
+	err := r.dbPool.QueryRow(*ctx, query, username).Scan(&user.UUID, &user.Username, &user.Email, &user.Password, &user.Role, &user.CreatedAt, &user.UpdatedAt)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			*ctx = context.WithValue(*ctx, errorscode.CtxErrorCodeKey, errorscode.CODE_ENTITY_NOT_FOUND)
+			return nil, errorUserNotFound
 		}
-		r.logger.Zap.Sugar().Errorf("error getting user by username: %v", res.Error)
-		return nil, res.Error
+		r.logger.Zap.Sugar().Errorf("error getting user by username: %v", err)
+		return nil, fmt.Errorf("error getting user by username: %v", err)
 	}
 
 	return &user, nil

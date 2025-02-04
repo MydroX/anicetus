@@ -1,1 +1,1 @@
-package repository // golangci-lint: ignore
+package repository
