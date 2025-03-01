@@ -6,10 +6,10 @@ import (
 	"testing"
 
 	"MydroX/project-v/internal/common/errorscode"
-	"MydroX/project-v/internal/gateway/config"
-	"MydroX/project-v/internal/gateway/users/dto"
-	"MydroX/project-v/internal/gateway/users/mocks"
-	"MydroX/project-v/internal/gateway/users/models"
+	"MydroX/project-v/internal/config"
+	"MydroX/project-v/internal/users/dto"
+	"MydroX/project-v/internal/users/mocks"
+	"MydroX/project-v/internal/users/models"
 
 	loggerpkg "MydroX/project-v/pkg/logger"
 	passwordpkg "MydroX/project-v/pkg/password"

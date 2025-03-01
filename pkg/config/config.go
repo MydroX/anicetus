@@ -5,8 +5,8 @@ import (
 	"os"
 )
 
-func Read(serviceName string) ([]byte, error) {
-	file, err := os.ReadFile(fmt.Sprintf("cmd/%s/config.yml", serviceName))
+func Read() ([]byte, error) {
+	file, err := os.ReadFile("cmd/config.yml")
 	if err != nil {
 		return nil, fmt.Errorf("error opening config file: %v", err)
 	}

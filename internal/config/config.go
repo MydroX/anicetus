@@ -38,8 +38,8 @@ type JWT struct {
 	Secret         string `yaml:"secret"`
 }
 
-func LoadConfig(serviceName string) (*Config, error) {
-	f, err := config.Read(serviceName)
+func LoadConfig() (*Config, error) {
+	f, err := config.Read()
 	if err != nil {
 		return nil, err
 	}

@@ -2,10 +2,10 @@ package usecases
 
 import (
 	"MydroX/project-v/internal/common/errorscode"
-	"MydroX/project-v/internal/gateway/config"
-	"MydroX/project-v/internal/gateway/users/dto"
-	"MydroX/project-v/internal/gateway/users/models"
-	"MydroX/project-v/internal/gateway/users/repository"
+	"MydroX/project-v/internal/config"
+	"MydroX/project-v/internal/users/dto"
+	"MydroX/project-v/internal/users/models"
+	"MydroX/project-v/internal/users/repository"
 	"MydroX/project-v/pkg/jwt"
 	"MydroX/project-v/pkg/logger"
 	passwordpkg "MydroX/project-v/pkg/password"

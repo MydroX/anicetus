@@ -23,7 +23,7 @@ go-test:
 build:
   stage: build
   script:
-    - go build -o gateway cmd/gateway/main.go
+    - go build -o app cmd/main.go
 
 variables:
   GOLANGCI_LINT_VERSION: 'v1.62.2-alpine'

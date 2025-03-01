@@ -1,10 +1,10 @@
-package gateway
+package api
 
 import (
-	"MydroX/project-v/internal/gateway/config"
-	usersservice "MydroX/project-v/internal/gateway/users"
-	"MydroX/project-v/internal/gateway/users/repository"
-	"MydroX/project-v/internal/gateway/users/usecases"
+	"MydroX/project-v/internal/config"
+	usersservice "MydroX/project-v/internal/users"
+	"MydroX/project-v/internal/users/repository"
+	"MydroX/project-v/internal/users/usecases"
 	loggerpkg "MydroX/project-v/pkg/logger"
 	"fmt"
 
@@ -17,7 +17,7 @@ type service struct {
 	usersController *usersservice.Controller
 }
 
-// Router is a function to define the routes for the gateway service.
+// Router is a function to define the routes for the service.
 func Router(logger *loggerpkg.Logger, service service) *gin.Engine {
 	router := gin.Default()
 
@@ -55,7 +55,7 @@ func Router(logger *loggerpkg.Logger, service service) *gin.Engine {
 	return router
 }
 
-// NewServer is a function to start the server for the gateway service.
+// NewServer is a function to start the server for the service.
 func NewServer(c *config.Config, logger *loggerpkg.Logger, db *pgxpool.Pool) {
 	usersRepository := repository.NewRepository(logger, db)
 

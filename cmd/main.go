@@ -1,8 +1,8 @@
 package main
 
 import (
-	"MydroX/project-v/internal/gateway"
-	"MydroX/project-v/internal/gateway/config"
+	app "MydroX/project-v/internal"
+	"MydroX/project-v/internal/config"
 	"MydroX/project-v/pkg/db"
 	loggerpkg "MydroX/project-v/pkg/logger"
 	"log"
@@ -10,10 +10,8 @@ import (
 	"go.uber.org/zap"
 )
 
-const serviceName = "gateway"
-
 func main() {
-	cfg, err := config.LoadConfig(serviceName)
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		log.Fatalf("error loading config: %v", err)
 	}
@@ -27,5 +25,5 @@ func main() {
 	defer connDB.Close()
 
 	logger.Zap.Info("starting server...")
-	gateway.NewServer(cfg, logger, connDB)
+	app.NewServer(cfg, logger, connDB)
 }

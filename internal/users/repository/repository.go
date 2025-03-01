@@ -2,7 +2,7 @@ package repository
 
 import (
 	"MydroX/project-v/internal/common/errorscode"
-	"MydroX/project-v/internal/gateway/users/models"
+	"MydroX/project-v/internal/users/models"
 	"MydroX/project-v/pkg/logger"
 	"context"
 	"errors"

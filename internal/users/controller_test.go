@@ -3,9 +3,9 @@ package users
 import (
 	"MydroX/project-v/internal/common/errorscode"
 	"MydroX/project-v/internal/common/response"
-	"MydroX/project-v/internal/gateway/config"
-	"MydroX/project-v/internal/gateway/users/dto"
-	"MydroX/project-v/internal/gateway/users/mocks"
+	"MydroX/project-v/internal/config"
+	"MydroX/project-v/internal/users/dto"
+	"MydroX/project-v/internal/users/mocks"
 	loggerpkg "MydroX/project-v/pkg/logger"
 	uuidpkg "MydroX/project-v/pkg/uuid"
 	"context"

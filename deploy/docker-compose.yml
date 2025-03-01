@@ -1,6 +1,6 @@
 services:
-  gateway:
-    container_name: gateway
+  app:
+    container_name: app
     build:
       context: ..
       dockerfile: deploy/Dockerfile
@@ -9,11 +9,11 @@ services:
     ports:
       - "3001:3000"
     depends_on:
-      - db-gateway
+      - db
     networks:
       - project-v
-  db-gateway:
-    container_name: db-gateway
+  db:
+    container_name: db
     image: postgres:16.3-alpine3.20
     environment:
       POSTGRES_USER: postgres
