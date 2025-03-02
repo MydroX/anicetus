@@ -1,4 +1,4 @@
-bin
+cmd/app
 tmp
 cmd/**/config.yml
 cmd/**/config.yaml

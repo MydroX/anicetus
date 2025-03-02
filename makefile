@@ -1,13 +1,17 @@
 init:
 	@echo "Welcome! Enjoy the ride!"
 
-up:
+up-dev:
 	@echo "Starting..."
-	@docker compose -f deploy/docker-compose.yml up --build
+	@docker compose -f deploy/docker-compose.yml -f deploy/dev/docker-compose.yml up --build
 
-down:
+up-prod:
+	@echo "Starting..."
+	@docker compose -f deploy/docker-compose.yml -f deploy/prod/docker-compose.yml up --build
+
+down-dev:
 	@echo "Stopping..."
-	@docker compose -f deploy/docker-compose.yml down
+	@docker compose -f deploy/docker-compose.yml -f deploy/dev/docker-compose.yml down
 	
 build:
 	@echo "Building..."

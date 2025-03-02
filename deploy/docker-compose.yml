@@ -3,11 +3,10 @@ services:
     container_name: app
     build:
       context: ..
-      dockerfile: deploy/Dockerfile
     volumes: 
       - ../.:/app
     ports:
-      - "3001:3000"
+      - "3000:3000"
     depends_on:
       - db
     networks:
@@ -23,6 +22,15 @@ services:
       - "5432:5432"
     volumes:
       - postgres:/data/postgres
+    networks:
+      - project-v
+
+  dashboard:
+    container_name: dashboard
+    build:
+      context: ..
+    ports:
+      - "8081:8081"
     networks:
       - project-v
 
