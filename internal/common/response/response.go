@@ -52,6 +52,10 @@ func BadRequestWithMessage(logger *loggerpkg.Logger, ctx *gin.Context, apiErrorC
 	logAndError(logger, ctx, http.StatusBadRequest, "invalid request", apiErrorCode, message)
 }
 
+func Conflict(logger *loggerpkg.Logger, ctx *gin.Context, apiErrorCode string) {
+	logAndError(logger, ctx, http.StatusConflict, "conflict", apiErrorCode, "conflict")
+}
+
 // NotFound is a function to handle error response for not found entity
 func NotFound(logger *loggerpkg.Logger, ctx *gin.Context, apiErrorCode string) {
 	logAndError(logger, ctx, http.StatusNotFound, "not found", apiErrorCode, "entity not found")

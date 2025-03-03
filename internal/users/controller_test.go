@@ -35,6 +35,7 @@ type testServer struct {
 	mockUsecase *mocks.MockUsersUsecases
 }
 
+// TODO: Find better way and remove this
 func testRouter(logger *loggerpkg.Logger, controller Controller) *gin.Engine {
 	router := gin.Default()
 
@@ -46,17 +47,7 @@ func testRouter(logger *loggerpkg.Logger, controller Controller) *gin.Engine {
 	api := router.Group("api")
 	v1 := api.Group("/v1")
 
-	users := v1.Group("/users")
-	users.POST("/register", controller.CreateUser)
-	users.POST("/login", controller.Login)
-	users.GET("/:uuid", controller.GetUser)
-
-	// TODO: Middleware authentification
-	users.PUT("/:uuid", controller.UpdateUser)
-	users.PATCH("/:uuid/email", controller.UpdateEmail)
-	users.PATCH("/:uuid/password", controller.UpdatePassword)
-
-	users.DELETE("/:uuid", controller.DeleteUser)
+	Router(v1, &controller)
 
 	return router
 }
@@ -177,6 +168,37 @@ func Test_Create(t *testing.T) {
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+
+	t.Run("[V1] Create - Duplicate entity", func(t *testing.T) {
+		ctx := context.Background()
+
+		input := dto.CreateUserRequest{
+			Username: "test@test.com",
+			Email:    "test@test.com",
+			Password: "thisisatestpassword1234!@#$",
+		}
+
+		userJSON, _ := json.Marshal(input)
+
+		req, _ := http.NewRequest("POST", v1+create, strings.NewReader(string(userJSON)))
+
+		user := &dto.CreateUserRequest{
+			Username: input.Username,
+			Email:    input.Email,
+			Password: input.Password,
+		}
+
+		s.mockUsecase.EXPECT().Create(&ctx, user).DoAndReturn(
+			func(ctx *context.Context, _ *dto.CreateUserRequest) error {
+				*ctx = context.WithValue(*ctx, errorscode.CtxErrorCodeKey, errorscode.CODE_DUPLICATE_ENTITY)
+				return fmt.Errorf("duplicate entity")
+			},
+		)
+
+		w := httptest.NewRecorder()
+		s.router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusConflict, w.Code)
 	})
 }
 
@@ -601,6 +623,44 @@ func Test_Login(t *testing.T) {
 		req, _ := http.NewRequest("POST", v1+"/login", strings.NewReader(string(userJSON)))
 
 		s.mockUsecase.EXPECT().Login(&ctx, input.Username, input.Email, input.Password).Return("", fmt.Errorf("test error"))
+
+		w := httptest.NewRecorder()
+		s.router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+}
+
+func Test_GetAllUsers(t *testing.T) {
+	s := newServerTest(t)
+	uuid := uuidpkg.NewWithPrefix(prefix)
+
+	t.Run("[V1] Get all users with success", func(t *testing.T) {
+		ctx := context.Background()
+
+		req, _ := http.NewRequest("GET", v1+"/", nil)
+
+		usecaseResp := dto.GetAllUsersResponse{
+			Users: []*dto.User{
+				{UUID: uuid, Username: "test", Email: "test@test.com", Role: "USER"},
+				{UUID: uuid, Username: "test", Email: "test2@test.com", Role: "USER"},
+			},
+		}
+
+		s.mockUsecase.EXPECT().GetAllUsers(&ctx).Return(&usecaseResp, nil)
+
+		w := httptest.NewRecorder()
+		s.router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("[V1] Get all users - Usecase error", func(t *testing.T) {
+		ctx := context.Background()
+
+		req, _ := http.NewRequest("GET", v1+"/", nil)
+
+		s.mockUsecase.EXPECT().GetAllUsers(&ctx).Return(nil, fmt.Errorf("test error"))
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)

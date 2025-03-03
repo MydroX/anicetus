@@ -39,6 +39,12 @@ func (u *usecases) Create(ctx *context.Context, req *dto.CreateUserRequest) erro
 		return err
 	}
 
+	// If the role is not provided, the default role is USER
+	// Might not be a good idea to force a non modifiable default value
+	if req.Role == "" {
+		req.Role = "USER"
+	}
+
 	user := models.User{
 		UUID:     uuidpkg.NewWithPrefix(prefix),
 		Username: req.Username,
@@ -125,6 +131,28 @@ func (u *usecases) Login(ctx *context.Context, username, email, password string)
 		return token, err
 	}
 	return "", fmt.Errorf("username or email must be provided")
+}
+
+func (u *usecases) GetAllUsers(ctx *context.Context) (*dto.GetAllUsersResponse, error) {
+	users, err := u.repository.GetAllUsers(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	res := dto.GetAllUsersResponse{
+		Users: make([]*dto.User, 0),
+	}
+
+	for _, user := range users {
+		res.Users = append(res.Users, &dto.User{
+			UUID:     user.UUID,
+			Username: user.Username,
+			Email:    user.Email,
+			Role:     user.Role,
+		})
+	}
+
+	return &res, err
 }
 
 func login(jwtConfig *config.JWT, userUUID, password, passwordCrypted string) (string, error) {

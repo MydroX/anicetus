@@ -56,6 +56,24 @@ func Test_Create(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
+	t.Run("[V1] Create user, default role", func(t *testing.T) {
+		ctx := context.Background()
+
+		request := dto.CreateUserRequest{
+			Username: "test",
+			Email:    "test@test.com",
+			Password: "thisisapassword123",
+		}
+
+		r.EXPECT().CreateUser(&ctx, gomock.Any()).DoAndReturn(func(_ *context.Context, user *models.User) error {
+			assert.Equal(t, user.Role, "USER")
+			return nil
+		})
+
+		err := u.Create(&ctx, &request)
+		assert.NoError(t, err)
+	})
+
 	t.Run("[V1] Create user, failed to hash password", func(t *testing.T) {
 		ctx := context.Background()
 
@@ -404,6 +422,41 @@ func Test_Login(t *testing.T) {
 		r.EXPECT().GetUserByEmail(&ctx, req.Email).Return(&userFromDB, nil)
 
 		_, err = u.Login(&ctx, "", req.Email, req.Password)
+
+		assert.Error(t, err)
+	})
+}
+
+func Test_GetAllUsers(t *testing.T) {
+	r, u := createTestUsecase(t)
+	userUUID := uuid.NewWithPrefix(userPrefix)
+
+	t.Run("[V1] Get all users", func(t *testing.T) {
+		ctx := context.Background()
+
+		users := []*models.User{
+			{
+				UUID:     userUUID,
+				Username: "test",
+				Email:    "test@test.com",
+				Role:     "USER",
+			},
+		}
+
+		r.EXPECT().GetAllUsers(&ctx).Return(users, nil)
+
+		res, err := u.GetAllUsers(&ctx)
+		assert.NoError(t, err)
+		assert.Len(t, res.Users, 1)
+		assert.Equal(t, res.Users[0].UUID, userUUID)
+	})
+
+	t.Run("[V1] Get all users, repository error", func(t *testing.T) {
+		ctx := context.Background()
+
+		r.EXPECT().GetAllUsers(&ctx).Return(nil, fmt.Errorf("error"))
+
+		_, err := u.GetAllUsers(&ctx)
 
 		assert.Error(t, err)
 	})

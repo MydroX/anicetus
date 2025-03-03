@@ -3,6 +3,6 @@ services:
     build:
       dockerfile: deploy/dev/Dockerfile.app
 
-  dashboard:
-    build:
-      dockerfile: deploy/dev/Dockerfile.dashboard
+  # dashboard:
+  #   build:
+  #     dockerfile: deploy/dev/Dockerfile.dashboard

@@ -29,4 +29,7 @@ type UsersUsecases interface {
 
 	// Login is the usecase to login a user
 	Login(ctx *context.Context, username, email, password string) (string, error)
+
+	// GetUsers is the usecase to get all the users
+	GetAllUsers(ctx *context.Context) (*dto.GetAllUsersResponse, error)
 }

@@ -170,3 +170,26 @@ func (r *repository) GetUserByUsername(ctx *context.Context, username string) (*
 
 	return &user, nil
 }
+
+func (r *repository) GetAllUsers(ctx *context.Context) ([]*models.User, error) {
+	query := `SELECT uuid, username, email, password, role, created_at, updated_at FROM users`
+
+	rows, err := r.dbPool.Query(*ctx, query)
+	if err != nil {
+		r.logger.Zap.Sugar().Errorf("error getting all users: %v", err)
+		return nil, fmt.Errorf("error getting all users: %v", err)
+	}
+
+	var users []*models.User
+	for rows.Next() {
+		var user models.User
+		err := rows.Scan(&user.UUID, &user.Username, &user.Email, &user.Password, &user.Role, &user.CreatedAt, &user.UpdatedAt)
+		if err != nil {
+			r.logger.Zap.Sugar().Errorf("error scanning user: %v", err)
+			return nil, fmt.Errorf("error scanning user: %v", err)
+		}
+		users = append(users, &user)
+	}
+
+	return users, nil
+}

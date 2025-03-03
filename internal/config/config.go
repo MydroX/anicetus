@@ -15,7 +15,6 @@ type Config struct {
 }
 
 type App struct {
-	Name    string `yaml:"name"`
 	Version string `yaml:"version"`
 	Domain  string `yaml:"domain"`
 }
@@ -26,11 +25,6 @@ type Database struct {
 	Username string `yaml:"user"`
 	Password string `yaml:"password"`
 	Name     string `yaml:"name"`
-	TestDB   TestDB `yaml:"test"`
-}
-
-type TestDB struct {
-	Name string `yaml:"name"`
 }
 
 type JWT struct {
