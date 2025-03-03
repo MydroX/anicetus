@@ -63,7 +63,7 @@ func (c *Controller) CreateUser(ginCtx *gin.Context) {
 	err = c.usecases.Create(&ctx, &request)
 	if err != nil {
 		if ctx.Value(errorscode.CtxErrorCodeKey) == errorscode.CODE_DUPLICATE_ENTITY {
-			response.BadRequestWithMessage(c.logger, ginCtx, errorscode.CODE_DUPLICATE_ENTITY, "user already exists")
+			response.Conflict(c.logger, ginCtx, errorscode.CODE_DUPLICATE_ENTITY)
 			return
 		}
 		response.InternalError(c.logger, ginCtx, err, ginCtx.GetString(string(errorscode.CtxErrorCodeKey)))
@@ -244,5 +244,17 @@ func (c *Controller) Login(ginCtx *gin.Context) {
 	resp := dto.LoginResponse{
 		Token: token,
 	}
+	ginCtx.JSON(http.StatusOK, resp)
+}
+
+func (c *Controller) GetAllUsers(ginCtx *gin.Context) {
+	ctx := ginCtx.Request.Context()
+
+	resp, err := c.usecases.GetAllUsers(&ctx)
+	if err != nil {
+		response.InternalError(c.logger, ginCtx, err, ginCtx.GetString(string(errorscode.CtxErrorCodeKey)))
+		return
+	}
+
 	ginCtx.JSON(http.StatusOK, resp)
 }

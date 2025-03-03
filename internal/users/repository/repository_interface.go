@@ -32,4 +32,7 @@ type UsersRepository interface {
 
 	// GetUserByUsername is a method to get a user by its username
 	GetUserByUsername(ctx *context.Context, username string) (*models.User, error)
+
+	// GetUsers is a method to get all the users
+	GetAllUsers(ctx *context.Context) ([]*models.User, error)
 }

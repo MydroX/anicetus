@@ -25,14 +25,15 @@ services:
     networks:
       - project-v
 
-  dashboard:
-    container_name: dashboard
-    build:
-      context: ..
-    ports:
-      - "8081:8081"
-    networks:
-      - project-v
+  # TODO: Fix hot reload for dashboard
+  # dashboard:
+  #   container_name: dashboard
+  #   build:
+  #     context: ..
+  #   ports:
+  #     - "8081:8081"
+  #   networks:
+  #     - project-v
 
 volumes:
   postgres:

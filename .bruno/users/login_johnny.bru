@@ -1,0 +1,23 @@
+meta {
+  name: login_johnny
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/api/v1/users/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "username": "{{username}}",
+    "password": "{{password}}"
+  }
+}
+
+vars:pre-request {
+  username: johnny
+  password: password123!password
+}

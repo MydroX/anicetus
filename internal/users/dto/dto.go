@@ -4,10 +4,21 @@ type CreateUserRequest struct {
 	Username string `json:"username" validate:"required,min=4,max=18"`
 	Password string `json:"password" validate:"required,min=14,max=72"`
 	Email    string `json:"email" validate:"required,email"`
-	Role     string `json:"role" validate:"required,oneof=ADMIN USER"`
+	Role     string `json:"role"`
 }
 
 type GetUserResponse struct {
+	UUID     string `json:"uuid"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Role     string `json:"role"`
+}
+
+type GetAllUsersResponse struct {
+	Users []*User `json:"users"`
+}
+
+type User struct {
 	UUID     string `json:"uuid"`
 	Username string `json:"username"`
 	Email    string `json:"email"`
@@ -33,7 +44,7 @@ type UpdateEmailRequest struct {
 type LoginRequest struct {
 	Username string `json:"username,omitempty" validate:"omitempty,min=4,max=18"`
 	Email    string `json:"email,omitempty" validate:"omitempty,email"`
-	Password string `json:"password" validate:"required,min=14,max=72"`
+	Password string `json:"password" validate:"required,min=8,max=72"`
 }
 
 type LoginResponse struct {

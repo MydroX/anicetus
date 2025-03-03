@@ -3,6 +3,7 @@ tmp
 cmd/**/config.yml
 cmd/**/config.yaml
 vendor
+.bruno/.DS_Store
 
 #temporary
 internal/users/repository/repository_test.go
