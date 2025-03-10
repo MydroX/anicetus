@@ -22,8 +22,6 @@ lint:
 
 go-test:
     stage: test
-    services:
-      - postgres
     script:
       - go test -v -coverpkg=./... -coverprofile=profile.cov ./...
       - go tool cover -func profile.cov

@@ -7,11 +7,12 @@ import (
 )
 
 type Config struct {
-	Env  string   `yaml:"env"`
-	Port string   `yaml:"port"`
-	DB   Database `yaml:"database"`
-	JWT  JWT      `yaml:"jwt"`
-	App  App      `yaml:"app"`
+	Env     string   `yaml:"env"`
+	Port    string   `yaml:"port"`
+	DB      Database `yaml:"database"`
+	JWT     JWT      `yaml:"jwt"`
+	App     App      `yaml:"app"`
+	Session Session  `yaml:"session"`
 }
 
 type App struct {
@@ -28,8 +29,22 @@ type Database struct {
 }
 
 type JWT struct {
-	ExpirationTime int    `yaml:"expiration_time"`
-	Secret         string `yaml:"secret"`
+	AccessToken  AccessToken  `yaml:"access_token"`
+	RefreshToken RefreshToken `yaml:"refresh_token"`
+}
+
+type AccessToken struct {
+	Expiration int    `yaml:"expiration"`
+	Secret     string `yaml:"secret"`
+}
+
+type RefreshToken struct {
+	Expiration int    `yaml:"expiration"`
+	Secret     string `yaml:"secret"`
+}
+
+type Session struct {
+	Persistent bool `yaml:"persistent"`
 }
 
 func LoadConfig() (*Config, error) {

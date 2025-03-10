@@ -1,4 +1,4 @@
-package users
+package controller
 
 import (
 	"MydroX/project-v/internal/common/errorscode"
@@ -8,6 +8,7 @@ import (
 	"MydroX/project-v/internal/users/mocks"
 	loggerpkg "MydroX/project-v/pkg/logger"
 	uuidpkg "MydroX/project-v/pkg/uuid"
+
 	"context"
 	"encoding/json"
 	"fmt"
@@ -23,7 +24,8 @@ import (
 )
 
 const (
-	v1 = "/api/v1/users"
+	v1    = "/api/v1"
+	users = "/users"
 
 	create = "/register"
 
@@ -35,8 +37,7 @@ type testServer struct {
 	mockUsecase *mocks.MockUsersUsecases
 }
 
-// TODO: Find better way and remove this
-func testRouter(logger *loggerpkg.Logger, controller Controller) *gin.Engine {
+func testRouter(logger *loggerpkg.Logger, controller ControllerInterface) *gin.Engine {
 	router := gin.Default()
 
 	err := router.SetTrustedProxies(nil)
@@ -47,7 +48,7 @@ func testRouter(logger *loggerpkg.Logger, controller Controller) *gin.Engine {
 	api := router.Group("api")
 	v1 := api.Group("/v1")
 
-	Router(v1, &controller)
+	Router(v1, controller)
 
 	return router
 }
@@ -58,8 +59,8 @@ func newServerTest(t *testing.T) testServer {
 	ctrl := gomock.NewController(t)
 	usecasesMock := mocks.NewMockUsersUsecases(ctrl)
 
-	c := NewController(logger, usecasesMock, &config.Config{})
-	router := testRouter(logger, *c)
+	c := New(logger, usecasesMock, &config.Config{})
+	router := testRouter(logger, c)
 
 	return testServer{
 		router:      router,
@@ -216,7 +217,7 @@ func Test_Get(t *testing.T) {
 	t.Run("[V1] Get user with success", func(t *testing.T) {
 		ctx := context.Background()
 
-		req, _ := http.NewRequest("GET", v1+"/"+uuid, nil)
+		req, _ := http.NewRequest("GET", v1+users+"/"+uuid, nil)
 
 		s.mockUsecase.EXPECT().Get(&ctx, uuid).Return(&user, nil)
 
@@ -226,7 +227,7 @@ func Test_Get(t *testing.T) {
 	})
 
 	t.Run("[V1] Get - Failed to validate UUID", func(t *testing.T) {
-		req, _ := http.NewRequest("GET", v1+"/"+"1", nil)
+		req, _ := http.NewRequest("GET", v1+users+"/"+"1", nil)
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -236,7 +237,7 @@ func Test_Get(t *testing.T) {
 	t.Run("[V1] Get - Failed to find user", func(t *testing.T) {
 		ctx := context.Background()
 
-		req, _ := http.NewRequest("GET", v1+"/"+uuid, nil)
+		req, _ := http.NewRequest("GET", v1+users+"/"+uuid, nil)
 
 		s.mockUsecase.EXPECT().Get(&ctx, uuid).DoAndReturn(
 			func(ctx *context.Context, _ string) (*dto.GetUserResponse, error) {
@@ -257,7 +258,7 @@ func Test_Get(t *testing.T) {
 	t.Run("[V1] Get -  Usecase error", func(t *testing.T) {
 		ctx := context.Background()
 
-		req, _ := http.NewRequest("GET", v1+"/"+uuid, nil)
+		req, _ := http.NewRequest("GET", v1+users+"/"+uuid, nil)
 
 		s.mockUsecase.EXPECT().Get(&ctx, uuid).Return(nil, fmt.Errorf("test error"))
 
@@ -284,7 +285,7 @@ func Test_Update(t *testing.T) {
 		}
 		userJSON, _ := json.Marshal(user)
 
-		req, _ := http.NewRequest("PUT", v1+"/"+uuid, strings.NewReader(string(userJSON)))
+		req, _ := http.NewRequest("PUT", v1+users+"/"+uuid, strings.NewReader(string(userJSON)))
 
 		s.mockUsecase.EXPECT().Update(&ctx, &user).Return(nil)
 
@@ -294,7 +295,7 @@ func Test_Update(t *testing.T) {
 	})
 
 	t.Run("[V1] Failed to bind JSON", func(t *testing.T) {
-		req, _ := http.NewRequest("PUT", v1+"/"+uuid, strings.NewReader(""))
+		req, _ := http.NewRequest("PUT", v1+users+"/"+uuid, strings.NewReader(""))
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -311,7 +312,7 @@ func Test_Update(t *testing.T) {
 		}
 		userJSON, _ := json.Marshal(user)
 
-		req, _ := http.NewRequest("PUT", v1+"/"+uuid, strings.NewReader(string(userJSON)))
+		req, _ := http.NewRequest("PUT", v1+users+"/"+uuid, strings.NewReader(string(userJSON)))
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -330,7 +331,7 @@ func Test_Update(t *testing.T) {
 		}
 		userJSON, _ := json.Marshal(user)
 
-		req, _ := http.NewRequest("PUT", v1+"/"+uuid, strings.NewReader(string(userJSON)))
+		req, _ := http.NewRequest("PUT", v1+users+"/"+uuid, strings.NewReader(string(userJSON)))
 
 		s.mockUsecase.EXPECT().Update(&ctx, &user).Return(fmt.Errorf("test error"))
 
@@ -353,7 +354,7 @@ func Test_UpdateEmail(t *testing.T) {
 		}
 		userJSON, _ := json.Marshal(user)
 
-		req, _ := http.NewRequest("PATCH", v1+"/"+uuid+"/email", strings.NewReader(string(userJSON)))
+		req, _ := http.NewRequest("PATCH", v1+users+"/"+uuid+"/email", strings.NewReader(string(userJSON)))
 
 		s.mockUsecase.EXPECT().UpdateEmail(&ctx, uuid, user.Email).Return(nil)
 
@@ -363,7 +364,7 @@ func Test_UpdateEmail(t *testing.T) {
 	})
 
 	t.Run("[V1] Update - Failed to bind JSON", func(t *testing.T) {
-		req, _ := http.NewRequest("PATCH", v1+"/"+uuid+"/email", strings.NewReader(""))
+		req, _ := http.NewRequest("PATCH", v1+users+"/"+uuid+"/email", strings.NewReader(""))
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -376,7 +377,7 @@ func Test_UpdateEmail(t *testing.T) {
 		}
 		userJSON, _ := json.Marshal(user)
 
-		req, _ := http.NewRequest("PATCH", v1+"/"+uuid+"/email", strings.NewReader(string(userJSON)))
+		req, _ := http.NewRequest("PATCH", v1+users+"/"+uuid+"/email", strings.NewReader(string(userJSON)))
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -384,7 +385,7 @@ func Test_UpdateEmail(t *testing.T) {
 	})
 
 	t.Run("[V1] Update - Failed to validate UUID", func(t *testing.T) {
-		req, _ := http.NewRequest("PATCH", v1+"/"+"notanuuid"+"/email", strings.NewReader(""))
+		req, _ := http.NewRequest("PATCH", v1+users+"/"+"notanuuid"+"/email", strings.NewReader(""))
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -399,7 +400,7 @@ func Test_UpdateEmail(t *testing.T) {
 		}
 		userJSON, _ := json.Marshal(user)
 
-		req, _ := http.NewRequest("PATCH", v1+"/"+uuid+"/email", strings.NewReader(string(userJSON)))
+		req, _ := http.NewRequest("PATCH", v1+users+"/"+uuid+"/email", strings.NewReader(string(userJSON)))
 
 		s.mockUsecase.EXPECT().UpdateEmail(&ctx, uuid, user.Email).Return(fmt.Errorf("test error"))
 
@@ -422,7 +423,7 @@ func Test_UpdatePassword(t *testing.T) {
 		}
 		userJSON, _ := json.Marshal(user)
 
-		req, _ := http.NewRequest("PATCH", v1+"/"+uuid+"/password", strings.NewReader(string(userJSON)))
+		req, _ := http.NewRequest("PATCH", v1+users+"/"+uuid+"/password", strings.NewReader(string(userJSON)))
 
 		s.mockUsecase.EXPECT().UpdatePassword(&ctx, uuid, user.Password).Return(nil)
 
@@ -432,7 +433,7 @@ func Test_UpdatePassword(t *testing.T) {
 	})
 
 	t.Run("[V1] Update - Failed to bind JSON", func(t *testing.T) {
-		req, _ := http.NewRequest("PATCH", v1+"/"+uuid+"/password", strings.NewReader(""))
+		req, _ := http.NewRequest("PATCH", v1+users+"/"+uuid+"/password", strings.NewReader(""))
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -445,7 +446,7 @@ func Test_UpdatePassword(t *testing.T) {
 		}
 		userJSON, _ := json.Marshal(user)
 
-		req, _ := http.NewRequest("PATCH", v1+"/"+uuid+"/password", strings.NewReader(string(userJSON)))
+		req, _ := http.NewRequest("PATCH", v1+users+"/"+uuid+"/password", strings.NewReader(string(userJSON)))
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -453,7 +454,7 @@ func Test_UpdatePassword(t *testing.T) {
 	})
 
 	t.Run("[V1] Update - Failed to validate UUID", func(t *testing.T) {
-		req, _ := http.NewRequest("PATCH", v1+"/"+"notanuuid"+"/password", strings.NewReader(""))
+		req, _ := http.NewRequest("PATCH", v1+users+"/"+"notanuuid"+"/password", strings.NewReader(""))
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -468,7 +469,7 @@ func Test_UpdatePassword(t *testing.T) {
 		}
 		userJSON, _ := json.Marshal(user)
 
-		req, _ := http.NewRequest("PATCH", v1+"/"+uuid+"/password", strings.NewReader(string(userJSON)))
+		req, _ := http.NewRequest("PATCH", v1+users+"/"+uuid+"/password", strings.NewReader(string(userJSON)))
 
 		s.mockUsecase.EXPECT().UpdatePassword(&ctx, uuid, user.Password).Return(fmt.Errorf("test error"))
 
@@ -486,7 +487,7 @@ func Test_Delete(t *testing.T) {
 	t.Run("[V1] Delete with success", func(t *testing.T) {
 		ctx := context.Background()
 
-		req, _ := http.NewRequest("DELETE", v1+"/"+uuid, nil)
+		req, _ := http.NewRequest("DELETE", v1+users+"/"+uuid, nil)
 
 		s.mockUsecase.EXPECT().Delete(&ctx, uuid).Return(nil)
 
@@ -496,7 +497,7 @@ func Test_Delete(t *testing.T) {
 	})
 
 	t.Run("[V1] Delete - failed to validate UUID", func(t *testing.T) {
-		req, _ := http.NewRequest("DELETE", v1+"/"+"notanuuid", nil)
+		req, _ := http.NewRequest("DELETE", v1+users+"/"+"notanuuid", nil)
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -506,127 +507,12 @@ func Test_Delete(t *testing.T) {
 	t.Run("[V1] Delete - Usecase error", func(t *testing.T) {
 		ctx := context.Background()
 
-		req, _ := http.NewRequest("DELETE", v1+"/"+uuid, nil)
+		req, _ := http.NewRequest("DELETE", v1+users+"/"+uuid, nil)
 
 		s.mockUsecase.EXPECT().Delete(&ctx, uuid).Return(fmt.Errorf("test error"))
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
-		assert.Equal(t, http.StatusInternalServerError, w.Code)
-	})
-}
-
-func Test_Login(t *testing.T) {
-	s := newServerTest(t)
-
-	t.Run("[V1] Login with success", func(t *testing.T) {
-		ctx := context.Background()
-
-		input := dto.LoginRequest{
-			Username: "test",
-			Password: "thisisatest123",
-		}
-
-		userJSON, _ := json.Marshal(input)
-
-		fmt.Println(v1 + "/login")
-		req, _ := http.NewRequest("POST", v1+"/login", strings.NewReader(string(userJSON)))
-
-		s.mockUsecase.EXPECT().Login(&ctx, input.Username, input.Email, input.Password).Return("token", nil)
-
-		w := httptest.NewRecorder()
-		s.router.ServeHTTP(w, req)
-
-		var resp dto.LoginResponse
-		_ = json.Unmarshal(w.Body.Bytes(), &resp)
-
-		assert.Equal(t, http.StatusOK, w.Code)
-		assert.NotEmpty(t, resp.Token)
-	})
-
-	t.Run("[V1] Login - Failed to bind JSON", func(t *testing.T) {
-		req, _ := http.NewRequest("POST", v1+"/login", strings.NewReader(""))
-
-		w := httptest.NewRecorder()
-		s.router.ServeHTTP(w, req)
-		assert.Equal(t, http.StatusBadRequest, w.Code)
-	})
-
-	t.Run("[V1] Login - Failed to validate JSON", func(t *testing.T) {
-		input := dto.LoginRequest{
-			Username: "tes",
-			Password: "thisisatest123",
-		}
-
-		userJSON, _ := json.Marshal(input)
-
-		req, _ := http.NewRequest("POST", v1+"/login", strings.NewReader(string(userJSON)))
-
-		w := httptest.NewRecorder()
-		s.router.ServeHTTP(w, req)
-		assert.Equal(t, http.StatusBadRequest, w.Code)
-	})
-
-	t.Run("[V1] Login - No username and email in body", func(t *testing.T) {
-		input := dto.LoginRequest{
-			Password: "thisisatest123",
-		}
-
-		userJSON, _ := json.Marshal(input)
-
-		req, _ := http.NewRequest("POST", v1+"/login", strings.NewReader(string(userJSON)))
-
-		w := httptest.NewRecorder()
-		s.router.ServeHTTP(w, req)
-
-		assert.Equal(t, http.StatusBadRequest, w.Code)
-	})
-
-	t.Run("[V1] Login - Failed to find user", func(t *testing.T) {
-		ctx := context.Background()
-
-		input := dto.LoginRequest{
-			Username: "test",
-			Password: "thisisatest123",
-		}
-
-		userJSON, _ := json.Marshal(input)
-
-		req, _ := http.NewRequest("POST", v1+"/login", strings.NewReader(string(userJSON)))
-
-		s.mockUsecase.EXPECT().Login(&ctx, input.Username, input.Email, input.Password).DoAndReturn(
-			func(ctx *context.Context, _ string, _ string, _ string) (string, error) {
-				*ctx = context.WithValue(*ctx, errorscode.CtxErrorCodeKey, errorscode.CODE_ENTITY_NOT_FOUND)
-				return "", fmt.Errorf("user not found")
-			})
-
-		w := httptest.NewRecorder()
-		s.router.ServeHTTP(w, req)
-
-		resp := response.ErrorResponse{}
-		_ = json.Unmarshal(w.Body.Bytes(), &resp)
-
-		assert.Equal(t, http.StatusNotFound, w.Code)
-		assert.Equal(t, errorscode.CODE_ENTITY_NOT_FOUND, resp.Code)
-	})
-
-	t.Run("[V1] Login - Usecase error", func(t *testing.T) {
-		ctx := context.Background()
-
-		input := dto.LoginRequest{
-			Username: "test",
-			Password: "thisisatest123",
-		}
-
-		userJSON, _ := json.Marshal(input)
-
-		req, _ := http.NewRequest("POST", v1+"/login", strings.NewReader(string(userJSON)))
-
-		s.mockUsecase.EXPECT().Login(&ctx, input.Username, input.Email, input.Password).Return("", fmt.Errorf("test error"))
-
-		w := httptest.NewRecorder()
-		s.router.ServeHTTP(w, req)
-
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 	})
 }
@@ -638,7 +524,7 @@ func Test_GetAllUsers(t *testing.T) {
 	t.Run("[V1] Get all users with success", func(t *testing.T) {
 		ctx := context.Background()
 
-		req, _ := http.NewRequest("GET", v1+"/", nil)
+		req, _ := http.NewRequest("GET", v1+users+"/", nil)
 
 		usecaseResp := dto.GetAllUsersResponse{
 			Users: []*dto.User{
@@ -658,7 +544,7 @@ func Test_GetAllUsers(t *testing.T) {
 	t.Run("[V1] Get all users - Usecase error", func(t *testing.T) {
 		ctx := context.Background()
 
-		req, _ := http.NewRequest("GET", v1+"/", nil)
+		req, _ := http.NewRequest("GET", v1+users+"/", nil)
 
 		s.mockUsecase.EXPECT().GetAllUsers(&ctx).Return(nil, fmt.Errorf("test error"))
 

@@ -1,4 +1,4 @@
-package users
+package controller
 
 import (
 	"MydroX/project-v/internal/common/errorscode"
@@ -17,18 +17,17 @@ import (
 
 const UUID = "uuid"
 
-type Controller struct {
+type controller struct {
 	logger   *logger.Logger
 	validate *validator.Validate
 	usecases usecases.UsersUsecases
 	config   *config.Config
 }
 
-// NewController is the interface for the controller.
-func NewController(l *logger.Logger, u usecases.UsersUsecases, c *config.Config) *Controller {
+func New(l *logger.Logger, u usecases.UsersUsecases, c *config.Config) ControllerInterface {
 	validator := validator.New()
 
-	return &Controller{
+	return &controller{
 		validate: validator,
 		logger:   l,
 		usecases: u,
@@ -36,7 +35,7 @@ func NewController(l *logger.Logger, u usecases.UsersUsecases, c *config.Config)
 	}
 }
 
-func (c *Controller) CreateUser(ginCtx *gin.Context) {
+func (c *controller) CreateUser(ginCtx *gin.Context) {
 	var request dto.CreateUserRequest
 	ctx := ginCtx.Request.Context()
 
@@ -73,7 +72,7 @@ func (c *Controller) CreateUser(ginCtx *gin.Context) {
 	ginCtx.JSON(http.StatusCreated, gin.H{"message": "user created"})
 }
 
-func (c *Controller) GetUser(ginCtx *gin.Context) {
+func (c *controller) GetUser(ginCtx *gin.Context) {
 	ctx := ginCtx.Request.Context()
 
 	userUUID := ginCtx.Param(UUID)
@@ -97,7 +96,7 @@ func (c *Controller) GetUser(ginCtx *gin.Context) {
 	ginCtx.JSON(http.StatusOK, resp)
 }
 
-func (c *Controller) UpdateUser(ginCtx *gin.Context) {
+func (c *controller) UpdateUser(ginCtx *gin.Context) {
 	var request dto.UpdateUserRequest
 	ctx := ginCtx.Request.Context()
 
@@ -122,7 +121,7 @@ func (c *Controller) UpdateUser(ginCtx *gin.Context) {
 	ginCtx.JSON(http.StatusOK, gin.H{"message": "user updated"})
 }
 
-func (c *Controller) UpdateEmail(ginCtx *gin.Context) {
+func (c *controller) UpdateEmail(ginCtx *gin.Context) {
 	var request dto.UpdateEmailRequest
 	ctx := ginCtx.Request.Context()
 
@@ -155,7 +154,7 @@ func (c *Controller) UpdateEmail(ginCtx *gin.Context) {
 	ginCtx.JSON(http.StatusOK, gin.H{"message": "email updated"})
 }
 
-func (c *Controller) UpdatePassword(ginCtx *gin.Context) {
+func (c *controller) UpdatePassword(ginCtx *gin.Context) {
 	var request dto.UpdatePasswordRequest
 	ctx := ginCtx.Request.Context()
 
@@ -189,7 +188,7 @@ func (c *Controller) UpdatePassword(ginCtx *gin.Context) {
 	ginCtx.JSON(http.StatusOK, gin.H{"message": "password updated"})
 }
 
-func (c *Controller) DeleteUser(ginCtx *gin.Context) {
+func (c *controller) DeleteUser(ginCtx *gin.Context) {
 	ctx := ginCtx.Request.Context()
 
 	userUUID := ginCtx.Param(UUID)
@@ -209,45 +208,7 @@ func (c *Controller) DeleteUser(ginCtx *gin.Context) {
 	ginCtx.JSON(http.StatusOK, gin.H{"message": "user deleted"})
 }
 
-func (c *Controller) Login(ginCtx *gin.Context) {
-	var request dto.LoginRequest
-	ctx := ginCtx.Request.Context()
-
-	if err := ginCtx.BindJSON(&request); err != nil {
-		response.BadRequest(c.logger, ginCtx, errorscode.CODE_INVALID_REQUEST)
-		return
-	}
-
-	err := c.validate.Struct(request)
-	if err != nil {
-		response.BadRequest(c.logger, ginCtx, errorscode.CODE_INVALID_REQUEST)
-		return
-	}
-
-	if request.Username == "" && request.Email == "" {
-		response.BadRequest(c.logger, ginCtx, errorscode.CODE_INVALID_REQUEST)
-		return
-	}
-
-	token, err := c.usecases.Login(&ctx, request.Username, request.Email, request.Password)
-	if err != nil {
-		if ctx.Value(errorscode.CtxErrorCodeKey) == errorscode.CODE_ENTITY_NOT_FOUND {
-			response.NotFound(c.logger, ginCtx, errorscode.CODE_ENTITY_NOT_FOUND)
-			return
-		}
-		response.InternalError(c.logger, ginCtx, err, ginCtx.GetString(string(errorscode.CtxErrorCodeKey)))
-		return
-	}
-
-	ginCtx.SetCookie("auth_token", token, c.config.JWT.ExpirationTime, "/", c.config.App.Domain, true, true)
-
-	resp := dto.LoginResponse{
-		Token: token,
-	}
-	ginCtx.JSON(http.StatusOK, resp)
-}
-
-func (c *Controller) GetAllUsers(ginCtx *gin.Context) {
+func (c *controller) GetAllUsers(ginCtx *gin.Context) {
 	ctx := ginCtx.Request.Context()
 
 	resp, err := c.usecases.GetAllUsers(&ctx)

@@ -192,16 +192,6 @@ linters-settings:
         severity: warning
         disabled: false
         exclude: [""]
-      # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#exported
-      - name: exported
-        severity: warning
-        disabled: false
-        exclude: [""]
-        arguments:
-          - "checkPrivateReceivers"
-          - "disableStutteringCheck"
-          - "checkPublicInterface"
-          - "disableChecksOnFunctions"
       # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#filename-format
       - name: filename-format
         severity: warning

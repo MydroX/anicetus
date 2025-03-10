@@ -1,20 +1,24 @@
 package api
 
 import (
-	"MydroX/project-v/internal/config"
-	usersservice "MydroX/project-v/internal/users"
-	"MydroX/project-v/internal/users/repository"
-	"MydroX/project-v/internal/users/usecases"
-	loggerpkg "MydroX/project-v/pkg/logger"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
+
+	"MydroX/project-v/internal/config"
+	iamcontroller "MydroX/project-v/internal/iam/controller"
+	iamusecases "MydroX/project-v/internal/iam/usecases"
+	userscontroller "MydroX/project-v/internal/users/controller"
+	usersrepository "MydroX/project-v/internal/users/repository"
+	usersusecases "MydroX/project-v/internal/users/usecases"
+	loggerpkg "MydroX/project-v/pkg/logger"
 )
 
 type service struct {
-	usersController *usersservice.Controller
+	usersController userscontroller.ControllerInterface
+	iamController   iamcontroller.ControllerInterface
 }
 
 // Router is a function to define the routes for the service.
@@ -32,26 +36,31 @@ func Router(logger *loggerpkg.Logger, service service) *gin.Engine {
 		})
 	})
 
-	api := router.Group("api")
-
 	// - Middleware SECRET KEY API for every endpoint in headers
 
+	api := router.Group("api")
 	v1 := api.Group("/v1")
-	usersservice.Router(v1, service.usersController)
+
+	iamcontroller.Router(v1, service.iamController)
+	userscontroller.Router(v1, service.usersController)
 
 	return router
 }
 
 // NewServer is a function to start the server for the service.
 func NewServer(c *config.Config, logger *loggerpkg.Logger, db *pgxpool.Pool) {
-	usersRepository := repository.NewRepository(logger, db)
+	usersRepository := usersrepository.NewRepository(logger, db)
+	// iamRepository := iamrepository.NewRepository(logger, db)
 
-	usersUsecase := usecases.NewUsecases(logger, usersRepository, &c.JWT)
+	usersUsecase := usersusecases.NewUsecases(logger, usersRepository, &c.JWT)
+	iamUsecase := iamusecases.NewUsecases(logger, usersRepository, &c.JWT)
 
-	usersController := usersservice.NewController(logger, usersUsecase, c)
+	usersController := userscontroller.New(logger, usersUsecase, c)
+	iamController := iamcontroller.New(logger, iamUsecase, c)
 
 	service := service{
 		usersController: usersController,
+		iamController:   iamController,
 	}
 
 	router := Router(logger, service)

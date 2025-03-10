@@ -1,13 +1,12 @@
-package users
+package controller
 
 import "github.com/gin-gonic/gin"
 
-func Router(v1 *gin.RouterGroup, c *Controller) {
-	users := v1.Group("/users")
+func Router(v1 *gin.RouterGroup, c ControllerInterface) {
+	// Public route
+	v1.POST("/register", c.CreateUser)
 
-	// Public routes
-	users.POST("/register", c.CreateUser)
-	users.POST("/login", c.Login)
+	users := v1.Group("/users")
 
 	// Logged in routes
 	users.PUT("/:uuid", c.UpdateUser)
