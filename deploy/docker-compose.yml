@@ -24,6 +24,17 @@ services:
       - postgres:/data/postgres
     networks:
       - project-v
+  
+  valkey:
+    container_name: valkey
+    image: valkey/valkey:8.1-alpine3.21
+    ports:
+      - "6379:6379" 
+    volumes:
+      - valkey_data:/data
+    restart: always
+    networks:
+      - project-v
 
   # TODO: Fix hot reload for dashboard
   # dashboard:
@@ -37,6 +48,7 @@ services:
 
 volumes:
   postgres:
+  valkey_data:
 
 networks:
   project-v:

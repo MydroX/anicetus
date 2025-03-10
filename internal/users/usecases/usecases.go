@@ -6,13 +6,10 @@ import (
 	"MydroX/project-v/internal/users/dto"
 	"MydroX/project-v/internal/users/models"
 	"MydroX/project-v/internal/users/repository"
-	"MydroX/project-v/pkg/jwt"
 	"MydroX/project-v/pkg/logger"
 	passwordpkg "MydroX/project-v/pkg/password"
 	uuidpkg "MydroX/project-v/pkg/uuid"
 	"context"
-	"fmt"
-	"time"
 )
 
 var prefix = "user"
@@ -23,7 +20,6 @@ type usecases struct {
 	jwtConfig  *config.JWT
 }
 
-// NewUsecases is creating an interface for all the usecases of the service.
 func NewUsecases(l *logger.Logger, r repository.UsersRepository, jwtConfig *config.JWT) UsersUsecases {
 	return &usecases{
 		logger:     l,
@@ -108,31 +104,6 @@ func (u *usecases) Delete(ctx *context.Context, uuid string) error {
 	return err
 }
 
-func (u *usecases) Login(ctx *context.Context, username, email, password string) (string, error) {
-	switch {
-	case email != "":
-		user, err := u.repository.GetUserByEmail(ctx, email)
-		if err != nil {
-			return "", err
-		}
-
-		token, err := login(u.jwtConfig, user.UUID, password, user.Password)
-
-		return token, err
-
-	case username != "":
-		user, err := u.repository.GetUserByUsername(ctx, username)
-		if err != nil {
-			return "", err
-		}
-
-		token, err := login(u.jwtConfig, user.UUID, password, user.Password)
-
-		return token, err
-	}
-	return "", fmt.Errorf("username or email must be provided")
-}
-
 func (u *usecases) GetAllUsers(ctx *context.Context) (*dto.GetAllUsersResponse, error) {
 	users, err := u.repository.GetAllUsers(ctx)
 	if err != nil {
@@ -153,19 +124,4 @@ func (u *usecases) GetAllUsers(ctx *context.Context) (*dto.GetAllUsersResponse, 
 	}
 
 	return &res, err
-}
-
-func login(jwtConfig *config.JWT, userUUID, password, passwordCrypted string) (string, error) {
-	if !passwordpkg.CheckPasswordHash(password, passwordCrypted) {
-		return "", fmt.Errorf("invalid password")
-	}
-	expirationTime := time.Now().Add(time.Second * time.Duration(jwtConfig.ExpirationTime))
-
-	token, _ := jwt.CreateToken(
-		expirationTime,
-		jwtConfig.Secret,
-		userUUID,
-	)
-
-	return token, nil
 }

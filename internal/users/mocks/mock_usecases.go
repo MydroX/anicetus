@@ -99,21 +99,6 @@ func (mr *MockUsersUsecasesMockRecorder) GetAllUsers(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllUsers", reflect.TypeOf((*MockUsersUsecases)(nil).GetAllUsers), ctx)
 }
 
-// Login mocks base method.
-func (m *MockUsersUsecases) Login(ctx *context.Context, username, email, password string) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Login", ctx, username, email, password)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Login indicates an expected call of Login.
-func (mr *MockUsersUsecasesMockRecorder) Login(ctx, username, email, password any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockUsersUsecases)(nil).Login), ctx, username, email, password)
-}
-
 // Update mocks base method.
 func (m *MockUsersUsecases) Update(ctx *context.Context, user *dto.UpdateUserRequest) error {
 	m.ctrl.T.Helper()

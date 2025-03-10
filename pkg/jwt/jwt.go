@@ -1,12 +1,33 @@
 package jwt
 
 import (
+	"errors"
+	"fmt"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func CreateToken(expirationTime time.Time, secretKey, userID string) (string, error) {
+type Token string
+
+type JWTError string
+
+var (
+	JWTNoError             JWTError
+	JWTExpiredToken        JWTError = "expired token"
+	JWTInvalidToken        JWTError = "invalid token"
+	JWTSigInvalid          JWTError = "signature invalid"
+	JWTNoToken             JWTError = "no token"
+	JWTUnexpectedSigMethod JWTError = "unexpected signing method"
+)
+
+type Claims struct {
+	Username string `json:"username"`
+	jwt.RegisteredClaims
+}
+
+func CreateAccessToken(expirationTime time.Time, secretKey, userID string) (string, error) {
 	expT := jwt.NewNumericDate(expirationTime)
 
 	claims := jwt.RegisteredClaims{
@@ -21,15 +42,47 @@ func CreateToken(expirationTime time.Time, secretKey, userID string) (string, er
 	return ss, nil
 }
 
-// func VerifyToken(tokenString string) error {
-// 	token, err := jwt.Parse("token", func(token *jwt.Token) (interface{}, error) {
-// 		return []byte("secret"), nil
-// 	})
-// 	if err != nil {
-// 		return err
-// 	}
-// 	if !token.Valid {
-// 		return jwt.ErrSignatureInvalid
-// 	}
-// 	return nil
-// }
+func CreateRefreshToken(expirationTime time.Time, secretKey, userID string) (string, error) {
+	expT := jwt.NewNumericDate(expirationTime)
+
+	claims := jwt.RegisteredClaims{
+		Subject:   userID,
+		ExpiresAt: expT,
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
+	ss, err := token.SignedString([]byte(secretKey))
+	if err != nil {
+		return "", err
+	}
+	return ss, nil
+}
+
+func ParseToken(tokenString string) (*Claims, JWTError) {
+	claims := &Claims{}
+
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, keyFunc)
+
+	if token.Valid {
+		return claims, JWTNoError
+	}
+
+	switch {
+	case errors.Is(err, jwt.ErrTokenMalformed):
+		return nil, JWTInvalidToken
+	case errors.Is(err, jwt.ErrTokenSignatureInvalid):
+		return nil, JWTSigInvalid
+	case errors.Is(err, jwt.ErrTokenExpired) || errors.Is(err, jwt.ErrTokenNotValidYet):
+		return nil, JWTExpiredToken
+	}
+
+	return nil, JWTInvalidToken
+}
+
+func keyFunc(token *jwt.Token) (any, error) {
+	secretKey := os.Getenv("JWT_SECRET")
+
+	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+		return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+	}
+	return secretKey, nil
+}
