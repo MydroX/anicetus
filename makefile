@@ -13,17 +13,25 @@ down-dev:
 	@echo "Stopping..."
 	@docker compose -f deploy/docker-compose.yml -f deploy/dev/docker-compose.yml down
 	
+test:
+	@echo "Testing..."
+	@go test -v ./...
+
 build:
 	@echo "Building..."
 	@go build -o bin/$(APP_NAME) cmd/$(APP_NAME)/main.go
 
 create-migration:
 	@echo "Creating migration..."
-	@GOOSE_DRIVER=postgres GOOSE_MIGRATION_DIR=migrations GOOSE_DBSTRING="postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable" goose create $(NAME) sql
+	@GOOSE_DRIVER=postgres GOOSE_MIGRATION_DIR=migrations GOOSE_DBSTRING="postgres://postgres:postgres@localhost:5400/postgres?sslmode=disable" goose create $(NAME) sql
 
 migrate-up:
 	@echo "Migrating up..."
-	@GOOSE_DRIVER=postgres GOOSE_MIGRATION_DIR=migrations GOOSE_DBSTRING="postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable" goose up
+	@GOOSE_DRIVER=postgres GOOSE_MIGRATION_DIR=migrations GOOSE_DBSTRING="postgres://postgres:postgres@localhost:5400/postgres?sslmode=disable" goose up
+
+migrate-down:
+	@echo "Migrating up..."
+	@GOOSE_DRIVER=postgres GOOSE_MIGRATION_DIR=migrations GOOSE_DBSTRING="postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable" goose down
 
 migrate-reset:
 	@echo "Reset database..."
@@ -34,5 +42,6 @@ lint:
 	@golangci-lint -v run
 
 generate-mocks:
-	@echo "Generating code..."
+	@echo "Generating mocks code..."
 	@go generate ./...
+	@echo "Mocks generated! Enjoy writing tests! 🥸"

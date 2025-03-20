@@ -1,42 +1,52 @@
 package usecases
 
 import (
-	"MydroX/project-v/internal/common/errorscode"
-	"MydroX/project-v/internal/config"
-	"MydroX/project-v/internal/iam/dto"
-	"MydroX/project-v/internal/users/mocks"
-	"MydroX/project-v/internal/users/models"
-	"MydroX/project-v/pkg/uuid"
-	"context"
-	"fmt"
+	"MydroX/anicetus/internal/common/context"
+	errorsutil "MydroX/anicetus/internal/common/errors"
+	"MydroX/anicetus/internal/config"
+	"MydroX/anicetus/internal/iam/dto"
+	iammocks "MydroX/anicetus/internal/iam/mocks"
+	usersmocks "MydroX/anicetus/internal/users/mocks"
+	"MydroX/anicetus/internal/users/models"
+	"MydroX/anicetus/pkg/uuid"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
-	loggerpkg "MydroX/project-v/pkg/logger"
-	passwordpkg "MydroX/project-v/pkg/password"
+	loggerpkg "MydroX/anicetus/pkg/logger"
+	passwordpkg "MydroX/anicetus/pkg/password"
 )
 
 var userPrefix = "user"
 
-func createTestUsecase(t *testing.T) (*mocks.MockUsersRepository, IamUsecasesInterface) {
+func createTestUsecase(t *testing.T) (*usersmocks.MockUsersRepository, *iammocks.MockIamRepository, IamUsecasesInterface) {
 	ctrl := gomock.NewController(t)
-	repositoryMock := mocks.NewMockUsersRepository(ctrl)
+	usersRepositoryMock := usersmocks.NewMockUsersRepository(ctrl)
+	iamRepositoryMock := iammocks.NewMockIamRepository(ctrl)
 
 	logger := loggerpkg.New("TEST")
-	u := NewUsecases(logger, repositoryMock, &config.JWT{})
+	u := New(logger, usersRepositoryMock, iamRepositoryMock, &config.Session{
+		HashConfig: config.HashConfig{
+			SaltLength:  16,
+			Iterations:  4,
+			Memory:      64 * 1024,
+			Parallelism: 4,
+			KeyLength:   32,
+		},
+	})
 
-	return repositoryMock, u
+	return usersRepositoryMock, iamRepositoryMock, u
 }
 
 func Test_Login(t *testing.T) {
-	r, u := createTestUsecase(t)
+	usersRepository, iamRepository, u := createTestUsecase(t)
 
 	userUUID := uuid.NewWithPrefix(userPrefix)
 
 	t.Run("[V1] Login user with email", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := context.NewAppContextTest()
 
 		p, err := passwordpkg.Hash("thisisapassword123")
 		assert.NoError(t, err)
@@ -52,17 +62,18 @@ func Test_Login(t *testing.T) {
 			Password: "thisisapassword123",
 		}
 
-		r.EXPECT().GetUserByEmail(&ctx, req.Email).Return(&userFromDB, nil)
+		usersRepository.EXPECT().GetUserByEmail(gomock.Any(), req.Email).Return(&userFromDB, nil)
+		iamRepository.EXPECT().SaveSession(gomock.Any(), gomock.Any()).Return(nil)
 
-		accessToken, refreshToken, err := u.Login(&ctx, "", req.Email, req.Password)
+		accessToken, refreshToken, apiErr := u.Login(ctx, &req)
 
 		assert.NotEmpty(t, accessToken)
 		assert.NotEmpty(t, refreshToken)
-		assert.NoError(t, err)
+		assert.Nil(t, apiErr)
 	})
 
 	t.Run("[V1] Login user with username", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := context.NewAppContextTest()
 
 		p, err := passwordpkg.Hash("thisisapassword123")
 		assert.NoError(t, err)
@@ -79,13 +90,14 @@ func Test_Login(t *testing.T) {
 			Password: "thisisapassword123",
 		}
 
-		r.EXPECT().GetUserByUsername(&ctx, req.Username).Return(&userFromDB, nil)
+		usersRepository.EXPECT().GetUserByUsername(gomock.Any(), req.Username).Return(&userFromDB, nil)
+		iamRepository.EXPECT().SaveSession(gomock.Any(), gomock.Any()).Return(nil)
 
-		accessToken, refreshToken, err := u.Login(&ctx, req.Username, "", req.Password)
+		accessToken, refreshToken, apiErr := u.Login(ctx, &req)
 
 		assert.NotEmpty(t, accessToken)
 		assert.NotEmpty(t, refreshToken)
-		assert.NoError(t, err)
+		assert.Nil(t, apiErr)
 	})
 
 	t.Run("[V1] Login user with wrong password", func(t *testing.T) {
@@ -94,63 +106,48 @@ func Test_Login(t *testing.T) {
 	})
 
 	t.Run("[V1] Login user without email or username", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := context.NewAppContextTest()
 		req := dto.LoginRequest{
 			Email:    "",
 			Username: "",
 			Password: "thisisapassword123",
 		}
 
-		_, _, err := u.Login(&ctx, req.Username, req.Email, req.Password)
-		assert.Error(t, err)
+		_, _, err := u.Login(ctx, &req)
+		assert.Error(t, err.Err)
 	})
 
 	t.Run("[V1] Login user, email not found", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := context.NewAppContextTest()
 
 		req := dto.LoginRequest{
 			Email:    "test@test.com",
 			Password: "thisisapassword123",
 		}
 
-		r.EXPECT().GetUserByEmail(&ctx, req.Email).DoAndReturn(
-			func(ctx *context.Context, _ string) (*models.User, error) {
-				*ctx = context.WithValue(*ctx, errorscode.CtxErrorCodeKey, errorscode.CODE_ENTITY_NOT_FOUND)
-				return nil, fmt.Errorf("user not found")
-			})
+		usersRepository.EXPECT().GetUserByEmail(gomock.Any(), req.Email).Return(nil, errorsutil.New(errorsutil.ERROR_NOT_FOUND, "user not found", errors.New("user not found")))
 
-		_, _, err := u.Login(&ctx, "", req.Email, req.Password)
+		_, _, err := u.Login(ctx, &req)
 
-		errorCode := ctx.Value(errorscode.CtxErrorCodeKey)
-
-		assert.Equal(t, errorscode.CODE_ENTITY_NOT_FOUND, errorCode)
-		assert.Error(t, err)
+		assert.Error(t, err.Err)
 	})
 
 	t.Run("[V1] Login user, username not found", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := context.NewAppContextTest()
 
 		req := dto.LoginRequest{
 			Username: "test",
 			Password: "thisisapassword123",
 		}
 
-		r.EXPECT().GetUserByUsername(&ctx, req.Username).DoAndReturn(
-			func(ctx *context.Context, _ string) (*models.User, error) {
-				*ctx = context.WithValue(*ctx, errorscode.CtxErrorCodeKey, errorscode.CODE_ENTITY_NOT_FOUND)
-				return nil, fmt.Errorf("user not found")
-			})
+		usersRepository.EXPECT().GetUserByUsername(gomock.Any(), req.Username).Return(nil, errorsutil.New(errorsutil.ERROR_NOT_FOUND, "user not found", errors.New("user not found")))
+		_, _, err := u.Login(ctx, &req)
 
-		_, _, err := u.Login(&ctx, req.Username, "", req.Password)
-
-		errorCode := ctx.Value(errorscode.CtxErrorCodeKey)
-
-		assert.Equal(t, errorscode.CODE_ENTITY_NOT_FOUND, errorCode)
-		assert.Error(t, err)
+		assert.Error(t, err.Err)
 	})
 
 	t.Run("[V1] Login user, wrong password", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := context.NewAppContextTest()
 
 		req := dto.LoginRequest{
 			Email:    "test@test.com",
@@ -166,10 +163,10 @@ func Test_Login(t *testing.T) {
 			Password: p,
 		}
 
-		r.EXPECT().GetUserByEmail(&ctx, req.Email).Return(&userFromDB, nil)
+		usersRepository.EXPECT().GetUserByEmail(gomock.Any(), req.Email).Return(&userFromDB, nil)
 
-		_, _, err = u.Login(&ctx, "", req.Email, req.Password)
+		_, _, apiErr := u.Login(ctx, &req)
 
-		assert.Error(t, err)
+		assert.Error(t, apiErr.Err)
 	})
 }

@@ -1,62 +1,131 @@
 package response
 
 import (
-	"MydroX/project-v/internal/common/errorscode"
-	loggerpkg "MydroX/project-v/pkg/logger"
+	"MydroX/anicetus/internal/common/context"
+	"MydroX/anicetus/internal/common/errors"
+	loggerpkg "MydroX/anicetus/pkg/logger"
 	"fmt"
 	"net/http"
+	"os"
+)
 
-	"github.com/gin-gonic/gin"
+const (
+	dev     = "dev"
+	staging = "staging"
+	prod    = "prod"
 )
 
 type ErrorResponse struct {
 	Message string `json:"message"`
 	Code    string `json:"code"`
+	TraceId string `json:"trace_id"`
 }
 
-// logAndError is a function to handle logAndError response
-// The function will log the logAndError message and return the logAndError message to the client.
-// In the case of debug mode, the logAndError message will be shown, otherwise, a generic logAndError message will be shown.
-func logAndError(logger *loggerpkg.Logger, ctx *gin.Context, httpCode int, errorMessage, apiErrorCode, messageAPI string) {
-	var errorCode string
+type ErrorOption func(*errorOptions)
+
+type errorOptions struct {
+	logMessage    string
+	clientMessage string
+}
+
+// WithLogMessage sets a custom log message
+func WithLogMessage(msg string, args ...any) ErrorOption {
+	return func(o *errorOptions) {
+		if len(args) > 0 {
+			o.logMessage = fmt.Sprintf(msg, args...)
+		} else {
+			o.logMessage = msg
+		}
+	}
+}
+
+// WithClientMessage sets a custom client-facing message
+func WithClientMessage(msg string) ErrorOption {
+	return func(o *errorOptions) {
+		o.clientMessage = msg
+	}
+}
+
+// WithDebugLog sets the log message to be the error message only when debug is enabled in environment
+func WithDebugLog(msg string, args ...any) ErrorOption {
+	return func(o *errorOptions) {
+		if len(args) > 0 {
+			o.logMessage = fmt.Sprintf(msg, args...)
+		} else {
+			o.logMessage = msg
+		}
+	}
+}
+
+// Error sends an error response with the given HTTP status code
+func Error(logger *loggerpkg.Logger, ctx *context.AppContext, httpCode int, apiErrorCode string, opts ...ErrorOption) {
+	// Default options
+	options := &errorOptions{
+		logMessage:    "Error occurred",
+		clientMessage: "An error occurred",
+	}
+
+	// Apply provided options
+	for _, opt := range opts {
+		opt(options)
+	}
 
 	if apiErrorCode == "" {
-		errorCode = errorscode.CODE_UNKNOWN_ERROR
-	} else {
-		errorCode = apiErrorCode
+		apiErrorCode = errors.ERROR_UNKNOWN_ERROR
 	}
 
-	logger.Zap.Error(fmt.Sprintf("[%d] | [%s] | %s", httpCode, errorCode, errorMessage))
-	if logger.Debug {
-		ctx.JSON(httpCode, gin.H{"error": errorMessage})
-		return
+	// Get trace ID
+	traceID := ctx.EnsureTraceID()
+
+	// Log debug
+	if os.Getenv("env") == dev || os.Getenv("env") == staging {
+		logger.Zap.Debug(fmt.Sprintf("[%d] | [%s] | %s | %s",
+			httpCode, apiErrorCode, traceID, options.logMessage))
 	}
 
-	ctx.JSON(httpCode, ErrorResponse{
-		Message: messageAPI,
-		Code:    errorCode,
+	// Log the error
+	logger.Zap.Error(fmt.Sprintf("[%d] | [%s] | %s | %s",
+		httpCode, apiErrorCode, traceID, options.logMessage))
+
+	ctx.GinContext().JSON(httpCode, ErrorResponse{
+		Message: options.clientMessage,
+		Code:    apiErrorCode,
+		TraceId: traceID,
 	})
 }
 
-// InternalError is a function to handle error response for internal server error
-func InternalError(logger *loggerpkg.Logger, ctx *gin.Context, err error, apiErrorCode string) {
-	logAndError(logger, ctx, http.StatusInternalServerError, err.Error(), apiErrorCode, "internal error")
+// InternalError sends a 500 Internal Server Error response
+func InternalError(logger *loggerpkg.Logger, ctx *context.AppContext, err *errors.Err, opts ...ErrorOption) {
+	defaultOpts := []ErrorOption{
+		WithLogMessage(err.Err.Error()),
+		WithClientMessage("Internal server error"),
+	}
+	Error(logger, ctx, http.StatusInternalServerError, err.Code, append(defaultOpts, opts...)...)
 }
 
-// BadRequest is a function to handle error response for invalid request
-func BadRequest(logger *loggerpkg.Logger, ctx *gin.Context, apiErrorCode string) {
-	logAndError(logger, ctx, http.StatusBadRequest, "invalid request", apiErrorCode, "invalid request")
+// BadRequest sends a 400 Bad Request response
+func BadRequest(logger *loggerpkg.Logger, ctx *context.AppContext, err *errors.Err, opts ...ErrorOption) {
+	defaultOpts := []ErrorOption{
+		WithLogMessage(err.Message),
+		WithClientMessage("Invalid request"),
+	}
+	Error(logger, ctx, http.StatusBadRequest, err.Code, append(defaultOpts, opts...)...)
 }
 
-func BadRequestWithMessage(logger *loggerpkg.Logger, ctx *gin.Context, apiErrorCode, message string) {
-	logAndError(logger, ctx, http.StatusBadRequest, "invalid request", apiErrorCode, message)
+// Conflict sends a 409 Conflict response
+func Conflict(logger *loggerpkg.Logger, ctx *context.AppContext, err *errors.Err, opts ...ErrorOption) {
+	defaultOpts := []ErrorOption{
+		WithLogMessage(err.Message),
+		WithClientMessage("Resource conflict"),
+	}
+	Error(logger, ctx, http.StatusConflict, err.Code, append(defaultOpts, opts...)...)
 }
 
-func Conflict(logger *loggerpkg.Logger, ctx *gin.Context, apiErrorCode string) {
-	logAndError(logger, ctx, http.StatusConflict, "conflict", apiErrorCode, "conflict")
-}
-
-// NotFound is a function to handle error response for not found entity
-func NotFound(logger *loggerpkg.Logger, ctx *gin.Context, apiErrorCode string) {
-	logAndError(logger, ctx, http.StatusNotFound, "not found", apiErrorCode, "entity not found")
+// NotFound sends a 404 Not Found response
+func NotFound(logger *loggerpkg.Logger, ctx *context.AppContext, err *errors.Err, opts ...ErrorOption) {
+	defaultOpts := []ErrorOption{
+		WithLogMessage(err.Message),
+		WithClientMessage("Entity not found"),
+	}
+	Error(logger, ctx, http.StatusNotFound, err.Code, append(defaultOpts, opts...)...)
 }

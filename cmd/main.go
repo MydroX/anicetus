@@ -1,10 +1,10 @@
 package main
 
 import (
-	app "MydroX/project-v/internal"
-	"MydroX/project-v/internal/config"
-	"MydroX/project-v/pkg/db"
-	loggerpkg "MydroX/project-v/pkg/logger"
+	app "MydroX/anicetus/internal"
+	"MydroX/anicetus/internal/config"
+	"MydroX/anicetus/pkg/db"
+	loggerpkg "MydroX/anicetus/pkg/logger"
 	"log"
 
 	"go.uber.org/zap"

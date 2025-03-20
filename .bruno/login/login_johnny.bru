@@ -1,7 +1,7 @@
 meta {
   name: login_johnny
   type: http
-  seq: 3
+  seq: 1
 }
 
 post {
@@ -13,7 +13,11 @@ post {
 body:json {
   {
     "username": "{{username}}",
-    "password": "{{password}}"
+    "password": "{{password}}",
+    "session": {
+      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0",
+      "ipv4_address": "192.168.1.1"
+    }
   }
 }
 

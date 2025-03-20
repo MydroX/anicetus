@@ -9,7 +9,6 @@ output:
     - format: colored-line-number
   print-issued-lines: true
   print-linter-name: true
-  uniq-by-line: true
   path-prefix: ""
   sort-results: true
   sort-order: severity
@@ -70,7 +69,7 @@ linters-settings:
         severity: warning
         disabled: false
         exclude: [""]
-        arguments: [7]
+        arguments: [12]
       # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#comment-spacings
       - name: comment-spacings
         severity: warning
@@ -209,7 +208,7 @@ linters-settings:
         severity: warning
         disabled: false
         exclude: [""]
-        arguments: [3]
+        arguments: [4]
       # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#identical-branches
       - name: identical-branches
         severity: warning
@@ -452,8 +451,10 @@ linters:
     - staticcheck
     - unused
     - revive
+    - whitespace
 issues:
   option: value
+  uniq-by-line: true
 severity:
   default-severity: warning
   case-sensitive: true
