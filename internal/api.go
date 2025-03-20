@@ -7,13 +7,14 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 
-	"MydroX/project-v/internal/config"
-	iamcontroller "MydroX/project-v/internal/iam/controller"
-	iamusecases "MydroX/project-v/internal/iam/usecases"
-	userscontroller "MydroX/project-v/internal/users/controller"
-	usersrepository "MydroX/project-v/internal/users/repository"
-	usersusecases "MydroX/project-v/internal/users/usecases"
-	loggerpkg "MydroX/project-v/pkg/logger"
+	"MydroX/anicetus/internal/config"
+	iamcontroller "MydroX/anicetus/internal/iam/controller"
+	iamrepository "MydroX/anicetus/internal/iam/repository"
+	iamusecases "MydroX/anicetus/internal/iam/usecases"
+	userscontroller "MydroX/anicetus/internal/users/controller"
+	usersrepository "MydroX/anicetus/internal/users/repository"
+	usersusecases "MydroX/anicetus/internal/users/usecases"
+	loggerpkg "MydroX/anicetus/pkg/logger"
 )
 
 type service struct {
@@ -49,11 +50,11 @@ func Router(logger *loggerpkg.Logger, service service) *gin.Engine {
 
 // NewServer is a function to start the server for the service.
 func NewServer(c *config.Config, logger *loggerpkg.Logger, db *pgxpool.Pool) {
-	usersRepository := usersrepository.NewRepository(logger, db)
-	// iamRepository := iamrepository.NewRepository(logger, db)
+	usersRepository := usersrepository.New(logger, db)
+	iamRepository := iamrepository.New(logger, db)
 
-	usersUsecase := usersusecases.NewUsecases(logger, usersRepository, &c.JWT)
-	iamUsecase := iamusecases.NewUsecases(logger, usersRepository, &c.JWT)
+	usersUsecase := usersusecases.New(logger, usersRepository, &c.Session)
+	iamUsecase := iamusecases.New(logger, usersRepository, iamRepository, &c.Session)
 
 	usersController := userscontroller.New(logger, usersUsecase, c)
 	iamController := iamcontroller.New(logger, iamUsecase, c)

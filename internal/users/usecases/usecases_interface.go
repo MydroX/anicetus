@@ -1,18 +1,19 @@
 package usecases
 
 import (
-	"MydroX/project-v/internal/users/dto"
-	"context"
+	"MydroX/anicetus/internal/common/context"
+	"MydroX/anicetus/internal/common/errors"
+	"MydroX/anicetus/internal/users/dto"
 )
 
-//go:generate mockgen -destination=../mocks/mock_usecases.go -package=mocks MydroX/project-v/internal/users/usecases UsersUsecases
+//go:generate mockgen -source=usecases_interface.go -destination=../mocks/mock_usecases.go -package=mocks
 
 type UsersUsecases interface {
-	Create(ctx *context.Context, user *dto.CreateUserRequest) error
-	Get(ctx *context.Context, uuid string) (*dto.GetUserResponse, error)
-	Update(ctx *context.Context, user *dto.UpdateUserRequest) error
-	UpdatePassword(ctx *context.Context, uuid string, password string) error
-	UpdateEmail(ctx *context.Context, uuid string, email string) error
-	Delete(ctx *context.Context, uuid string) error
-	GetAllUsers(ctx *context.Context) (*dto.GetAllUsersResponse, error)
+	Create(ctx *context.AppContext, user *dto.CreateUserRequest) *errors.Err
+	Get(ctx *context.AppContext, uuid string) (*dto.GetUserResponse, *errors.Err)
+	Update(ctx *context.AppContext, user *dto.UpdateUserRequest) *errors.Err
+	UpdatePassword(ctx *context.AppContext, uuid string, password string) *errors.Err
+	UpdateEmail(ctx *context.AppContext, uuid string, email string) *errors.Err
+	Delete(ctx *context.AppContext, uuid string) *errors.Err
+	GetAllUsers(ctx *context.AppContext) (*dto.GetAllUsersResponse, *errors.Err)
 }

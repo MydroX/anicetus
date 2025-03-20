@@ -1,9 +1,7 @@
 package iam
 
 import (
-	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -14,12 +12,12 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
-	"MydroX/project-v/internal/common/errorscode"
-	"MydroX/project-v/internal/common/response"
-	"MydroX/project-v/internal/config"
-	"MydroX/project-v/internal/iam/dto"
-	"MydroX/project-v/internal/iam/mocks"
-	loggerpkg "MydroX/project-v/pkg/logger"
+	"MydroX/anicetus/internal/common/errors"
+	"MydroX/anicetus/internal/common/response"
+	"MydroX/anicetus/internal/config"
+	"MydroX/anicetus/internal/iam/dto"
+	"MydroX/anicetus/internal/iam/mocks"
+	loggerpkg "MydroX/anicetus/pkg/logger"
 )
 
 const v1 = "/api/v1"
@@ -64,18 +62,23 @@ func Test_Login(t *testing.T) {
 	s := newServerTest(t)
 
 	t.Run("[V1] Login with success", func(t *testing.T) {
-		ctx := context.Background()
-
 		input := dto.LoginRequest{
 			Username: "test",
 			Password: "thisisatest123",
+			Session: dto.Session{
+				RefreshToken:   "refresh",
+				IPv4Address:    "0.0.0.0",
+				OS:             "linux",
+				Browser:        "chrome",
+				BrowserVersion: "1.0",
+			},
 		}
 
 		userJSON, _ := json.Marshal(input)
 
 		req, _ := http.NewRequest("POST", v1+"/login", strings.NewReader(string(userJSON)))
 
-		s.mockUsecase.EXPECT().Login(&ctx, input.Username, input.Email, input.Password).Return("access", "refresh", nil)
+		s.mockUsecase.EXPECT().Login(gomock.Any(), &input).Return("access", "refresh", nil)
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -84,7 +87,8 @@ func Test_Login(t *testing.T) {
 		_ = json.Unmarshal(w.Body.Bytes(), &resp)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		assert.NotEmpty(t, resp.Token)
+		assert.NotEmpty(t, resp.AccessToken)
+		assert.NotEmpty(t, resp.RefreshToken)
 	})
 
 	t.Run("[V1] Login - Failed to bind JSON", func(t *testing.T) {
@@ -126,23 +130,23 @@ func Test_Login(t *testing.T) {
 	})
 
 	t.Run("[V1] Login - Failed to find user", func(t *testing.T) {
-		ctx := context.Background()
-
 		input := dto.LoginRequest{
 			Username: "test",
 			Password: "thisisatest123",
+			Session: dto.Session{
+				RefreshToken:   "refresh",
+				IPv4Address:    "0.0.0.0",
+				OS:             "linux",
+				Browser:        "chrome",
+				BrowserVersion: "1.0",
+			},
 		}
 
 		userJSON, _ := json.Marshal(input)
 
 		req, _ := http.NewRequest("POST", v1+"/login", strings.NewReader(string(userJSON)))
 
-		s.mockUsecase.EXPECT().Login(&ctx, input.Username, input.Email, input.Password).DoAndReturn(
-			func(ctx *context.Context, _ string, _ string, _ string) (string, string, error) {
-				*ctx = context.WithValue(*ctx, errorscode.CtxErrorCodeKey, errorscode.CODE_ENTITY_NOT_FOUND)
-				return "", "", fmt.Errorf("user not found")
-			})
-
+		s.mockUsecase.EXPECT().Login(gomock.Any(), &input).Return("", "", errors.New(errors.ERROR_NOT_FOUND, "user not found", nil))
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
 
@@ -150,26 +154,52 @@ func Test_Login(t *testing.T) {
 		_ = json.Unmarshal(w.Body.Bytes(), &resp)
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
-		assert.Equal(t, errorscode.CODE_ENTITY_NOT_FOUND, resp.Code)
 	})
 
 	t.Run("[V1] Login - Usecase error", func(t *testing.T) {
-		ctx := context.Background()
-
 		input := dto.LoginRequest{
 			Username: "test",
 			Password: "thisisatest123",
+			Session: dto.Session{
+				RefreshToken:   "refresh",
+				IPv4Address:    "0.0.0.0",
+				OS:             "linux",
+				Browser:        "chrome",
+				BrowserVersion: "1.0",
+			},
 		}
 
 		userJSON, _ := json.Marshal(input)
 
 		req, _ := http.NewRequest("POST", v1+"/login", strings.NewReader(string(userJSON)))
 
-		s.mockUsecase.EXPECT().Login(&ctx, input.Username, input.Email, input.Password).Return("", "", fmt.Errorf("test error"))
+		s.mockUsecase.EXPECT().Login(gomock.Any(), &input).Return("", "", &errors.Err{Code: errors.ERROR_INTERNAL, Message: "internal error"})
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+
+	t.Run("[V1] Login - No email or username", func(t *testing.T) {
+		input := dto.LoginRequest{
+			Password: "thisisatest123",
+			Session: dto.Session{
+				RefreshToken:   "refresh",
+				IPv4Address:    "0.0.0.0",
+				OS:             "linux",
+				Browser:        "chrome",
+				BrowserVersion: "1.0",
+			},
+		}
+
+		userJSON, _ := json.Marshal(input)
+
+		req, _ := http.NewRequest("POST", v1+"/login", strings.NewReader(string(userJSON)))
+
+		w := httptest.NewRecorder()
+		s.router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
 	})
 }

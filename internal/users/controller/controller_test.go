@@ -1,15 +1,14 @@
 package controller
 
 import (
-	"MydroX/project-v/internal/common/errorscode"
-	"MydroX/project-v/internal/common/response"
-	"MydroX/project-v/internal/config"
-	"MydroX/project-v/internal/users/dto"
-	"MydroX/project-v/internal/users/mocks"
-	loggerpkg "MydroX/project-v/pkg/logger"
-	uuidpkg "MydroX/project-v/pkg/uuid"
+	"MydroX/anicetus/internal/common/errors"
+	"MydroX/anicetus/internal/common/response"
+	"MydroX/anicetus/internal/config"
+	"MydroX/anicetus/internal/users/dto"
+	"MydroX/anicetus/internal/users/mocks"
+	loggerpkg "MydroX/anicetus/pkg/logger"
+	uuidpkg "MydroX/anicetus/pkg/uuid"
 
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -72,12 +71,10 @@ func Test_Create(t *testing.T) {
 	s := newServerTest(t)
 
 	t.Run("[V1] Create user with success", func(t *testing.T) {
-		ctx := context.Background()
-
 		input := dto.CreateUserRequest{
 			Username: "test",
 			Email:    "test@test.com",
-			Password: "thisisatestpassword1234!@#$",
+			Password: "Thisisatestpassword1234!@#$",
 			Role:     "USER",
 		}
 		userJSON, _ := json.Marshal(input)
@@ -91,7 +88,7 @@ func Test_Create(t *testing.T) {
 			Role:     input.Role,
 		}
 
-		s.mockUsecase.EXPECT().Create(&ctx, user).Return(nil)
+		s.mockUsecase.EXPECT().Create(gomock.Any(), user).Return(nil)
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -141,16 +138,14 @@ func Test_Create(t *testing.T) {
 		_ = json.Unmarshal(w.Body.Bytes(), &resp)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
-		assert.Equal(t, errorscode.CODE_INVALID_USERNAME, resp.Code)
+		assert.Equal(t, errors.ERROR_INVALID_USERNAME, resp.Code)
 	})
 
 	t.Run("[V1] Create - Usecase error", func(t *testing.T) {
-		ctx := context.Background()
-
 		input := dto.CreateUserRequest{
 			Username: "test",
 			Email:    "test@test.com",
-			Password: "thisisatestpassword1234!@#$",
+			Password: "Thisisatestpassword1234!@#$",
 			Role:     "USER",
 		}
 		userJSON, _ := json.Marshal(input)
@@ -164,7 +159,7 @@ func Test_Create(t *testing.T) {
 			Role:     input.Role,
 		}
 
-		s.mockUsecase.EXPECT().Create(&ctx, user).Return(fmt.Errorf("test error"))
+		s.mockUsecase.EXPECT().Create(gomock.Any(), user).Return(&errors.Err{Code: errors.ERROR_INTERNAL, Err: fmt.Errorf("test error")})
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -172,12 +167,12 @@ func Test_Create(t *testing.T) {
 	})
 
 	t.Run("[V1] Create - Duplicate entity", func(t *testing.T) {
-		ctx := context.Background()
+		// ctx := context.NewAppContextTest()
 
 		input := dto.CreateUserRequest{
 			Username: "test@test.com",
 			Email:    "test@test.com",
-			Password: "thisisatestpassword1234!@#$",
+			Password: "Thisisatestpassword1234!@#$",
 		}
 
 		userJSON, _ := json.Marshal(input)
@@ -190,16 +185,27 @@ func Test_Create(t *testing.T) {
 			Password: input.Password,
 		}
 
-		s.mockUsecase.EXPECT().Create(&ctx, user).DoAndReturn(
-			func(ctx *context.Context, _ *dto.CreateUserRequest) error {
-				*ctx = context.WithValue(*ctx, errorscode.CtxErrorCodeKey, errorscode.CODE_DUPLICATE_ENTITY)
-				return fmt.Errorf("duplicate entity")
-			},
-		)
+		s.mockUsecase.EXPECT().Create(gomock.Any(), user).Return(&errors.Err{Code: errors.ERROR_DUPLICATE_ENTITY, Err: fmt.Errorf("test error")})
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
 		assert.Equal(t, http.StatusConflict, w.Code)
+	})
+
+	t.Run("[V1] Create - Invalid password", func(t *testing.T) {
+		input := dto.CreateUserRequest{
+			Username: "test@test.com",
+			Email:    "test@test.com",
+			Password: "passwordpassword",
+		}
+
+		userJSON, _ := json.Marshal(input)
+
+		req, _ := http.NewRequest("POST", v1+create, strings.NewReader(string(userJSON)))
+
+		w := httptest.NewRecorder()
+		s.router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
 	})
 }
 
@@ -215,11 +221,9 @@ func Test_Get(t *testing.T) {
 	}
 
 	t.Run("[V1] Get user with success", func(t *testing.T) {
-		ctx := context.Background()
-
 		req, _ := http.NewRequest("GET", v1+users+"/"+uuid, nil)
 
-		s.mockUsecase.EXPECT().Get(&ctx, uuid).Return(&user, nil)
+		s.mockUsecase.EXPECT().Get(gomock.Any(), uuid).Return(&user, nil)
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -235,15 +239,9 @@ func Test_Get(t *testing.T) {
 	})
 
 	t.Run("[V1] Get - Failed to find user", func(t *testing.T) {
-		ctx := context.Background()
-
 		req, _ := http.NewRequest("GET", v1+users+"/"+uuid, nil)
 
-		s.mockUsecase.EXPECT().Get(&ctx, uuid).DoAndReturn(
-			func(ctx *context.Context, _ string) (*dto.GetUserResponse, error) {
-				*ctx = context.WithValue(*ctx, errorscode.CtxErrorCodeKey, errorscode.CODE_ENTITY_NOT_FOUND)
-				return nil, fmt.Errorf("user not found")
-			})
+		s.mockUsecase.EXPECT().Get(gomock.Any(), uuid).Return(&dto.GetUserResponse{}, &errors.Err{Code: errors.ERROR_NOT_FOUND, Err: fmt.Errorf("test error")})
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -252,15 +250,12 @@ func Test_Get(t *testing.T) {
 		_ = json.Unmarshal(w.Body.Bytes(), &resp)
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
-		assert.Equal(t, errorscode.CODE_ENTITY_NOT_FOUND, resp.Code)
 	})
 
 	t.Run("[V1] Get -  Usecase error", func(t *testing.T) {
-		ctx := context.Background()
-
 		req, _ := http.NewRequest("GET", v1+users+"/"+uuid, nil)
 
-		s.mockUsecase.EXPECT().Get(&ctx, uuid).Return(nil, fmt.Errorf("test error"))
+		s.mockUsecase.EXPECT().Get(gomock.Any(), uuid).Return(nil, &errors.Err{Code: errors.ERROR_INTERNAL, Err: fmt.Errorf("test error")})
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -274,8 +269,6 @@ func Test_Update(t *testing.T) {
 	uuid := uuidpkg.NewWithPrefix(prefix)
 
 	t.Run("[V1] Update with success", func(t *testing.T) {
-		ctx := context.Background()
-
 		user := dto.UpdateUserRequest{
 			UUID:     uuid,
 			Username: "testusername",
@@ -287,7 +280,7 @@ func Test_Update(t *testing.T) {
 
 		req, _ := http.NewRequest("PUT", v1+users+"/"+uuid, strings.NewReader(string(userJSON)))
 
-		s.mockUsecase.EXPECT().Update(&ctx, &user).Return(nil)
+		s.mockUsecase.EXPECT().Update(gomock.Any(), &user).Return(nil)
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -320,8 +313,6 @@ func Test_Update(t *testing.T) {
 	})
 
 	t.Run("[V1] Usecase error", func(t *testing.T) {
-		ctx := context.Background()
-
 		user := dto.UpdateUserRequest{
 			UUID:     uuid,
 			Username: "testusername",
@@ -333,7 +324,7 @@ func Test_Update(t *testing.T) {
 
 		req, _ := http.NewRequest("PUT", v1+users+"/"+uuid, strings.NewReader(string(userJSON)))
 
-		s.mockUsecase.EXPECT().Update(&ctx, &user).Return(fmt.Errorf("test error"))
+		s.mockUsecase.EXPECT().Update(gomock.Any(), &user).Return(&errors.Err{Code: errors.ERROR_INTERNAL, Err: fmt.Errorf("test error")})
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -347,8 +338,6 @@ func Test_UpdateEmail(t *testing.T) {
 	uuid := uuidpkg.NewWithPrefix(prefix)
 
 	t.Run("[V1] Update email with success", func(t *testing.T) {
-		ctx := context.Background()
-
 		user := dto.UpdateEmailRequest{
 			Email: "test@test.com",
 		}
@@ -356,7 +345,7 @@ func Test_UpdateEmail(t *testing.T) {
 
 		req, _ := http.NewRequest("PATCH", v1+users+"/"+uuid+"/email", strings.NewReader(string(userJSON)))
 
-		s.mockUsecase.EXPECT().UpdateEmail(&ctx, uuid, user.Email).Return(nil)
+		s.mockUsecase.EXPECT().UpdateEmail(gomock.Any(), uuid, user.Email).Return(nil)
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -393,8 +382,6 @@ func Test_UpdateEmail(t *testing.T) {
 	})
 
 	t.Run("[V1] Update - Usecase error", func(t *testing.T) {
-		ctx := context.Background()
-
 		user := dto.UpdateEmailRequest{
 			Email: "test@test.com",
 		}
@@ -402,7 +389,7 @@ func Test_UpdateEmail(t *testing.T) {
 
 		req, _ := http.NewRequest("PATCH", v1+users+"/"+uuid+"/email", strings.NewReader(string(userJSON)))
 
-		s.mockUsecase.EXPECT().UpdateEmail(&ctx, uuid, user.Email).Return(fmt.Errorf("test error"))
+		s.mockUsecase.EXPECT().UpdateEmail(gomock.Any(), uuid, user.Email).Return(&errors.Err{Code: errors.ERROR_INTERNAL, Err: fmt.Errorf("test error")})
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -416,16 +403,14 @@ func Test_UpdatePassword(t *testing.T) {
 	uuid := uuidpkg.NewWithPrefix(prefix)
 
 	t.Run("[V1] Update password with success", func(t *testing.T) {
-		ctx := context.Background()
-
 		user := dto.UpdatePasswordRequest{
-			Password: "thisisatestpassword123?",
+			Password: "Thisisatestpassword123?",
 		}
 		userJSON, _ := json.Marshal(user)
 
 		req, _ := http.NewRequest("PATCH", v1+users+"/"+uuid+"/password", strings.NewReader(string(userJSON)))
 
-		s.mockUsecase.EXPECT().UpdatePassword(&ctx, uuid, user.Password).Return(nil)
+		s.mockUsecase.EXPECT().UpdatePassword(gomock.Any(), uuid, user.Password).Return(nil)
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -462,20 +447,31 @@ func Test_UpdatePassword(t *testing.T) {
 	})
 
 	t.Run("[V1] Update - Usecase error", func(t *testing.T) {
-		ctx := context.Background()
-
 		user := dto.UpdatePasswordRequest{
-			Password: "thisisatestpassword123?",
+			Password: "Thisisatestpassword123?",
 		}
 		userJSON, _ := json.Marshal(user)
 
 		req, _ := http.NewRequest("PATCH", v1+users+"/"+uuid+"/password", strings.NewReader(string(userJSON)))
 
-		s.mockUsecase.EXPECT().UpdatePassword(&ctx, uuid, user.Password).Return(fmt.Errorf("test error"))
+		s.mockUsecase.EXPECT().UpdatePassword(gomock.Any(), uuid, user.Password).Return(&errors.Err{Code: errors.ERROR_INTERNAL, Err: fmt.Errorf("test error")})
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+
+	t.Run("[V1] Update - Invalid password", func(t *testing.T) {
+		user := dto.UpdatePasswordRequest{
+			Password: "passwordpassword",
+		}
+		userJSON, _ := json.Marshal(user)
+
+		req, _ := http.NewRequest("PATCH", v1+users+"/"+uuid+"/password", strings.NewReader(string(userJSON)))
+
+		w := httptest.NewRecorder()
+		s.router.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
 	})
 }
 
@@ -485,11 +481,9 @@ func Test_Delete(t *testing.T) {
 	uuid := uuidpkg.NewWithPrefix(prefix)
 
 	t.Run("[V1] Delete with success", func(t *testing.T) {
-		ctx := context.Background()
-
 		req, _ := http.NewRequest("DELETE", v1+users+"/"+uuid, nil)
 
-		s.mockUsecase.EXPECT().Delete(&ctx, uuid).Return(nil)
+		s.mockUsecase.EXPECT().Delete(gomock.Any(), uuid).Return(nil)
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -505,11 +499,9 @@ func Test_Delete(t *testing.T) {
 	})
 
 	t.Run("[V1] Delete - Usecase error", func(t *testing.T) {
-		ctx := context.Background()
-
 		req, _ := http.NewRequest("DELETE", v1+users+"/"+uuid, nil)
 
-		s.mockUsecase.EXPECT().Delete(&ctx, uuid).Return(fmt.Errorf("test error"))
+		s.mockUsecase.EXPECT().Delete(gomock.Any(), uuid).Return(&errors.Err{Code: errors.ERROR_INTERNAL, Err: fmt.Errorf("test error")})
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -522,8 +514,6 @@ func Test_GetAllUsers(t *testing.T) {
 	uuid := uuidpkg.NewWithPrefix(prefix)
 
 	t.Run("[V1] Get all users with success", func(t *testing.T) {
-		ctx := context.Background()
-
 		req, _ := http.NewRequest("GET", v1+users+"/", nil)
 
 		usecaseResp := dto.GetAllUsersResponse{
@@ -533,7 +523,7 @@ func Test_GetAllUsers(t *testing.T) {
 			},
 		}
 
-		s.mockUsecase.EXPECT().GetAllUsers(&ctx).Return(&usecaseResp, nil)
+		s.mockUsecase.EXPECT().GetAllUsers(gomock.Any()).Return(&usecaseResp, nil)
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -542,11 +532,9 @@ func Test_GetAllUsers(t *testing.T) {
 	})
 
 	t.Run("[V1] Get all users - Usecase error", func(t *testing.T) {
-		ctx := context.Background()
-
 		req, _ := http.NewRequest("GET", v1+users+"/", nil)
 
-		s.mockUsecase.EXPECT().GetAllUsers(&ctx).Return(nil, fmt.Errorf("test error"))
+		s.mockUsecase.EXPECT().GetAllUsers(gomock.Any()).Return(nil, &errors.Err{Code: errors.ERROR_INTERNAL, Err: fmt.Errorf("test error")})
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)

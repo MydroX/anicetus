@@ -1,4 +1,4 @@
-module MydroX/project-v
+module MydroX/anicetus
 
 go 1.22.0
 

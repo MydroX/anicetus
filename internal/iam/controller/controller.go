@@ -1,12 +1,13 @@
 package iam
 
 import (
-	"MydroX/project-v/internal/common/errorscode"
-	"MydroX/project-v/internal/common/response"
-	"MydroX/project-v/internal/config"
-	"MydroX/project-v/internal/iam/dto"
-	"MydroX/project-v/internal/iam/usecases"
-	"MydroX/project-v/pkg/logger"
+	"MydroX/anicetus/internal/common/context"
+	"MydroX/anicetus/internal/common/errors"
+	"MydroX/anicetus/internal/common/response"
+	"MydroX/anicetus/internal/config"
+	"MydroX/anicetus/internal/iam/dto"
+	"MydroX/anicetus/internal/iam/usecases"
+	"MydroX/anicetus/pkg/logger"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -33,39 +34,41 @@ func New(l *logger.Logger, u usecases.IamUsecasesInterface, c *config.Config) Co
 
 func (c *controller) Login(ginCtx *gin.Context) {
 	var request dto.LoginRequest
-	ctx := ginCtx.Request.Context()
+	ctx := context.NewAppContext(ginCtx)
+	ctx.EnsureTraceID()
 
 	if err := ginCtx.BindJSON(&request); err != nil {
-		response.BadRequest(c.logger, ginCtx, errorscode.CODE_INVALID_REQUEST)
+		response.BadRequest(c.logger, ctx, &errors.Err{Code: errors.ERROR_FAIL_TO_BIND, Err: err})
 		return
 	}
 
 	err := c.validate.Struct(request)
 	if err != nil {
-		response.BadRequest(c.logger, ginCtx, errorscode.CODE_INVALID_REQUEST)
+		response.BadRequest(c.logger, ctx, &errors.Err{Code: errors.ERROR_INVALID_INPUT, Err: err})
 		return
 	}
 
 	if request.Username == "" && request.Email == "" {
-		response.BadRequest(c.logger, ginCtx, errorscode.CODE_INVALID_REQUEST)
+		response.BadRequest(c.logger, ctx, &errors.Err{Code: errors.ERROR_INVALID_INPUT, Message: "username or email is required"})
 		return
 	}
 
-	accessToken, refreshToken, err := c.usecases.Login(&ctx, request.Username, request.Email, request.Password)
-	if err != nil {
-		if ctx.Value(errorscode.CtxErrorCodeKey) == errorscode.CODE_ENTITY_NOT_FOUND {
-			response.NotFound(c.logger, ginCtx, errorscode.CODE_ENTITY_NOT_FOUND)
+	accessToken, refreshToken, apiErr := c.usecases.Login(ctx, &request)
+	if apiErr != nil {
+		if apiErr.Code == errors.ERROR_NOT_FOUND {
+			response.NotFound(c.logger, ctx, &errors.Err{Code: errors.ERROR_NOT_FOUND, Message: "user not found"})
 			return
 		}
-		response.InternalError(c.logger, ginCtx, err, ginCtx.GetString(string(errorscode.CtxErrorCodeKey)))
+		response.InternalError(c.logger, ctx, apiErr)
 		return
 	}
 
-	ginCtx.SetCookie("access_token", accessToken, c.config.JWT.AccessToken.Expiration, "/", c.config.App.Domain, true, true)
-	ginCtx.SetCookie("refresh_token", refreshToken, c.config.JWT.RefreshToken.Expiration, "/", c.config.App.Domain, true, true)
+	ginCtx.SetCookie("access_token", accessToken, c.config.Session.AccessToken.Expiration, "/", c.config.App.Domain, true, true)
+	ginCtx.SetCookie("refresh_token", refreshToken, c.config.Session.RefreshToken.Expiration, "/", c.config.App.Domain, true, true)
 
 	resp := dto.LoginResponse{
-		Token: accessToken,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
 	}
 	ginCtx.JSON(http.StatusOK, resp)
 }

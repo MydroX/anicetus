@@ -1,38 +1,37 @@
 package usecases
 
 import (
-	"MydroX/project-v/internal/common/errorscode"
-	"MydroX/project-v/internal/config"
-	"MydroX/project-v/internal/users/dto"
-	"MydroX/project-v/internal/users/models"
-	"MydroX/project-v/internal/users/repository"
-	"MydroX/project-v/pkg/logger"
-	passwordpkg "MydroX/project-v/pkg/password"
-	uuidpkg "MydroX/project-v/pkg/uuid"
-	"context"
+	"MydroX/anicetus/internal/common/context"
+	"MydroX/anicetus/internal/common/errors"
+	"MydroX/anicetus/internal/config"
+	"MydroX/anicetus/internal/users/dto"
+	"MydroX/anicetus/internal/users/models"
+	"MydroX/anicetus/internal/users/repository"
+	"MydroX/anicetus/pkg/logger"
+	passwordpkg "MydroX/anicetus/pkg/password"
+	uuidpkg "MydroX/anicetus/pkg/uuid"
 )
 
 var prefix = "user"
 
 type usecases struct {
-	logger     *logger.Logger
-	repository repository.UsersRepository
-	jwtConfig  *config.JWT
+	logger        *logger.Logger
+	repository    repository.UsersRepository
+	sessionConfig *config.Session
 }
 
-func NewUsecases(l *logger.Logger, r repository.UsersRepository, jwtConfig *config.JWT) UsersUsecases {
+func New(l *logger.Logger, r repository.UsersRepository, sessionConfig *config.Session) UsersUsecases {
 	return &usecases{
-		logger:     l,
-		repository: r,
-		jwtConfig:  jwtConfig,
+		logger:        l,
+		repository:    r,
+		sessionConfig: sessionConfig,
 	}
 }
 
-func (u *usecases) Create(ctx *context.Context, req *dto.CreateUserRequest) error {
+func (u *usecases) Create(ctx *context.AppContext, req *dto.CreateUserRequest) *errors.Err {
 	passwordHashed, err := passwordpkg.Hash(req.Password)
 	if err != nil {
-		*ctx = context.WithValue(*ctx, errorscode.CtxErrorCodeKey, errorscode.CODE_FAILED_TO_HASH_PASSWORD)
-		return err
+		return &errors.Err{Code: errors.ERROR_INTERNAL, Err: err}
 	}
 
 	// If the role is not provided, the default role is USER
@@ -49,12 +48,12 @@ func (u *usecases) Create(ctx *context.Context, req *dto.CreateUserRequest) erro
 		Role:     req.Role,
 	}
 
-	err = u.repository.CreateUser(ctx, &user)
+	apiErr := u.repository.CreateUser(ctx, &user)
 
-	return err
+	return apiErr
 }
 
-func (u *usecases) Get(ctx *context.Context, uuid string) (*dto.GetUserResponse, error) {
+func (u *usecases) Get(ctx *context.AppContext, uuid string) (*dto.GetUserResponse, *errors.Err) {
 	user, err := u.repository.GetUserByUUID(ctx, uuid)
 	if err != nil {
 		return nil, err
@@ -70,7 +69,7 @@ func (u *usecases) Get(ctx *context.Context, uuid string) (*dto.GetUserResponse,
 	return &res, err
 }
 
-func (u *usecases) Update(ctx *context.Context, userParams *dto.UpdateUserRequest) error {
+func (u *usecases) Update(ctx *context.AppContext, userParams *dto.UpdateUserRequest) *errors.Err {
 	user := models.User{
 		UUID:     userParams.UUID,
 		Username: userParams.Username,
@@ -83,28 +82,27 @@ func (u *usecases) Update(ctx *context.Context, userParams *dto.UpdateUserReques
 	return err
 }
 
-func (u *usecases) UpdatePassword(ctx *context.Context, uuid, newPassword string) error {
+func (u *usecases) UpdatePassword(ctx *context.AppContext, uuid, newPassword string) *errors.Err {
 	newPasswordCrypted, err := passwordpkg.Hash(newPassword)
 	if err != nil {
-		*ctx = context.WithValue(*ctx, errorscode.CtxErrorCodeKey, errorscode.CODE_FAILED_TO_HASH_PASSWORD)
-		return err
+		return &errors.Err{Code: errors.ERROR_INTERNAL, Err: err}
 	}
 
-	err = u.repository.UpdatePassword(ctx, uuid, newPasswordCrypted)
-	return err
+	apiErr := u.repository.UpdatePassword(ctx, uuid, newPasswordCrypted)
+	return apiErr
 }
 
-func (u *usecases) UpdateEmail(ctx *context.Context, uuid, email string) error {
+func (u *usecases) UpdateEmail(ctx *context.AppContext, uuid, email string) *errors.Err {
 	err := u.repository.UpdateEmail(ctx, uuid, email)
 	return err
 }
 
-func (u *usecases) Delete(ctx *context.Context, uuid string) error {
+func (u *usecases) Delete(ctx *context.AppContext, uuid string) *errors.Err {
 	err := u.repository.DeleteUser(ctx, uuid)
 	return err
 }
 
-func (u *usecases) GetAllUsers(ctx *context.Context) (*dto.GetAllUsersResponse, error) {
+func (u *usecases) GetAllUsers(ctx *context.AppContext) (*dto.GetAllUsersResponse, *errors.Err) {
 	users, err := u.repository.GetAllUsers(ctx)
 	if err != nil {
 		return nil, err

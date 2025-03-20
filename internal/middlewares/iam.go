@@ -2,14 +2,11 @@
 package middlewares
 
 import (
-	"MydroX/project-v/pkg/jwt"
+	"MydroX/anicetus/internal/common/jwt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
-
-// func Authenticate() gin.HandlerFunc {
-// }
 
 func CheckAccessToken() gin.HandlerFunc {
 	return func(c *gin.Context) {

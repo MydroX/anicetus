@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"MydroX/anicetus/pkg/argon2id"
 	"errors"
 	"fmt"
 	"os"
@@ -9,7 +10,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type Token string
+type TokenJWT string
 
 type JWTError string
 
@@ -76,6 +77,15 @@ func ParseToken(tokenString string) (*Claims, JWTError) {
 	}
 
 	return nil, JWTInvalidToken
+}
+
+func (t TokenJWT) String() string {
+	return string(t)
+}
+
+// HashArgon2 is a function to hash the token with a argon2 algorithm.
+func (t TokenJWT) HashArgon2(params *argon2id.HashParams) (string, error) {
+	return argon2id.Hash(t.String(), params)
 }
 
 func keyFunc(token *jwt.Token) (any, error) {
