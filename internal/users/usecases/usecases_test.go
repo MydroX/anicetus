@@ -39,7 +39,6 @@ func Test_Create(t *testing.T) {
 			Username: "test",
 			Email:    "test@test.com",
 			Password: "thisisapassword123",
-			Role:     "USER",
 		}
 
 		r.EXPECT().CreateUser(gomock.Any(), gomock.Any()).Return(nil)
@@ -71,7 +70,6 @@ func Test_Create(t *testing.T) {
 			Username: "test",
 			Email:    "test@test.com",
 			Password: "WcYVkLZaCHH5AjzVyyhPaZ0Ny1j8Yqxqu0zYHz8YtvKDzQ7cEx8cXG7VTBq55RmLUFubXPhHgaqwGyQn",
-			Role:     "USER",
 		}
 
 		err := u.Create(ctx, &request)
@@ -86,7 +84,6 @@ func Test_Create(t *testing.T) {
 			Username: "test",
 			Email:    "test@test.com",
 			Password: "thisisapassword123",
-			Role:     "USER",
 		}
 
 		r.EXPECT().CreateUser(gomock.Any(), gomock.Any()).Return(errorsutil.New(errorsutil.ERROR_INTERNAL, "test error", fmt.Errorf("test error")))

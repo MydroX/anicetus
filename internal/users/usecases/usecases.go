@@ -34,18 +34,12 @@ func (u *usecases) Create(ctx *context.AppContext, req *dto.CreateUserRequest) e
 		return &errorsutil.AppError{Code: errorsutil.ERROR_INTERNAL, Err: err}
 	}
 
-	// If the role is not provided, the default role is USER
-	// Might not be a good idea to force a non modifiable default value
-	if req.Role == "" {
-		req.Role = "USER"
-	}
-
 	user := models.User{
 		UUID:     uuidpkg.NewWithPrefix(prefix),
 		Username: req.Username,
 		Email:    req.Email,
 		Password: passwordHashed,
-		Role:     req.Role,
+		Role:     "USER",
 	}
 
 	err = u.repository.CreateUser(ctx, &user)

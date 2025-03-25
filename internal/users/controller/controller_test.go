@@ -74,7 +74,6 @@ func Test_Create(t *testing.T) {
 			Username: "test",
 			Email:    "test@test.com",
 			Password: "Thisisatestpassword1234!@#$",
-			Role:     "USER",
 		}
 		userJSON, _ := json.Marshal(input)
 
@@ -84,7 +83,6 @@ func Test_Create(t *testing.T) {
 			Username: input.Username,
 			Email:    input.Email,
 			Password: input.Password,
-			Role:     input.Role,
 		}
 
 		s.mockUsecase.EXPECT().Create(gomock.Any(), user).Return(nil)
@@ -107,7 +105,6 @@ func Test_Create(t *testing.T) {
 			Username: "test",
 			Email:    "",
 			Password: "thisisatestpassword1234!@#$",
-			Role:     "USER",
 		}
 		userJSON, _ := json.Marshal(input)
 
@@ -123,7 +120,6 @@ func Test_Create(t *testing.T) {
 			Username: "test@@@",
 			Email:    "test@test.com",
 			Password: "Thisisatestpassword1234!@#$",
-			Role:     "USER",
 		}
 
 		userJSON, _ := json.Marshal(input)
@@ -141,7 +137,6 @@ func Test_Create(t *testing.T) {
 			Username: "test",
 			Email:    "test@test.com",
 			Password: "Thisisatestpassword1234!@#$",
-			Role:     "USER",
 		}
 		userJSON, _ := json.Marshal(input)
 
@@ -151,7 +146,6 @@ func Test_Create(t *testing.T) {
 			Username: input.Username,
 			Email:    input.Email,
 			Password: input.Password,
-			Role:     input.Role,
 		}
 
 		s.mockUsecase.EXPECT().Create(gomock.Any(), user).Return(&errorsutil.AppError{Code: errorsutil.ERROR_INTERNAL, Err: fmt.Errorf("test error")})
