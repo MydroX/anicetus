@@ -2,66 +2,58 @@ package response
 
 import (
 	"MydroX/anicetus/internal/common/context"
-	"MydroX/anicetus/internal/common/errors"
+	"MydroX/anicetus/internal/common/errorsutil"
 	loggerpkg "MydroX/anicetus/pkg/logger"
+	"errors"
 	"fmt"
 	"net/http"
-	"os"
 )
 
-const (
-	dev     = "dev"
-	staging = "staging"
-	prod    = "prod"
-)
-
-type ErrorResponse struct {
+type errorResponse struct {
 	Message string `json:"message"`
-	Code    string `json:"code"`
+	Code    int    `json:"code"`
 	TraceId string `json:"trace_id"`
 }
 
-type ErrorOption func(*errorOptions)
+type ErrorOptions func(*errorOptions)
 
 type errorOptions struct {
-	logMessage    string
 	clientMessage string
 }
 
-// WithLogMessage sets a custom log message
-func WithLogMessage(msg string, args ...any) ErrorOption {
-	return func(o *errorOptions) {
-		if len(args) > 0 {
-			o.logMessage = fmt.Sprintf(msg, args...)
-		} else {
-			o.logMessage = msg
-		}
-	}
-}
-
 // WithClientMessage sets a custom client-facing message
-func WithClientMessage(msg string) ErrorOption {
+func WithClientMessage(msg string) ErrorOptions {
 	return func(o *errorOptions) {
 		o.clientMessage = msg
 	}
 }
 
-// WithDebugLog sets the log message to be the error message only when debug is enabled in environment
-func WithDebugLog(msg string, args ...any) ErrorOption {
-	return func(o *errorOptions) {
-		if len(args) > 0 {
-			o.logMessage = fmt.Sprintf(msg, args...)
-		} else {
-			o.logMessage = msg
-		}
+// handleError sends an error response with the given HTTP status code
+func handleError(logger *loggerpkg.Logger, ctx *context.AppContext, appErr *errorsutil.AppError, options *errorOptions) {
+	if appErr.Severity == "" {
+		logger.Zap.Warn(fmt.Sprintf("Severity is not set : %d | %s | %s | %s", appErr.Code, appErr.Message, appErr.Err, ctx.EnsureTraceID()))
+		appErr.Severity = errorsutil.SeverityError
 	}
+
+	// Get trace ID
+	traceID := ctx.EnsureTraceID()
+
+	// Get HTTP status code
+	httpCode := appErr.MapErrorCodeToHTTPCode()
+
+	// Log error
+	logger.Zap.Error(fmt.Sprintf("%s | %d | %d | %s | %s \n%v", appErr.Severity, httpCode, appErr.Code, traceID, appErr.Message, appErr.Err))
+
+	ctx.GinContext().JSON(httpCode, errorResponse{
+		Message: options.clientMessage,
+		Code:    appErr.Code,
+		TraceId: traceID,
+	})
 }
 
-// Error sends an error response with the given HTTP status code
-func Error(logger *loggerpkg.Logger, ctx *context.AppContext, httpCode int, apiErrorCode string, opts ...ErrorOption) {
-	// Default options
+// applyOptions applies the default options and any provided options
+func applyOptions(opts ...ErrorOptions) *errorOptions {
 	options := &errorOptions{
-		logMessage:    "Error occurred",
 		clientMessage: "An error occurred",
 	}
 
@@ -70,62 +62,44 @@ func Error(logger *loggerpkg.Logger, ctx *context.AppContext, httpCode int, apiE
 		opt(options)
 	}
 
-	if apiErrorCode == "" {
-		apiErrorCode = errors.ERROR_UNKNOWN_ERROR
-	}
-
-	// Get trace ID
-	traceID := ctx.EnsureTraceID()
-
-	// Log debug
-	if os.Getenv("env") == dev || os.Getenv("env") == staging {
-		logger.Zap.Debug(fmt.Sprintf("[%d] | [%s] | %s | %s",
-			httpCode, apiErrorCode, traceID, options.logMessage))
-	}
-
-	// Log the error
-	logger.Zap.Error(fmt.Sprintf("[%d] | [%s] | %s | %s",
-		httpCode, apiErrorCode, traceID, options.logMessage))
-
-	ctx.GinContext().JSON(httpCode, ErrorResponse{
-		Message: options.clientMessage,
-		Code:    apiErrorCode,
-		TraceId: traceID,
-	})
+	return options
 }
 
-// InternalError sends a 500 Internal Server Error response
-func InternalError(logger *loggerpkg.Logger, ctx *context.AppContext, err *errors.Err, opts ...ErrorOption) {
-	defaultOpts := []ErrorOption{
-		WithLogMessage(err.Err.Error()),
-		WithClientMessage("Internal server error"),
+// Error is the generic error handler
+func Error(logger *loggerpkg.Logger, ctx *context.AppContext, err error, opts ...ErrorOptions) {
+	var apiErr *errorsutil.AppError
+	if ok := errors.As(err, &apiErr); !ok {
+		logger.Zap.Error(fmt.Sprintf("CRITICAL | [%s] | %s | %s ", ctx.EnsureTraceID(), "Something went wrong while handling error", err))
+		ctx.GinContext().JSON(http.StatusInternalServerError, errorResponse{
+			Message: "Internal server error, server has not been able to handle the error properly",
+			Code:    errorsutil.ERROR_UNKNOWN_ERROR,
+			TraceId: ctx.EnsureTraceID(),
+		})
+		return
 	}
-	Error(logger, ctx, http.StatusInternalServerError, err.Code, append(defaultOpts, opts...)...)
+
+	// Apply options
+	options := applyOptions(opts...)
+
+	if apiErr.Code == 0 {
+		apiErr.Code = errorsutil.ERROR_UNKNOWN_ERROR
+	}
+
+	handleError(logger, ctx, apiErr, options)
 }
 
 // BadRequest sends a 400 Bad Request response
-func BadRequest(logger *loggerpkg.Logger, ctx *context.AppContext, err *errors.Err, opts ...ErrorOption) {
-	defaultOpts := []ErrorOption{
-		WithLogMessage(err.Message),
-		WithClientMessage("Invalid request"),
+func BadRequest(logger *loggerpkg.Logger, ctx *context.AppContext, appErrCode int, message string) {
+	appErr := &errorsutil.AppError{
+		Code:     appErrCode,
+		Message:  "Bad request: " + message,
+		Severity: errorsutil.SeverityError,
 	}
-	Error(logger, ctx, http.StatusBadRequest, err.Code, append(defaultOpts, opts...)...)
-}
 
-// Conflict sends a 409 Conflict response
-func Conflict(logger *loggerpkg.Logger, ctx *context.AppContext, err *errors.Err, opts ...ErrorOption) {
-	defaultOpts := []ErrorOption{
-		WithLogMessage(err.Message),
-		WithClientMessage("Resource conflict"),
+	opts := []ErrorOptions{
+		WithClientMessage(message),
 	}
-	Error(logger, ctx, http.StatusConflict, err.Code, append(defaultOpts, opts...)...)
-}
 
-// NotFound sends a 404 Not Found response
-func NotFound(logger *loggerpkg.Logger, ctx *context.AppContext, err *errors.Err, opts ...ErrorOption) {
-	defaultOpts := []ErrorOption{
-		WithLogMessage(err.Message),
-		WithClientMessage("Entity not found"),
-	}
-	Error(logger, ctx, http.StatusNotFound, err.Code, append(defaultOpts, opts...)...)
+	options := applyOptions(opts...)
+	handleError(logger, ctx, appErr, options)
 }

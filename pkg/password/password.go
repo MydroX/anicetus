@@ -89,7 +89,6 @@ func NewValidator(opts ...Option) *Validator {
 }
 
 // Validate checks if a password meets the requirements
-// Validate checks if a password meets the requirements
 func (v *Validator) Validate(password string) error {
 	// Check length
 	if err := v.validateLength(password); err != nil {

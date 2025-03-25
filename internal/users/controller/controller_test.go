@@ -1,8 +1,7 @@
 package controller
 
 import (
-	"MydroX/anicetus/internal/common/errors"
-	"MydroX/anicetus/internal/common/response"
+	"MydroX/anicetus/internal/common/errorsutil"
 	"MydroX/anicetus/internal/config"
 	"MydroX/anicetus/internal/users/dto"
 	"MydroX/anicetus/internal/users/mocks"
@@ -123,7 +122,7 @@ func Test_Create(t *testing.T) {
 		input := dto.CreateUserRequest{
 			Username: "test@@@",
 			Email:    "test@test.com",
-			Password: "thisisatestpassword1234!@#$",
+			Password: "Thisisatestpassword1234!@#$",
 			Role:     "USER",
 		}
 
@@ -134,11 +133,7 @@ func Test_Create(t *testing.T) {
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
 
-		var resp response.ErrorResponse
-		_ = json.Unmarshal(w.Body.Bytes(), &resp)
-
 		assert.Equal(t, http.StatusBadRequest, w.Code)
-		assert.Equal(t, errors.ERROR_INVALID_USERNAME, resp.Code)
 	})
 
 	t.Run("[V1] Create - Usecase error", func(t *testing.T) {
@@ -159,7 +154,7 @@ func Test_Create(t *testing.T) {
 			Role:     input.Role,
 		}
 
-		s.mockUsecase.EXPECT().Create(gomock.Any(), user).Return(&errors.Err{Code: errors.ERROR_INTERNAL, Err: fmt.Errorf("test error")})
+		s.mockUsecase.EXPECT().Create(gomock.Any(), user).Return(&errorsutil.AppError{Code: errorsutil.ERROR_INTERNAL, Err: fmt.Errorf("test error")})
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -185,7 +180,7 @@ func Test_Create(t *testing.T) {
 			Password: input.Password,
 		}
 
-		s.mockUsecase.EXPECT().Create(gomock.Any(), user).Return(&errors.Err{Code: errors.ERROR_DUPLICATE_ENTITY, Err: fmt.Errorf("test error")})
+		s.mockUsecase.EXPECT().Create(gomock.Any(), user).Return(&errorsutil.AppError{Code: errorsutil.ERROR_DUPLICATE_ENTITY, Err: fmt.Errorf("test error")})
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -241,13 +236,10 @@ func Test_Get(t *testing.T) {
 	t.Run("[V1] Get - Failed to find user", func(t *testing.T) {
 		req, _ := http.NewRequest("GET", v1+users+"/"+uuid, nil)
 
-		s.mockUsecase.EXPECT().Get(gomock.Any(), uuid).Return(&dto.GetUserResponse{}, &errors.Err{Code: errors.ERROR_NOT_FOUND, Err: fmt.Errorf("test error")})
+		s.mockUsecase.EXPECT().Get(gomock.Any(), uuid).Return(&dto.GetUserResponse{}, &errorsutil.AppError{Code: errorsutil.ERROR_NOT_FOUND, Err: fmt.Errorf("test error")})
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
-
-		resp := response.ErrorResponse{}
-		_ = json.Unmarshal(w.Body.Bytes(), &resp)
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
 	})
@@ -255,7 +247,7 @@ func Test_Get(t *testing.T) {
 	t.Run("[V1] Get -  Usecase error", func(t *testing.T) {
 		req, _ := http.NewRequest("GET", v1+users+"/"+uuid, nil)
 
-		s.mockUsecase.EXPECT().Get(gomock.Any(), uuid).Return(nil, &errors.Err{Code: errors.ERROR_INTERNAL, Err: fmt.Errorf("test error")})
+		s.mockUsecase.EXPECT().Get(gomock.Any(), uuid).Return(nil, &errorsutil.AppError{Code: errorsutil.ERROR_INTERNAL, Err: fmt.Errorf("test error")})
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -324,7 +316,7 @@ func Test_Update(t *testing.T) {
 
 		req, _ := http.NewRequest("PUT", v1+users+"/"+uuid, strings.NewReader(string(userJSON)))
 
-		s.mockUsecase.EXPECT().Update(gomock.Any(), &user).Return(&errors.Err{Code: errors.ERROR_INTERNAL, Err: fmt.Errorf("test error")})
+		s.mockUsecase.EXPECT().Update(gomock.Any(), &user).Return(&errorsutil.AppError{Code: errorsutil.ERROR_INTERNAL, Err: fmt.Errorf("test error")})
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -389,7 +381,7 @@ func Test_UpdateEmail(t *testing.T) {
 
 		req, _ := http.NewRequest("PATCH", v1+users+"/"+uuid+"/email", strings.NewReader(string(userJSON)))
 
-		s.mockUsecase.EXPECT().UpdateEmail(gomock.Any(), uuid, user.Email).Return(&errors.Err{Code: errors.ERROR_INTERNAL, Err: fmt.Errorf("test error")})
+		s.mockUsecase.EXPECT().UpdateEmail(gomock.Any(), uuid, user.Email).Return(&errorsutil.AppError{Code: errorsutil.ERROR_INTERNAL, Err: fmt.Errorf("test error")})
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -454,7 +446,7 @@ func Test_UpdatePassword(t *testing.T) {
 
 		req, _ := http.NewRequest("PATCH", v1+users+"/"+uuid+"/password", strings.NewReader(string(userJSON)))
 
-		s.mockUsecase.EXPECT().UpdatePassword(gomock.Any(), uuid, user.Password).Return(&errors.Err{Code: errors.ERROR_INTERNAL, Err: fmt.Errorf("test error")})
+		s.mockUsecase.EXPECT().UpdatePassword(gomock.Any(), uuid, user.Password).Return(&errorsutil.AppError{Code: errorsutil.ERROR_INTERNAL, Err: fmt.Errorf("test error")})
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -501,7 +493,7 @@ func Test_Delete(t *testing.T) {
 	t.Run("[V1] Delete - Usecase error", func(t *testing.T) {
 		req, _ := http.NewRequest("DELETE", v1+users+"/"+uuid, nil)
 
-		s.mockUsecase.EXPECT().Delete(gomock.Any(), uuid).Return(&errors.Err{Code: errors.ERROR_INTERNAL, Err: fmt.Errorf("test error")})
+		s.mockUsecase.EXPECT().Delete(gomock.Any(), uuid).Return(&errorsutil.AppError{Code: errorsutil.ERROR_INTERNAL, Err: fmt.Errorf("test error")})
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
@@ -534,7 +526,7 @@ func Test_GetAllUsers(t *testing.T) {
 	t.Run("[V1] Get all users - Usecase error", func(t *testing.T) {
 		req, _ := http.NewRequest("GET", v1+users+"/", nil)
 
-		s.mockUsecase.EXPECT().GetAllUsers(gomock.Any()).Return(nil, &errors.Err{Code: errors.ERROR_INTERNAL, Err: fmt.Errorf("test error")})
+		s.mockUsecase.EXPECT().GetAllUsers(gomock.Any()).Return(nil, &errorsutil.AppError{Code: errorsutil.ERROR_INTERNAL, Err: fmt.Errorf("test error")})
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)

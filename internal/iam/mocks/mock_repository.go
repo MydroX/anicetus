@@ -11,7 +11,6 @@ package mocks
 
 import (
 	context "MydroX/anicetus/internal/common/context"
-	errors "MydroX/anicetus/internal/common/errors"
 	models "MydroX/anicetus/internal/iam/models"
 	reflect "reflect"
 
@@ -43,10 +42,10 @@ func (m *MockIamRepository) EXPECT() *MockIamRepositoryMockRecorder {
 }
 
 // SaveSession mocks base method.
-func (m *MockIamRepository) SaveSession(ctx *context.AppContext, session *models.Session) *errors.Err {
+func (m *MockIamRepository) SaveSession(ctx *context.AppContext, session *models.Session) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SaveSession", ctx, session)
-	ret0, _ := ret[0].(*errors.Err)
+	ret0, _ := ret[0].(error)
 	return ret0
 }
 

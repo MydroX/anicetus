@@ -11,7 +11,6 @@ package mocks
 
 import (
 	context "MydroX/anicetus/internal/common/context"
-	errors "MydroX/anicetus/internal/common/errors"
 	dto "MydroX/anicetus/internal/users/dto"
 	reflect "reflect"
 
@@ -43,10 +42,10 @@ func (m *MockUsersUsecases) EXPECT() *MockUsersUsecasesMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockUsersUsecases) Create(ctx *context.AppContext, user *dto.CreateUserRequest) *errors.Err {
+func (m *MockUsersUsecases) Create(ctx *context.AppContext, user *dto.CreateUserRequest) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", ctx, user)
-	ret0, _ := ret[0].(*errors.Err)
+	ret0, _ := ret[0].(error)
 	return ret0
 }
 
@@ -57,10 +56,10 @@ func (mr *MockUsersUsecasesMockRecorder) Create(ctx, user any) *gomock.Call {
 }
 
 // Delete mocks base method.
-func (m *MockUsersUsecases) Delete(ctx *context.AppContext, uuid string) *errors.Err {
+func (m *MockUsersUsecases) Delete(ctx *context.AppContext, uuid string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", ctx, uuid)
-	ret0, _ := ret[0].(*errors.Err)
+	ret0, _ := ret[0].(error)
 	return ret0
 }
 
@@ -71,11 +70,11 @@ func (mr *MockUsersUsecasesMockRecorder) Delete(ctx, uuid any) *gomock.Call {
 }
 
 // Get mocks base method.
-func (m *MockUsersUsecases) Get(ctx *context.AppContext, uuid string) (*dto.GetUserResponse, *errors.Err) {
+func (m *MockUsersUsecases) Get(ctx *context.AppContext, uuid string) (*dto.GetUserResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", ctx, uuid)
 	ret0, _ := ret[0].(*dto.GetUserResponse)
-	ret1, _ := ret[1].(*errors.Err)
+	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
@@ -86,11 +85,11 @@ func (mr *MockUsersUsecasesMockRecorder) Get(ctx, uuid any) *gomock.Call {
 }
 
 // GetAllUsers mocks base method.
-func (m *MockUsersUsecases) GetAllUsers(ctx *context.AppContext) (*dto.GetAllUsersResponse, *errors.Err) {
+func (m *MockUsersUsecases) GetAllUsers(ctx *context.AppContext) (*dto.GetAllUsersResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllUsers", ctx)
 	ret0, _ := ret[0].(*dto.GetAllUsersResponse)
-	ret1, _ := ret[1].(*errors.Err)
+	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
@@ -101,10 +100,10 @@ func (mr *MockUsersUsecasesMockRecorder) GetAllUsers(ctx any) *gomock.Call {
 }
 
 // Update mocks base method.
-func (m *MockUsersUsecases) Update(ctx *context.AppContext, user *dto.UpdateUserRequest) *errors.Err {
+func (m *MockUsersUsecases) Update(ctx *context.AppContext, user *dto.UpdateUserRequest) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", ctx, user)
-	ret0, _ := ret[0].(*errors.Err)
+	ret0, _ := ret[0].(error)
 	return ret0
 }
 
@@ -115,10 +114,10 @@ func (mr *MockUsersUsecasesMockRecorder) Update(ctx, user any) *gomock.Call {
 }
 
 // UpdateEmail mocks base method.
-func (m *MockUsersUsecases) UpdateEmail(ctx *context.AppContext, uuid, email string) *errors.Err {
+func (m *MockUsersUsecases) UpdateEmail(ctx *context.AppContext, uuid, email string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateEmail", ctx, uuid, email)
-	ret0, _ := ret[0].(*errors.Err)
+	ret0, _ := ret[0].(error)
 	return ret0
 }
 
@@ -129,10 +128,10 @@ func (mr *MockUsersUsecasesMockRecorder) UpdateEmail(ctx, uuid, email any) *gomo
 }
 
 // UpdatePassword mocks base method.
-func (m *MockUsersUsecases) UpdatePassword(ctx *context.AppContext, uuid, password string) *errors.Err {
+func (m *MockUsersUsecases) UpdatePassword(ctx *context.AppContext, uuid, password string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdatePassword", ctx, uuid, password)
-	ret0, _ := ret[0].(*errors.Err)
+	ret0, _ := ret[0].(error)
 	return ret0
 }
 

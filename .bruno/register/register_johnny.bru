@@ -5,16 +5,16 @@ meta {
 }
 
 post {
-  url: {{base_url}}/api/v1/users/register
+  url: {{base_url}}/api/v1/register
   body: json
   auth: none
 }
 
 body:json {
   {
-    "email": "johnny@test.com",
-    "username": "johnny",
-    "password": "password123!password"
+    "email": "john@test.com",
+    "username": "john",
+    "password": "Password123!password"
   }
 }
 
