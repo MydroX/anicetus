@@ -11,7 +11,6 @@ package mocks
 
 import (
 	context "MydroX/anicetus/internal/common/context"
-	errors "MydroX/anicetus/internal/common/errors"
 	dto "MydroX/anicetus/internal/iam/dto"
 	reflect "reflect"
 
@@ -43,12 +42,12 @@ func (m *MockIamUsecasesInterface) EXPECT() *MockIamUsecasesInterfaceMockRecorde
 }
 
 // Login mocks base method.
-func (m *MockIamUsecasesInterface) Login(ctx *context.AppContext, req *dto.LoginRequest) (string, string, *errors.Err) {
+func (m *MockIamUsecasesInterface) Login(ctx *context.AppContext, req *dto.LoginRequest) (string, string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Login", ctx, req)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(string)
-	ret2, _ := ret[2].(*errors.Err)
+	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
 }
 
@@ -59,10 +58,10 @@ func (mr *MockIamUsecasesInterfaceMockRecorder) Login(ctx, req any) *gomock.Call
 }
 
 // Logout mocks base method.
-func (m *MockIamUsecasesInterface) Logout(ctx *context.AppContext, token string) *errors.Err {
+func (m *MockIamUsecasesInterface) Logout(ctx *context.AppContext, token string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Logout", ctx, token)
-	ret0, _ := ret[0].(*errors.Err)
+	ret0, _ := ret[0].(error)
 	return ret0
 }
 
@@ -73,11 +72,11 @@ func (mr *MockIamUsecasesInterfaceMockRecorder) Logout(ctx, token any) *gomock.C
 }
 
 // RefreshToken mocks base method.
-func (m *MockIamUsecasesInterface) RefreshToken(ctx *context.AppContext, token string) (string, *errors.Err) {
+func (m *MockIamUsecasesInterface) RefreshToken(ctx *context.AppContext, token string) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RefreshToken", ctx, token)
 	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(*errors.Err)
+	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 

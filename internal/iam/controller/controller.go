@@ -2,7 +2,7 @@ package iam
 
 import (
 	"MydroX/anicetus/internal/common/context"
-	"MydroX/anicetus/internal/common/errors"
+	"MydroX/anicetus/internal/common/errorsutil"
 	"MydroX/anicetus/internal/common/response"
 	"MydroX/anicetus/internal/config"
 	"MydroX/anicetus/internal/iam/dto"
@@ -38,28 +38,24 @@ func (c *controller) Login(ginCtx *gin.Context) {
 	ctx.EnsureTraceID()
 
 	if err := ginCtx.BindJSON(&request); err != nil {
-		response.BadRequest(c.logger, ctx, &errors.Err{Code: errors.ERROR_FAIL_TO_BIND, Err: err})
+		response.BadRequest(c.logger, ctx, errorsutil.ERROR_FAIL_TO_BIND, errorsutil.MessageFailToBind)
 		return
 	}
 
 	err := c.validate.Struct(request)
 	if err != nil {
-		response.BadRequest(c.logger, ctx, &errors.Err{Code: errors.ERROR_INVALID_INPUT, Err: err})
+		response.BadRequest(c.logger, ctx, errorsutil.ERROR_INVALID_INPUT, errorsutil.MessageInvalidInput)
 		return
 	}
 
 	if request.Username == "" && request.Email == "" {
-		response.BadRequest(c.logger, ctx, &errors.Err{Code: errors.ERROR_INVALID_INPUT, Message: "username or email is required"})
+		response.BadRequest(c.logger, ctx, errorsutil.ERROR_INVALID_INPUT, "username or email is required")
 		return
 	}
 
-	accessToken, refreshToken, apiErr := c.usecases.Login(ctx, &request)
-	if apiErr != nil {
-		if apiErr.Code == errors.ERROR_NOT_FOUND {
-			response.NotFound(c.logger, ctx, &errors.Err{Code: errors.ERROR_NOT_FOUND, Message: "user not found"})
-			return
-		}
-		response.InternalError(c.logger, ctx, apiErr)
+	accessToken, refreshToken, err := c.usecases.Login(ctx, &request)
+	if err != nil {
+		response.Error(c.logger, ctx, err)
 		return
 	}
 

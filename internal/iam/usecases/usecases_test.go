@@ -2,7 +2,7 @@ package usecases
 
 import (
 	"MydroX/anicetus/internal/common/context"
-	errorsutil "MydroX/anicetus/internal/common/errors"
+	"MydroX/anicetus/internal/common/errorsutil"
 	"MydroX/anicetus/internal/config"
 	"MydroX/anicetus/internal/iam/dto"
 	iammocks "MydroX/anicetus/internal/iam/mocks"
@@ -114,7 +114,7 @@ func Test_Login(t *testing.T) {
 		}
 
 		_, _, err := u.Login(ctx, &req)
-		assert.Error(t, err.Err)
+		assert.Error(t, err)
 	})
 
 	t.Run("[V1] Login user, email not found", func(t *testing.T) {
@@ -129,7 +129,7 @@ func Test_Login(t *testing.T) {
 
 		_, _, err := u.Login(ctx, &req)
 
-		assert.Error(t, err.Err)
+		assert.Error(t, err)
 	})
 
 	t.Run("[V1] Login user, username not found", func(t *testing.T) {
@@ -143,7 +143,7 @@ func Test_Login(t *testing.T) {
 		usersRepository.EXPECT().GetUserByUsername(gomock.Any(), req.Username).Return(nil, errorsutil.New(errorsutil.ERROR_NOT_FOUND, "user not found", errors.New("user not found")))
 		_, _, err := u.Login(ctx, &req)
 
-		assert.Error(t, err.Err)
+		assert.Error(t, err)
 	})
 
 	t.Run("[V1] Login user, wrong password", func(t *testing.T) {
@@ -167,6 +167,6 @@ func Test_Login(t *testing.T) {
 
 		_, _, apiErr := u.Login(ctx, &req)
 
-		assert.Error(t, apiErr.Err)
+		assert.Error(t, apiErr)
 	})
 }

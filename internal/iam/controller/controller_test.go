@@ -12,8 +12,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
-	"MydroX/anicetus/internal/common/errors"
-	"MydroX/anicetus/internal/common/response"
+	"MydroX/anicetus/internal/common/errorsutil"
 	"MydroX/anicetus/internal/config"
 	"MydroX/anicetus/internal/iam/dto"
 	"MydroX/anicetus/internal/iam/mocks"
@@ -23,6 +22,7 @@ import (
 const v1 = "/api/v1"
 
 type testServer struct {
+	logger      *loggerpkg.Logger
 	router      *gin.Engine
 	mockUsecase *mocks.MockIamUsecasesInterface
 }
@@ -53,6 +53,7 @@ func newServerTest(t *testing.T) testServer {
 	router := testRouter(logger, c)
 
 	return testServer{
+		logger:      logger,
 		router:      router,
 		mockUsecase: usecasesMock,
 	}
@@ -146,11 +147,14 @@ func Test_Login(t *testing.T) {
 
 		req, _ := http.NewRequest("POST", v1+"/login", strings.NewReader(string(userJSON)))
 
-		s.mockUsecase.EXPECT().Login(gomock.Any(), &input).Return("", "", errors.New(errors.ERROR_NOT_FOUND, "user not found", nil))
+		s.mockUsecase.EXPECT().Login(gomock.Any(), &input).Return("", "", errorsutil.New(errorsutil.ERROR_NOT_FOUND, "user not found", nil))
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)
 
-		resp := response.ErrorResponse{}
+		resp := errorsutil.AppError{
+			Code:    errorsutil.ERROR_NOT_FOUND,
+			Message: "user not found",
+		}
 		_ = json.Unmarshal(w.Body.Bytes(), &resp)
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
@@ -173,7 +177,7 @@ func Test_Login(t *testing.T) {
 
 		req, _ := http.NewRequest("POST", v1+"/login", strings.NewReader(string(userJSON)))
 
-		s.mockUsecase.EXPECT().Login(gomock.Any(), &input).Return("", "", &errors.Err{Code: errors.ERROR_INTERNAL, Message: "internal error"})
+		s.mockUsecase.EXPECT().Login(gomock.Any(), &input).Return("", "", errorsutil.New(errorsutil.ERROR_INTERNAL, "internal error", nil))
 
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, req)

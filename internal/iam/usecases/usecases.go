@@ -1,11 +1,11 @@
 package usecases
 
 import (
-	errorsgo "errors"
+	"errors"
 	"time"
 
 	"MydroX/anicetus/internal/common/context"
-	"MydroX/anicetus/internal/common/errors"
+	"MydroX/anicetus/internal/common/errorsutil"
 	"MydroX/anicetus/internal/common/jwt"
 	"MydroX/anicetus/internal/config"
 	"MydroX/anicetus/internal/iam/dto"
@@ -39,7 +39,7 @@ func New(l *logger.Logger, ur usersrepository.UsersRepository, iamr iamrepositor
 	}
 }
 
-func (u *usecases) Login(ctx *context.AppContext, req *dto.LoginRequest) (accessToken, refreshToken string, err *errors.Err) {
+func (u *usecases) Login(ctx *context.AppContext, req *dto.LoginRequest) (accessToken, refreshToken string, err error) {
 	switch {
 	case req.Email != "":
 		user, err := u.usersRepository.GetUserByEmail(ctx, req.Email)
@@ -61,10 +61,10 @@ func (u *usecases) Login(ctx *context.AppContext, req *dto.LoginRequest) (access
 
 		return accessToken, refreshToken, err
 	}
-	return "", "", errors.New(
-		errors.ERROR_INVALID_INPUT,
-		"username or email is required",
-		errorsgo.New("username or email is required"),
+	return "", "", errorsutil.New(
+		errorsutil.ERROR_INVALID_INPUT,
+		"username or email must be provided",
+		errors.New("username or email must be provided"),
 	)
 }
 
@@ -73,9 +73,13 @@ func login(
 	u *usecases, user *usersmodels.User,
 	s *dto.Session,
 	password string,
-) (accessToken, refreshToken string, err *errors.Err) {
+) (accessToken, refreshToken string, err error) {
 	if !passwordpkg.CheckPasswordHash(password, user.Password) {
-		return "", "", errors.New(errors.ERROR_INVALID_INPUT, "invalid password", errorsgo.New("invalid password"))
+		return "", "", errorsutil.New(
+			errorsutil.ERROR_INVALID_INPUT,
+			"invalid password",
+			errors.New("invalid password"),
+		)
 	}
 
 	expirationTimeAccess := time.Now().Add(time.Second * time.Duration(u.sessionConfig.AccessToken.Expiration))
@@ -104,7 +108,11 @@ func login(
 
 	refreshTokenHashed, hashErr := argon2id.Hash(refreshToken, hashParams)
 	if hashErr != nil {
-		return "", "", errors.New(errors.ERROR_HASH_TOKEN, "failed to hash refresh token", hashErr)
+		return "", "", errorsutil.New(
+			errorsutil.ERROR_FAILED_TO_HASH_PASSWORD,
+			"failed to hash refresh token",
+			hashErr,
+		)
 	}
 
 	session := models.Session{
@@ -130,11 +138,11 @@ func login(
 }
 
 // nolint
-func (u *usecases) Logout(ctx *context.AppContext, token string) *errors.Err {
+func (u *usecases) Logout(ctx *context.AppContext, token string) error {
 	panic("not implemented") // TODO: Implement
 }
 
 // nolint
-func (u *usecases) RefreshToken(ctx *context.AppContext, token string) (string, *errors.Err) {
+func (u *usecases) RefreshToken(ctx *context.AppContext, token string) (string, error) {
 	panic("not implemented") // TODO: Implement
 }
