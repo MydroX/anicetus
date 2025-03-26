@@ -45,3 +45,9 @@ generate-mocks:
 	@echo "Generating mocks code..."
 	@go generate ./...
 	@echo "Mocks generated! Enjoy writing tests! 🥸"
+
+show-test-coverage:
+	@echo "Showing coverage..."
+	@mkdir -p ./coverage/unit
+	@go test -cover ./... -args -test.gocoverdir="$(shell pwd)/coverage/unit"
+	@go tool covdata percent -i=./coverage/unit

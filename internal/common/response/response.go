@@ -31,7 +31,7 @@ func WithClientMessage(msg string) ErrorOptions {
 // handleError sends an error response with the given HTTP status code
 func handleError(logger *loggerpkg.Logger, ctx *context.AppContext, appErr *errorsutil.AppError, options *errorOptions) {
 	if appErr.Severity == "" {
-		logger.Zap.Warn(fmt.Sprintf("Severity is not set : %d | %s | %s | %s", appErr.Code, appErr.Message, appErr.Err, ctx.EnsureTraceID()))
+		logger.Zap.Warn(fmt.Sprintf("Severity is not set for request %s", ctx.EnsureTraceID()))
 		appErr.Severity = errorsutil.SeverityError
 	}
 
