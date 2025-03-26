@@ -31,16 +31,26 @@ type HashParams struct {
 
 // New creates a new HashParams instance with the provided secret key and options
 func New(options ...func(*HashParams)) *HashParams {
-	h := &HashParams{
-		Memory:      DefaultMemory,
-		Iterations:  DefaultIterations,
-		Parallelism: DefaultParallelism,
-		SaltLength:  DefaultSaltLength,
-		KeyLength:   DefaultKeyLength,
-	}
+	var h = &HashParams{}
 
 	for _, option := range options {
 		option(h)
+	}
+
+	if h.Memory == 0 {
+		h.Memory = DefaultMemory
+	}
+	if h.Iterations == 0 {
+		h.Iterations = DefaultIterations
+	}
+	if h.Parallelism == 0 {
+		h.Parallelism = DefaultParallelism
+	}
+	if h.SaltLength == 0 {
+		h.SaltLength = DefaultSaltLength
+	}
+	if h.KeyLength == 0 {
+		h.KeyLength = DefaultKeyLength
 	}
 
 	return h

@@ -9,6 +9,7 @@ type Session struct {
 	RefreshToken   string
 	LastUsedAt     time.Time
 	OS             string
+	OSVersion      string
 	Browser        string
 	BrowserVersion string
 	IPv4Address    string

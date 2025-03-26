@@ -67,9 +67,9 @@ func Test_Login(t *testing.T) {
 			Username: "test",
 			Password: "thisisatest123",
 			Session: dto.Session{
-				RefreshToken:   "refresh",
 				IPv4Address:    "0.0.0.0",
 				OS:             "linux",
+				OSVersion:      "1.0",
 				Browser:        "chrome",
 				BrowserVersion: "1.0",
 			},
@@ -135,9 +135,9 @@ func Test_Login(t *testing.T) {
 			Username: "test",
 			Password: "thisisatest123",
 			Session: dto.Session{
-				RefreshToken:   "refresh",
 				IPv4Address:    "0.0.0.0",
 				OS:             "linux",
+				OSVersion:      "1.0",
 				Browser:        "chrome",
 				BrowserVersion: "1.0",
 			},
@@ -165,9 +165,9 @@ func Test_Login(t *testing.T) {
 			Username: "test",
 			Password: "thisisatest123",
 			Session: dto.Session{
-				RefreshToken:   "refresh",
 				IPv4Address:    "0.0.0.0",
 				OS:             "linux",
+				OSVersion:      "1.0",
 				Browser:        "chrome",
 				BrowserVersion: "1.0",
 			},
@@ -189,9 +189,9 @@ func Test_Login(t *testing.T) {
 		input := dto.LoginRequest{
 			Password: "thisisatest123",
 			Session: dto.Session{
-				RefreshToken:   "refresh",
 				IPv4Address:    "0.0.0.0",
 				OS:             "linux",
+				OSVersion:      "1.0",
 				Browser:        "chrome",
 				BrowserVersion: "1.0",
 			},

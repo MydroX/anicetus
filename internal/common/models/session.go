@@ -8,9 +8,8 @@ type Browser struct {
 }
 
 type OS struct {
-	Name         string `json:"name"`
-	Version      string `json:"version"`
-	Architecture string `json:"architecture"`
+	Name    string `json:"name"`
+	Version string `json:"version"`
 }
 
 type Device struct {

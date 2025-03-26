@@ -153,7 +153,7 @@ func SQLErrorParser(err error) error {
 		}
 	case pgerrcode.CheckViolation:
 		return &AppError{
-			Code:    ERROR_CHECK_VIOLATION,
+			Code:    ERROR_CONSTRAINT_VIOLATION,
 			Message: pgErr.Message,
 			Err:     err,
 		}

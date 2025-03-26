@@ -28,9 +28,9 @@ type RefreshTokenRequest struct {
 }
 
 type Session struct {
-	RefreshToken   string `json:"refresh_token" validate:"required"`
 	IPv4Address    string `json:"ipv4_address" validate:"required,ipv4"`
 	OS             string `json:"os" validate:"required"`
+	OSVersion      string `json:"os_version" validate:"required"`
 	Browser        string `json:"browser" validate:"required"`
 	BrowserVersion string `json:"browser_version" validate:"required"`
 }

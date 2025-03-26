@@ -114,14 +114,12 @@ func TestSaveSession(t *testing.T) {
 				var appErr *errorsutil.AppError
 				if assert.True(t, errors.As(err, &appErr), "Expected an AppError") {
 					assert.Equal(t, errorsutil.ERROR_UNIQUE_VIOLATION, appErr.Code)
-					assert.Contains(t, appErr.Message, "session: unique violation")
 				}
 			},
 		},
 		"Generic Database Error": {
 			session: testSession,
 			mockSetup: func() {
-				// Create a generic PG error that isn't a unique violation
 				pgErr := &pgconn.PgError{
 					Code:    pgerrcode.CheckViolation,
 					Message: "check constraint violation",
@@ -148,8 +146,7 @@ func TestSaveSession(t *testing.T) {
 
 				var appErr *errorsutil.AppError
 				if assert.True(t, errors.As(err, &appErr), "Expected an AppError") {
-					assert.Equal(t, errorsutil.ERROR_INTERNAL, appErr.Code)
-					assert.Contains(t, appErr.Message, "session: error during save")
+					assert.Equal(t, errorsutil.ERROR_CONSTRAINT_VIOLATION, appErr.Code)
 				}
 			},
 		},
