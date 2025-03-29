@@ -1,5 +1,5 @@
 meta {
-  name: login_johnny
+  name: login_nakka
   type: http
   seq: 1
 }
@@ -15,13 +15,16 @@ body:json {
     "username": "{{username}}",
     "password": "{{password}}",
     "session": {
-      "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:42.0) Gecko/20100101 Firefox/42.0",
-      "ipv4_address": "192.168.1.1"
+      "os": "Mac OS X",
+      "os_version": "10.15",
+      "ipv4_address": "192.168.1.1",
+      "browser": "Mozilla",
+      "browser_version": "138.0a1"
     }
   }
 }
 
 vars:pre-request {
-  username: johnny
-  password: password123!password
+  username: Nakka
+  password: Password123!password
 }

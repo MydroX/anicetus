@@ -3,6 +3,7 @@ package usecases
 import (
 	"MydroX/anicetus/internal/common/context"
 	"MydroX/anicetus/internal/common/errorsutil"
+	"MydroX/anicetus/internal/common/uuidutil"
 	"MydroX/anicetus/internal/config"
 	"MydroX/anicetus/internal/iam/dto"
 	iammocks "MydroX/anicetus/internal/iam/mocks"
@@ -19,8 +20,6 @@ import (
 	passwordpkg "MydroX/anicetus/pkg/password"
 )
 
-var userPrefix = "user"
-
 func createTestUsecase(t *testing.T) (*usersmocks.MockUsersRepository, *iammocks.MockIamRepository, IamUsecasesInterface) {
 	ctrl := gomock.NewController(t)
 	usersRepositoryMock := usersmocks.NewMockUsersRepository(ctrl)
@@ -35,6 +34,14 @@ func createTestUsecase(t *testing.T) (*usersmocks.MockUsersRepository, *iammocks
 			Parallelism: 4,
 			KeyLength:   32,
 		},
+		AccessToken: config.AccessToken{
+			Expiration: 3600,
+			Secret:     "testsecret",
+		},
+		RefreshToken: config.RefreshToken{
+			Expiration: 7200,
+			Secret:     "testsecret",
+		},
 	})
 
 	return usersRepositoryMock, iamRepositoryMock, u
@@ -43,7 +50,7 @@ func createTestUsecase(t *testing.T) (*usersmocks.MockUsersRepository, *iammocks
 func Test_Login(t *testing.T) {
 	usersRepository, iamRepository, u := createTestUsecase(t)
 
-	userUUID := uuid.NewWithPrefix(userPrefix)
+	userUUID := uuid.NewWithPrefix(uuidutil.PREFIX_USER)
 
 	t.Run("[V1] Login user with email", func(t *testing.T) {
 		ctx := context.NewAppContextTest()

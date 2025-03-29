@@ -70,11 +70,12 @@ func (u *usecases) Login(ctx *context.AppContext, req *dto.LoginRequest) (access
 
 func login(
 	ctx *context.AppContext,
-	u *usecases, user *usersmodels.User,
+	u *usecases,
+	user *usersmodels.User,
 	s *dto.Session,
-	password string,
+	reqPwd string,
 ) (accessToken, refreshToken string, err error) {
-	if !passwordpkg.CheckPasswordHash(password, user.Password) {
+	if !passwordpkg.CheckPasswordHash(reqPwd, user.Password) {
 		return "", "", errorsutil.New(
 			errorsutil.ERROR_INVALID_INPUT,
 			"invalid password",
@@ -82,21 +83,42 @@ func login(
 		)
 	}
 
-	expirationTimeAccess := time.Now().Add(time.Second * time.Duration(u.sessionConfig.AccessToken.Expiration))
-
-	accessToken, _ = jwt.CreateAccessToken(
-		expirationTimeAccess,
+	accessToken, err = jwt.CreateAccessToken(
+		&jwt.AccessClaims{
+			BaseClaims: jwt.BaseClaims{
+				UserUUID:           user.UUID,
+				TokenType:          jwt.AccessToken,
+				ExpirationDuration: time.Duration(u.sessionConfig.AccessToken.Expiration),
+			},
+		},
 		u.sessionConfig.AccessToken.Secret,
-		user.UUID,
 	)
+	if err != nil {
+		return "", "", errorsutil.New(
+			errorsutil.ERROR_CREATE_TOKEN,
+			"failed to create access token",
+			err,
+		)
+	}
 
-	expirationTimeRefresh := time.Now().Add(time.Second * time.Duration(u.sessionConfig.RefreshToken.Expiration))
-
-	refreshToken, _ = jwt.CreateRefreshToken(
-		expirationTimeRefresh,
+	refreshToken, err = jwt.CreateRefreshToken(
+		&jwt.RefreshClaims{
+			BaseClaims: jwt.BaseClaims{
+				UserUUID:           user.UUID,
+				TokenType:          jwt.RefreshToken,
+				ExpirationDuration: time.Duration(u.sessionConfig.RefreshToken.Expiration),
+			},
+			SessionUUID: uuid.NewWithPrefix(sessionPrefix),
+		},
 		u.sessionConfig.RefreshToken.Secret,
-		user.UUID,
 	)
+	if err != nil {
+		return "", "", errorsutil.New(
+			errorsutil.ERROR_CREATE_TOKEN,
+			"failed to create refresh token",
+			err,
+		)
+	}
 
 	hashParams := argon2id.New(
 		argon2id.Iterations(uint32(u.sessionConfig.HashConfig.Iterations)),
@@ -114,6 +136,8 @@ func login(
 			hashErr,
 		)
 	}
+
+	expirationTimeRefresh := time.Now().Add(time.Second * time.Duration(u.sessionConfig.RefreshToken.Expiration))
 
 	session := models.Session{
 		UUID:           uuid.NewWithPrefix(sessionPrefix),

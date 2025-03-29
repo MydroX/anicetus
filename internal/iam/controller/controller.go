@@ -42,8 +42,8 @@ func (c *controller) Login(ginCtx *gin.Context) {
 		return
 	}
 
-	err := c.validate.Struct(request)
-	if err != nil {
+	jwtErr := c.validate.Struct(request)
+	if jwtErr != nil {
 		response.BadRequest(c.logger, ctx, errorsutil.ERROR_INVALID_INPUT, errorsutil.MessageInvalidInput)
 		return
 	}
@@ -53,9 +53,9 @@ func (c *controller) Login(ginCtx *gin.Context) {
 		return
 	}
 
-	accessToken, refreshToken, err := c.usecases.Login(ctx, &request)
-	if err != nil {
-		response.Error(c.logger, ctx, err)
+	accessToken, refreshToken, jwtErr := c.usecases.Login(ctx, &request)
+	if jwtErr != nil {
+		response.Error(c.logger, ctx, jwtErr)
 		return
 	}
 

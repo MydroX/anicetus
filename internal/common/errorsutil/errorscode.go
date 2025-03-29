@@ -26,7 +26,8 @@ const (
 	ERROR_INVALID_PASSWORD        = 11003 // Password does not meet the requirements
 
 	// IAM errors (12xxx)
-	ERROR_HASH_TOKEN = 12001 // Failed to hash token
+	ERROR_HASH_TOKEN   = 12001 // Failed to hash token
+	ERROR_CREATE_TOKEN = 12002 // Failed to create token
 
 	// Database errors (99xxx)
 	ERROR_UNIQUE_VIOLATION      = 99001 // Unique constraint violation
