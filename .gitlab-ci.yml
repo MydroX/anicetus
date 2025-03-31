@@ -13,7 +13,7 @@ lint:
   image: golangci/golangci-lint:$GOLANGCI_LINT_VERSION
   stage: test
   script:
-    - golangci-lint run 
+    - golangci-lint -v run 
 
 go-test:
     stage: test

@@ -20,10 +20,16 @@ const (
 
 func setupTestEnv() func() {
 	originalSecret := os.Getenv("JWT_SECRET")
-	os.Setenv("JWT_SECRET", testSecretKey)
+	err := os.Setenv("JWT_SECRET", testSecretKey)
+	if err != nil {
+		panic("Failed to set JWT_SECRET environment variable")
+	}
 
 	return func() {
-		os.Setenv("JWT_SECRET", originalSecret)
+		err = os.Setenv("JWT_SECRET", originalSecret)
+		if err != nil {
+			panic("Failed to restore JWT_SECRET environment variable")
+		}
 	}
 }
 
@@ -517,14 +523,17 @@ func TestKeyFunc(t *testing.T) {
 	assert.Equal(t, []byte(testSecretKey), key)
 
 	// Test with missing secret
-	os.Unsetenv("JWT_SECRET")
+	err = os.Unsetenv("JWT_SECRET")
+	assert.NoError(t, err)
+
 	key, err = keyFunc(token)
 	assert.Error(t, err)
 	assert.Equal(t, ErrMissingSecretKey, err)
 	assert.Nil(t, key)
 
 	// Reset the environment
-	os.Setenv("JWT_SECRET", testSecretKey)
+	err = os.Setenv("JWT_SECRET", testSecretKey)
+	assert.NoError(t, err)
 
 	// Test with invalid signing method
 	invalidToken := jwt.New(jwt.SigningMethodRS256)
