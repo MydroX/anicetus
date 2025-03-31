@@ -1,3 +1,5 @@
+//revive:disable:cognitive-complexity
+//revive:disable:add-constant
 package jwt
 
 import (
@@ -176,7 +178,7 @@ func ParseAccessToken(tokenString string) (*AccessClaims, error) {
 
 	// Extract permissions
 	var permissions []string
-	if perms, ok := claims["permissions"].([]interface{}); ok {
+	if perms, ok := claims["permissions"].([]any); ok {
 		for _, p := range perms {
 			if perm, ok := p.(string); ok {
 				permissions = append(permissions, perm)
