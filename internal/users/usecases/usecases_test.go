@@ -57,7 +57,7 @@ func Test_Create(t *testing.T) {
 		}
 
 		r.EXPECT().CreateUser(gomock.Any(), gomock.Any()).DoAndReturn(func(_ *context.AppContext, user *models.User) error {
-			assert.Equal(t, user.Role, "USER")
+			assert.Equal(t, user.Role, []string{"USER"})
 			return nil
 		})
 
