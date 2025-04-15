@@ -22,7 +22,10 @@ import (
 func TestCreateUser(t *testing.T) {
 	// Test setup
 	ctx := context.NewAppContextTest()
-	log := logger.New("TEST")
+	log, err := logger.New("TEST")
+	if err != nil {
+		panic(err)
+	}
 	queries := &UsersQueries{}
 
 	poolMock, err := pgxmock.NewPool()
@@ -38,7 +41,7 @@ func TestCreateUser(t *testing.T) {
 		Username: "testuser",
 		Email:    "test@example.com",
 		Password: "hashedpassword123",
-		Role:     "USER",
+		Role:     []string{"USER"},
 	}
 
 	// Test cases
@@ -126,7 +129,10 @@ func TestCreateUser(t *testing.T) {
 func TestGetUserByUUID(t *testing.T) {
 	// Test setup
 	ctx := context.NewAppContextTest()
-	log := logger.New("TEST")
+	log, err := logger.New("TEST")
+	if err != nil {
+		panic(err)
+	}
 
 	poolMock, err := pgxmock.NewPool()
 	require.NoError(t, err, "Failed to create mock pool")
@@ -149,7 +155,7 @@ func TestGetUserByUUID(t *testing.T) {
 		Username:  "testuser",
 		Email:     "test@example.com",
 		Password:  "hashedpassword123",
-		Role:      "USER",
+		Role:      []string{"USER"},
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
@@ -234,7 +240,10 @@ func TestGetUserByUUID(t *testing.T) {
 func TestUpdateUser(t *testing.T) {
 	// Test setup
 	ctx := context.NewAppContextTest()
-	log := logger.New("TEST")
+	log, err := logger.New("TEST")
+	if err != nil {
+		panic(err)
+	}
 
 	poolMock, err := pgxmock.NewPool()
 	require.NoError(t, err, "Failed to create mock pool")
@@ -254,7 +263,7 @@ func TestUpdateUser(t *testing.T) {
 		UUID:     testUUID,
 		Username: "updated_username",
 		Email:    "updated@example.com",
-		Role:     "ADMIN",
+		Role:     []string{"USER"},
 	}
 
 	// User with updated fields and additional fields from DB
@@ -263,7 +272,7 @@ func TestUpdateUser(t *testing.T) {
 		Username:  "updated_username",
 		Email:     "updated@example.com",
 		Password:  "hashedpassword123",
-		Role:      "ADMIN",
+		Role:      []string{"USER"},
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
@@ -369,7 +378,10 @@ func TestUpdateUser(t *testing.T) {
 func TestUpdatePassword(t *testing.T) {
 	// Test setup
 	ctx := context.NewAppContextTest()
-	log := logger.New("TEST")
+	log, err := logger.New("TEST")
+	if err != nil {
+		panic(err)
+	}
 
 	poolMock, err := pgxmock.NewPool()
 	require.NoError(t, err, "Failed to create mock pool")
@@ -469,7 +481,10 @@ func TestUpdatePassword(t *testing.T) {
 func TestUpdateEmail(t *testing.T) {
 	// Test setup
 	ctx := context.NewAppContextTest()
-	log := logger.New("TEST")
+	log, err := logger.New("TEST")
+	if err != nil {
+		panic(err)
+	}
 
 	poolMock, err := pgxmock.NewPool()
 	require.NoError(t, err, "Failed to create mock pool")
@@ -572,7 +587,10 @@ func TestUpdateEmail(t *testing.T) {
 func TestDeleteUser(t *testing.T) {
 	// Test setup
 	ctx := context.NewAppContextTest()
-	log := logger.New("TEST")
+	log, err := logger.New("TEST")
+	if err != nil {
+		panic(err)
+	}
 
 	poolMock, err := pgxmock.NewPool()
 	require.NoError(t, err, "Failed to create mock pool")
@@ -667,7 +685,10 @@ func TestDeleteUser(t *testing.T) {
 func TestGetUserByEmail(t *testing.T) {
 	// Test setup
 	ctx := context.NewAppContextTest()
-	log := logger.New("TEST")
+	log, err := logger.New("TEST")
+	if err != nil {
+		panic(err)
+	}
 
 	poolMock, err := pgxmock.NewPool()
 	require.NoError(t, err, "Failed to create mock pool")
@@ -689,7 +710,7 @@ func TestGetUserByEmail(t *testing.T) {
 		Username:  "testuser",
 		Email:     testEmail,
 		Password:  "hashedpassword123",
-		Role:      "USER",
+		Role:      []string{"USER"},
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
@@ -772,7 +793,10 @@ func TestGetUserByEmail(t *testing.T) {
 func TestGetUserByUsername(t *testing.T) {
 	// Test setup
 	ctx := context.NewAppContextTest()
-	log := logger.New("TEST")
+	log, err := logger.New("TEST")
+	if err != nil {
+		panic(err)
+	}
 
 	poolMock, err := pgxmock.NewPool()
 	require.NoError(t, err, "Failed to create mock pool")
@@ -794,7 +818,7 @@ func TestGetUserByUsername(t *testing.T) {
 		Username:  testUsername,
 		Email:     "test@example.com",
 		Password:  "hashedpassword123",
-		Role:      "USER",
+		Role:      []string{"USER"},
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
@@ -877,7 +901,10 @@ func TestGetUserByUsername(t *testing.T) {
 func TestGetAllUsers(t *testing.T) {
 	// Test setup
 	ctx := context.NewAppContextTest()
-	log := logger.New("TEST")
+	log, err := logger.New("TEST")
+	if err != nil {
+		panic(err)
+	}
 
 	poolMock, err := pgxmock.NewPool()
 	require.NoError(t, err, "Failed to create mock pool")
@@ -898,7 +925,7 @@ func TestGetAllUsers(t *testing.T) {
 		Username:  "user1",
 		Email:     "user1@example.com",
 		Password:  "hashedpassword1",
-		Role:      "USER",
+		Role:      []string{"USER"},
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
@@ -908,7 +935,7 @@ func TestGetAllUsers(t *testing.T) {
 		Username:  "user2",
 		Email:     "user2@example.com",
 		Password:  "hashedpassword2",
-		Role:      "ADMIN",
+		Role:      []string{"ADMIN"},
 		CreatedAt: now,
 		UpdatedAt: now,
 	}

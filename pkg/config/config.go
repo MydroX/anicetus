@@ -1,15 +1,24 @@
 package config
 
 import (
-	"fmt"
-	"os"
+	"log"
+
+	"github.com/spf13/viper"
 )
 
-func Read() ([]byte, error) {
-	file, err := os.ReadFile("cmd/config.yml")
-	if err != nil {
-		return nil, fmt.Errorf("error opening config file: %v", err)
+func LoadConfig() error {
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath("./cmd/")
+	viper.AddConfigPath(".")
+
+	viper.AutomaticEnv()
+
+	if err := viper.ReadInConfig(); err != nil {
+		return err
 	}
 
-	return file, nil
+	log.Default().Println("Config loaded successfully!")
+
+	return nil
 }

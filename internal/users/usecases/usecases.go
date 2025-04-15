@@ -8,18 +8,19 @@ import (
 	"MydroX/anicetus/internal/users/dto"
 	"MydroX/anicetus/internal/users/models"
 	"MydroX/anicetus/internal/users/repository"
-	"MydroX/anicetus/pkg/logger"
 	passwordpkg "MydroX/anicetus/pkg/password"
 	uuidpkg "MydroX/anicetus/pkg/uuid"
+
+	"go.uber.org/zap"
 )
 
 type usecases struct {
-	logger        *logger.Logger
+	logger        *zap.SugaredLogger
 	repository    repository.UsersRepository
 	sessionConfig *config.Session
 }
 
-func New(l *logger.Logger, r repository.UsersRepository, sessionConfig *config.Session) UsersUsecases {
+func New(l *zap.SugaredLogger, r repository.UsersRepository, sessionConfig *config.Session) UsersUsecases {
 	return &usecases{
 		logger:        l,
 		repository:    r,
@@ -38,7 +39,7 @@ func (u *usecases) Create(ctx *context.AppContext, req *dto.CreateUserRequest) e
 		Username: req.Username,
 		Email:    req.Email,
 		Password: passwordHashed,
-		Role:     "USER",
+		Role:     []string{"USER"},
 	}
 
 	err = u.repository.CreateUser(ctx, &user)

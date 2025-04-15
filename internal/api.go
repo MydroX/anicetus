@@ -14,7 +14,6 @@ import (
 	userscontroller "MydroX/anicetus/internal/users/controller"
 	usersrepository "MydroX/anicetus/internal/users/repository"
 	usersusecases "MydroX/anicetus/internal/users/usecases"
-	loggerpkg "MydroX/anicetus/pkg/logger"
 )
 
 type service struct {
@@ -23,12 +22,12 @@ type service struct {
 }
 
 // Router is a function to define the routes for the service.
-func Router(logger *loggerpkg.Logger, service service) *gin.Engine {
+func Router(logger *zap.SugaredLogger, service service) *gin.Engine {
 	router := gin.Default()
 
 	err := router.SetTrustedProxies(nil)
 	if err != nil {
-		logger.Zap.Fatal("error setting trusted proxies", zap.Error(err))
+		logger.Fatal("error setting trusted proxies", zap.Error(err))
 	}
 
 	router.GET("/health", func(c *gin.Context) {
@@ -49,9 +48,9 @@ func Router(logger *loggerpkg.Logger, service service) *gin.Engine {
 }
 
 // NewServer is a function to start the server for the service.
-func NewServer(c *config.Config, logger *loggerpkg.Logger, db *pgxpool.Pool) {
+func NewServer(c *config.Config, logger *zap.SugaredLogger, db *pgxpool.Pool) {
 	usersRepository := usersrepository.New(logger, db)
-	iamRepository := iamrepository.New(logger, db)
+	iamRepository := iamrepository.NewIAMStore(logger, db)
 
 	usersUsecase := usersusecases.New(logger, usersRepository, &c.Session)
 	iamUsecase := iamusecases.New(logger, usersRepository, iamRepository, &c.Session)
@@ -68,6 +67,6 @@ func NewServer(c *config.Config, logger *loggerpkg.Logger, db *pgxpool.Pool) {
 
 	err := router.Run(fmt.Sprintf(":%s", c.Port))
 	if err != nil {
-		logger.Zap.Fatal("error starting server", zap.Error(err))
+		logger.Fatal("error starting server", zap.Error(err))
 	}
 }

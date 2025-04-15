@@ -20,6 +20,19 @@ const (
 	RefreshToken TokenType = "refresh"
 )
 
+// Claim keys
+const (
+	claimTokenType   = "token_type"
+	claimUserUUID    = "user_uuid"
+	claimSessionUUID = "session_uuid"
+	claimPermissions = "permissions"
+	claimExp         = "exp"
+	claimIAT         = "iat"
+	claimIss         = "iss"
+	claimAud         = "aud"
+	claimNbf         = "nbf"
+)
+
 // Custom error types for better error handling
 var (
 	// General JWT errors
@@ -38,6 +51,13 @@ var (
 	// Fields errors
 	ErrMissingSessionUUID = errors.New("session_uuid is missing from token")
 	ErrMissingUserUUID    = errors.New("user_uuid is missing from token")
+
+	// Claims validation errors
+	ErrInvalidIssuer     = errors.New("invalid token issuer")
+	ErrInvalidAudience   = errors.New("invalid token audience")
+	ErrTokenNotValidYet  = errors.New("token not valid yet")
+	ErrMissingIssuedAt   = errors.New("issued at claim is missing")
+	ErrMissingExpiration = errors.New("expiration claim is missing")
 )
 
 // JWTError provides more context about JWT errors
@@ -63,9 +83,13 @@ func (e *JWTError) Is(target error) bool {
 
 // BaseClaims contains essential fields common to all tokens
 type BaseClaims struct {
-	UserUUID           string
-	TokenType          TokenType
-	ExpirationDuration time.Duration
+	JWTID     string
+	UserUUID  string
+	TokenType TokenType
+	Exp       int64
+	IssuedAt  time.Time
+	Issuer    string
+	Audience  string
 }
 
 // AccessClaims for the short-lived access token
@@ -81,13 +105,20 @@ type RefreshClaims struct {
 	SessionUUID string
 }
 
+// TokenConfig holds configuration for token validation
+type TokenConfig struct {
+	ExpectedIssuer   string
+	ExpectedAudience string
+	ClockSkewSeconds int // Tolerance for time-based claims
+}
+
 // CreateAccessToken creates a new access token (without session info)
 func CreateAccessToken(c *AccessClaims, secretKey string) (string, error) {
 	if secretKey == "" {
 		return "", &JWTError{Err: ErrMissingSecretKey}
 	}
 
-	expirationTime := time.Now().Add(time.Second * c.ExpirationDuration)
+	expirationTime := time.Now().Add(time.Duration(c.Exp) * time.Second)
 	expT := jwt.NewNumericDate(expirationTime)
 
 	claims := jwt.MapClaims{
@@ -95,6 +126,8 @@ func CreateAccessToken(c *AccessClaims, secretKey string) (string, error) {
 		"token_type":  string(AccessToken),
 		"permissions": c.Permissions,
 		"exp":         expT,
+		"iss":         c.Issuer,
+		"aud":         c.Audience,
 		"iat":         jwt.NewNumericDate(time.Now()),
 	}
 
@@ -116,7 +149,7 @@ func CreateRefreshToken(c *RefreshClaims, secretKey string) (string, error) {
 		return "", &JWTError{Err: ErrMissingSecretKey}
 	}
 
-	expirationTime := time.Now().Add(time.Second * c.ExpirationDuration)
+	expirationTime := time.Now().Add(time.Duration(c.Exp) * time.Second)
 	expT := jwt.NewNumericDate(expirationTime)
 
 	claims := jwt.MapClaims{
@@ -124,6 +157,8 @@ func CreateRefreshToken(c *RefreshClaims, secretKey string) (string, error) {
 		"session_uuid": c.SessionUUID,
 		"token_type":   string(RefreshToken),
 		"exp":          expT,
+		"iss":          c.Issuer,
+		"aud":          c.Audience,
 		"iat":          jwt.NewNumericDate(time.Now()),
 	}
 
@@ -139,8 +174,76 @@ func CreateRefreshToken(c *RefreshClaims, secretKey string) (string, error) {
 	return ss, nil
 }
 
+// validateStandardClaims validates standard JWT claims
+func validateStandardClaims(claims jwt.MapClaims, config *TokenConfig) error {
+	now := time.Now()
+	clockSkew := time.Duration(config.ClockSkewSeconds) * time.Second
+
+	// Validate issuer if present
+	if iss, ok := claims["iss"].(string); ok {
+		if iss != config.ExpectedIssuer {
+			return &JWTError{
+				Err:     ErrInvalidIssuer,
+				Message: fmt.Sprintf("expected %s, got %s", config.ExpectedIssuer, iss),
+			}
+		}
+	}
+
+	// Validate audience if present
+	if aud, ok := claims["aud"].(string); ok {
+		if aud != config.ExpectedAudience {
+			return &JWTError{
+				Err:     ErrInvalidAudience,
+				Message: fmt.Sprintf("expected %s, got %s", config.ExpectedAudience, aud),
+			}
+		}
+	} else if audArray, ok := claims["aud"].([]any); ok {
+		validAudience := false
+		for _, a := range audArray {
+			if aud, ok := a.(string); ok && aud == config.ExpectedAudience {
+				validAudience = true
+				break
+			}
+		}
+		if !validAudience {
+			return &JWTError{Err: ErrInvalidAudience}
+		}
+	}
+
+	// Validate expiration time (required)
+	if exp, ok := claims["exp"].(float64); !ok {
+		return &JWTError{Err: ErrMissingExpiration}
+	} else {
+		expTime := time.Unix(int64(exp), 0)
+		if now.After(expTime.Add(clockSkew)) {
+			return &JWTError{Err: ErrTokenExpired}
+		}
+	}
+
+	// Validate issued at if present
+	if iat, ok := claims["iat"].(float64); ok {
+		issuedAt := time.Unix(int64(iat), 0)
+		if now.Before(issuedAt.Add(-clockSkew)) {
+			return &JWTError{
+				Err:     ErrMissingIssuedAt,
+				Message: "token used before issued",
+			}
+		}
+	}
+
+	// Validate not before if present
+	if nbf, ok := claims["nbf"].(float64); ok {
+		notBefore := time.Unix(int64(nbf), 0)
+		if now.Before(notBefore.Add(-clockSkew)) {
+			return &JWTError{Err: ErrTokenNotValidYet}
+		}
+	}
+
+	return nil
+}
+
 // ParseAccessToken parses and validates an access token
-func ParseAccessToken(tokenString string) (*AccessClaims, error) {
+func ParseAccessToken(tokenString string, config *TokenConfig) (*AccessClaims, error) {
 	token, err := jwt.Parse(tokenString, keyFunc)
 	if err != nil {
 		if errors.Is(err, jwt.ErrTokenExpired) {
@@ -159,6 +262,11 @@ func ParseAccessToken(tokenString string) (*AccessClaims, error) {
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
 		return nil, &JWTError{Err: ErrInvalidClaimsType}
+	}
+
+	// Validate standard claims
+	if err := validateStandardClaims(claims, config); err != nil {
+		return nil, err
 	}
 
 	// Verify this is an access token
@@ -186,11 +294,29 @@ func ParseAccessToken(tokenString string) (*AccessClaims, error) {
 		}
 	}
 
+	// Extract standard claims for BaseClaims
+	var issuedAt time.Time
+	if iat, ok := claims["iat"].(float64); ok {
+		issuedAt = time.Unix(int64(iat), 0)
+	}
+
+	var expiration int64
+	if exp, ok := claims["exp"].(float64); ok {
+		expiration = int64(exp)
+	}
+
+	issuer, _ := claims["iss"].(string)
+	audience, _ := claims["aud"].(string)
+
 	// Create and return the access claims
 	accessClaims := &AccessClaims{
 		BaseClaims: BaseClaims{
 			UserUUID:  userUUID,
 			TokenType: AccessToken,
+			Exp:       expiration,
+			IssuedAt:  issuedAt,
+			Issuer:    issuer,
+			Audience:  audience,
 		},
 		Permissions: permissions,
 	}
@@ -199,7 +325,7 @@ func ParseAccessToken(tokenString string) (*AccessClaims, error) {
 }
 
 // ParseRefreshToken parses and validates a refresh token
-func ParseRefreshToken(tokenString string) (*RefreshClaims, error) {
+func ParseRefreshToken(tokenString string, config *TokenConfig) (*RefreshClaims, error) {
 	token, err := jwt.Parse(tokenString, keyFunc)
 	if err != nil {
 		if errors.Is(err, jwt.ErrTokenExpired) {
@@ -218,6 +344,11 @@ func ParseRefreshToken(tokenString string) (*RefreshClaims, error) {
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
 		return nil, &JWTError{Err: ErrInvalidClaimsType}
+	}
+
+	// Validate standard claims
+	if err := validateStandardClaims(claims, config); err != nil {
+		return nil, err
 	}
 
 	// Verify this is a refresh token
@@ -241,11 +372,29 @@ func ParseRefreshToken(tokenString string) (*RefreshClaims, error) {
 		return nil, &JWTError{Err: ErrMissingUserUUID}
 	}
 
+	// Extract standard claims for BaseClaims
+	var issuedAt time.Time
+	if iat, ok := claims["iat"].(float64); ok {
+		issuedAt = time.Unix(int64(iat), 0)
+	}
+
+	var expiration int64
+	if exp, ok := claims["exp"].(float64); ok {
+		expiration = int64(exp)
+	}
+
+	issuer, _ := claims["iss"].(string)
+	audience, _ := claims["aud"].(string)
+
 	// Create and return the refresh claims
 	refreshClaims := &RefreshClaims{
 		BaseClaims: BaseClaims{
 			UserUUID:  userUUID,
 			TokenType: RefreshToken,
+			Exp:       expiration,
+			IssuedAt:  issuedAt,
+			Issuer:    issuer,
+			Audience:  audience,
 		},
 		SessionUUID: sessionUUID,
 	}
@@ -254,7 +403,60 @@ func ParseRefreshToken(tokenString string) (*RefreshClaims, error) {
 }
 
 // ParseToken parses the token string and returns the base claims
-func ParseToken(tokenString string) (*BaseClaims, error) {
+func ParseToken(tokenString string, config *TokenConfig) (*BaseClaims, error) {
+	claims, err := parseAndValidateToken(tokenString, config)
+	if err != nil {
+		return nil, err
+	}
+
+	// Extract token type with validation
+	tokenType, ok := claims[claimTokenType].(string)
+	if !ok {
+		return nil, &JWTError{Err: ErrMissingTokenType}
+	}
+
+	userUUID, ok := claims[claimUserUUID].(string)
+	if !ok || userUUID == "" {
+		return nil, &JWTError{Err: ErrMissingUserUUID}
+	}
+
+	// Create base claims
+	baseClaims := &BaseClaims{
+		UserUUID:  userUUID,
+		TokenType: TokenType(tokenType),
+		Exp:       extractInt64Claim(claims, claimExp),
+		IssuedAt:  extractTimeClaim(claims, claimIAT),
+		Issuer:    extractStringClaim(claims, claimIss),
+		Audience:  extractStringClaim(claims, claimAud),
+	}
+
+	return baseClaims, nil
+}
+
+// Helper functions for extracting claims
+func extractStringClaim(claims jwt.MapClaims, key string) string {
+	if val, ok := claims[key].(string); ok {
+		return val
+	}
+	return ""
+}
+
+func extractInt64Claim(claims jwt.MapClaims, key string) int64 {
+	if val, ok := claims[key].(float64); ok {
+		return int64(val)
+	}
+	return 0
+}
+
+func extractTimeClaim(claims jwt.MapClaims, key string) time.Time {
+	if val, ok := claims[key].(float64); ok {
+		return time.Unix(int64(val), 0)
+	}
+	return time.Time{}
+}
+
+// Common function for parsing and validating tokens
+func parseAndValidateToken(tokenString string, config *TokenConfig) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(tokenString, keyFunc)
 	if err != nil {
 		if errors.Is(err, jwt.ErrTokenExpired) {
@@ -275,24 +477,12 @@ func ParseToken(tokenString string) (*BaseClaims, error) {
 		return nil, &JWTError{Err: ErrInvalidClaimsType}
 	}
 
-	// Extract token type with validation
-	tokenType, ok := claims["token_type"].(string)
-	if !ok {
-		return nil, &JWTError{Err: ErrMissingTokenType}
+	// Validate standard claims
+	if err := validateStandardClaims(claims, config); err != nil {
+		return nil, err
 	}
 
-	userUUID, ok := claims["user_uuid"].(string)
-	if !ok || userUUID == "" {
-		return nil, &JWTError{Err: ErrMissingUserUUID}
-	}
-
-	// Create and return the base claims
-	baseClaims := &BaseClaims{
-		UserUUID:  userUUID,
-		TokenType: TokenType(tokenType),
-	}
-
-	return baseClaims, nil
+	return claims, nil
 }
 
 func (t TokenJWT) String() string {

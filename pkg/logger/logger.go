@@ -1,39 +1,34 @@
 package logger
 
-import "go.uber.org/zap"
+import (
+	"fmt"
 
-type Logger struct {
-	Zap   *zap.Logger
-	Debug bool
-}
+	"go.uber.org/zap"
+)
 
-func New(env string) *Logger {
+func New(env string) (*zap.SugaredLogger, error) {
 	var zapLogger *zap.Logger
+	var err error
+
 	switch env {
 	case "DEV":
-		zapLogger, _ = zap.NewDevelopment()
-		return &Logger{
-			Zap:   zapLogger,
-			Debug: true,
+		zapLogger, err = zap.NewDevelopment()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create development logger: %w", err)
 		}
 	case "PROD":
-		zapLogger, _ = zap.NewProduction()
-		return &Logger{
-			Zap:   zapLogger,
-			Debug: false,
+		zapLogger, err = zap.NewProduction()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create production logger: %w", err)
 		}
 	case "TEST":
-		zapLogger, _ = zap.NewDevelopment()
-		return &Logger{
-			Zap:   zapLogger,
-			Debug: false,
+		zapLogger, err = zap.NewDevelopment()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create test logger: %w", err)
 		}
 	default:
-		zapLogger = zap.NewNop()
-		zapLogger.Warn("logger is set unknown environment")
+		return nil, fmt.Errorf("invalid environment for logger: %s", env)
 	}
-	return &Logger{
-		Zap:   zapLogger,
-		Debug: false,
-	}
+
+	return zapLogger.Sugar(), nil
 }

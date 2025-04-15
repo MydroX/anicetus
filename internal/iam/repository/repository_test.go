@@ -21,13 +21,16 @@ import (
 func TestSaveSession(t *testing.T) {
 	// Test setup
 	ctx := context.NewAppContextTest()
-	log := logger.New("TEST")
+	log, err := logger.New("TEST")
+	if err != nil {
+		panic(err)
+	}
 
 	poolMock, err := pgxmock.NewPool()
 	require.NoError(t, err, "Failed to create mock pool")
 	defer poolMock.Close()
 
-	repo := New(log, poolMock)
+	repo := NewIAMStore(log, poolMock)
 	queries := &Queries{}
 
 	// Get the actual query and escape for regex

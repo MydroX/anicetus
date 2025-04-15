@@ -7,7 +7,6 @@ import (
 	"MydroX/anicetus/internal/config"
 	"MydroX/anicetus/internal/users/dto"
 	"MydroX/anicetus/internal/users/usecases"
-	"MydroX/anicetus/pkg/logger"
 	"MydroX/anicetus/pkg/password"
 	"MydroX/anicetus/pkg/uuid"
 	"net/http"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"go.uber.org/zap"
 )
 
 const (
@@ -26,14 +26,14 @@ const (
 )
 
 type controller struct {
-	logger            *logger.Logger
+	logger            *zap.SugaredLogger
 	validate          *validator.Validate
 	passwordValidator *password.Validator
 	usecases          usecases.UsersUsecases
 	config            *config.Config
 }
 
-func New(l *logger.Logger, u usecases.UsersUsecases, c *config.Config) ControllerInterface {
+func New(l *zap.SugaredLogger, u usecases.UsersUsecases, c *config.Config) ControllerInterface {
 	validator := validator.New()
 
 	passwordValidator := password.NewValidator(

@@ -2,28 +2,54 @@ package main
 
 import (
 	app "MydroX/anicetus/internal"
-	"MydroX/anicetus/internal/config"
+	"MydroX/anicetus/internal/common/jwt"
+	cfg "MydroX/anicetus/internal/config"
+	"MydroX/anicetus/pkg/cache"
+	"MydroX/anicetus/pkg/config"
 	"MydroX/anicetus/pkg/db"
-	loggerpkg "MydroX/anicetus/pkg/logger"
+	"MydroX/anicetus/pkg/logger"
 	"log"
 
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
 
 func main() {
-	cfg, err := config.LoadConfig()
+	err := config.LoadConfig()
 	if err != nil {
 		log.Fatalf("error loading config: %v", err)
 	}
 
-	logger := loggerpkg.New(cfg.Env)
-
-	connDB, err := db.Connect(cfg.DB.Host, cfg.DB.Username, cfg.DB.Password, cfg.DB.Name, cfg.DB.Port)
+	var appConfig cfg.Config
+	err = viper.Unmarshal(&appConfig)
 	if err != nil {
-		logger.Zap.Fatal("error conecting to database", zap.Error(err))
+		log.Fatalf("error unmarshalling config: %v", err)
+	}
+
+	l, err := logger.New(appConfig.Env)
+	if err != nil {
+		log.Fatalf("error creating logger: %v", err)
+	}
+
+	l.Info("connecting to database...")
+	connDB, err := db.Connect(appConfig.DB.Host, appConfig.DB.Username, appConfig.DB.Password, appConfig.DB.Name, appConfig.DB.Port)
+	if err != nil {
+		l.Fatal("error conecting to database", zap.Error(err))
 	}
 	defer connDB.Close()
 
-	logger.Zap.Info("starting server...")
-	app.NewServer(cfg, logger, connDB)
+	l.Info("creating in memory cache...")
+	c, err := cache.New()
+	if err != nil {
+		l.Fatal("error creating cache", zap.Error(err))
+	}
+
+	l.Info("loading allowed audiences in cache...")
+	err = jwt.AllowedAudiencesInCache(connDB, c, l)
+	if err != nil {
+		l.Fatal("error loading allowed audiences in cache", zap.Error(err))
+	}
+
+	l.Info("starting server...")
+	app.NewServer(&appConfig, l, connDB)
 }

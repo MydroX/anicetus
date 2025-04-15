@@ -7,10 +7,10 @@ type CreateUserRequest struct {
 }
 
 type GetUserResponse struct {
-	UUID     string `json:"uuid"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Role     string `json:"role"`
+	UUID     string   `json:"uuid"`
+	Username string   `json:"username"`
+	Email    string   `json:"email"`
+	Role     []string `json:"role"`
 }
 
 type GetAllUsersResponse struct {
@@ -18,18 +18,18 @@ type GetAllUsersResponse struct {
 }
 
 type User struct {
-	UUID     string `json:"uuid"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Role     string `json:"role"`
+	UUID     string   `json:"uuid"`
+	Username string   `json:"username"`
+	Email    string   `json:"email"`
+	Role     []string `json:"role"`
 }
 
 type UpdateUserRequest struct {
-	UUID     string `json:"uuid" validate:"required,min=36,max=46"`
-	Username string `json:"username" validate:"required,min=4,max=18"`
-	Password string `json:"password" validate:"required,min=14,max=72"`
-	Email    string `json:"email" validate:"required,email"`
-	Role     string `json:"role" validate:"required,oneof=ADMIN USER"`
+	UUID     string   `json:"uuid" validate:"required,min=36,max=46"`
+	Username string   `json:"username" validate:"required,min=4,max=18"`
+	Password string   `json:"password" validate:"required,min=14,max=72"`
+	Email    string   `json:"email" validate:"required,email"`
+	Role     []string `json:"role" validate:"required,oneof=ADMIN USER"`
 }
 
 type UpdatePasswordRequest struct {

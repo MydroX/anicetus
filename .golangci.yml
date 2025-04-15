@@ -123,7 +123,7 @@ linters:
           severity: warning
           disabled: false
           exclude:
-            - ""
+            - "internal/api.go"
         - name: defer
           arguments:
             - - call-chain

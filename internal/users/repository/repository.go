@@ -5,8 +5,9 @@ import (
 	"MydroX/anicetus/internal/common/errorsutil"
 	"MydroX/anicetus/internal/common/pgxutil"
 	"MydroX/anicetus/internal/users/models"
-	"MydroX/anicetus/pkg/logger"
 	"fmt"
+
+	"go.uber.org/zap"
 )
 
 var (
@@ -14,13 +15,13 @@ var (
 )
 
 type repository struct {
-	logger  *logger.Logger
+	logger  *zap.SugaredLogger
 	dbPool  pgxutil.DBPool
 	queries *UsersQueries
 }
 
 // New is creating an interface for every method of the repository
-func New(l *logger.Logger, dbPool pgxutil.DBPool) UsersRepository {
+func New(l *zap.SugaredLogger, dbPool pgxutil.DBPool) UsersRepository {
 	return &repository{
 		logger:  l,
 		dbPool:  dbPool,

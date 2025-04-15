@@ -9,6 +9,7 @@ import (
 	iammocks "MydroX/anicetus/internal/iam/mocks"
 	usersmocks "MydroX/anicetus/internal/users/mocks"
 	"MydroX/anicetus/internal/users/models"
+	"MydroX/anicetus/pkg/logger"
 	"MydroX/anicetus/pkg/uuid"
 	"errors"
 	"testing"
@@ -16,17 +17,19 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
-	loggerpkg "MydroX/anicetus/pkg/logger"
 	passwordpkg "MydroX/anicetus/pkg/password"
 )
 
-func createTestUsecase(t *testing.T) (*usersmocks.MockUsersRepository, *iammocks.MockIamRepository, IamUsecasesInterface) {
+func createTestUsecase(t *testing.T) (*usersmocks.MockUsersRepository, *iammocks.MockIamRepository, IamUsecasesService) {
 	ctrl := gomock.NewController(t)
 	usersRepositoryMock := usersmocks.NewMockUsersRepository(ctrl)
 	iamRepositoryMock := iammocks.NewMockIamRepository(ctrl)
 
-	logger := loggerpkg.New("TEST")
-	u := New(logger, usersRepositoryMock, iamRepositoryMock, &config.Session{
+	l, err := logger.New("TEST")
+	if err != nil {
+		panic(err)
+	}
+	u := New(l, usersRepositoryMock, iamRepositoryMock, &config.Session{
 		HashConfig: config.HashConfig{
 			SaltLength:  16,
 			Iterations:  4,

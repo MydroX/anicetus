@@ -17,32 +17,32 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
-// MockIamUsecasesInterface is a mock of IamUsecasesInterface interface.
-type MockIamUsecasesInterface struct {
+// MockIamUsecasesService is a mock of IamUsecasesService interface.
+type MockIamUsecasesService struct {
 	ctrl     *gomock.Controller
-	recorder *MockIamUsecasesInterfaceMockRecorder
+	recorder *MockIamUsecasesServiceMockRecorder
 	isgomock struct{}
 }
 
-// MockIamUsecasesInterfaceMockRecorder is the mock recorder for MockIamUsecasesInterface.
-type MockIamUsecasesInterfaceMockRecorder struct {
-	mock *MockIamUsecasesInterface
+// MockIamUsecasesServiceMockRecorder is the mock recorder for MockIamUsecasesService.
+type MockIamUsecasesServiceMockRecorder struct {
+	mock *MockIamUsecasesService
 }
 
-// NewMockIamUsecasesInterface creates a new mock instance.
-func NewMockIamUsecasesInterface(ctrl *gomock.Controller) *MockIamUsecasesInterface {
-	mock := &MockIamUsecasesInterface{ctrl: ctrl}
-	mock.recorder = &MockIamUsecasesInterfaceMockRecorder{mock}
+// NewMockIamUsecasesService creates a new mock instance.
+func NewMockIamUsecasesService(ctrl *gomock.Controller) *MockIamUsecasesService {
+	mock := &MockIamUsecasesService{ctrl: ctrl}
+	mock.recorder = &MockIamUsecasesServiceMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockIamUsecasesInterface) EXPECT() *MockIamUsecasesInterfaceMockRecorder {
+func (m *MockIamUsecasesService) EXPECT() *MockIamUsecasesServiceMockRecorder {
 	return m.recorder
 }
 
 // Login mocks base method.
-func (m *MockIamUsecasesInterface) Login(ctx *context.AppContext, req *dto.LoginRequest) (string, string, error) {
+func (m *MockIamUsecasesService) Login(ctx *context.AppContext, req *dto.LoginRequest) (string, string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Login", ctx, req)
 	ret0, _ := ret[0].(string)
@@ -52,13 +52,13 @@ func (m *MockIamUsecasesInterface) Login(ctx *context.AppContext, req *dto.Login
 }
 
 // Login indicates an expected call of Login.
-func (mr *MockIamUsecasesInterfaceMockRecorder) Login(ctx, req any) *gomock.Call {
+func (mr *MockIamUsecasesServiceMockRecorder) Login(ctx, req any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockIamUsecasesInterface)(nil).Login), ctx, req)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockIamUsecasesService)(nil).Login), ctx, req)
 }
 
 // Logout mocks base method.
-func (m *MockIamUsecasesInterface) Logout(ctx *context.AppContext, token string) error {
+func (m *MockIamUsecasesService) Logout(ctx *context.AppContext, token string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Logout", ctx, token)
 	ret0, _ := ret[0].(error)
@@ -66,13 +66,13 @@ func (m *MockIamUsecasesInterface) Logout(ctx *context.AppContext, token string)
 }
 
 // Logout indicates an expected call of Logout.
-func (mr *MockIamUsecasesInterfaceMockRecorder) Logout(ctx, token any) *gomock.Call {
+func (mr *MockIamUsecasesServiceMockRecorder) Logout(ctx, token any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Logout", reflect.TypeOf((*MockIamUsecasesInterface)(nil).Logout), ctx, token)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Logout", reflect.TypeOf((*MockIamUsecasesService)(nil).Logout), ctx, token)
 }
 
 // RefreshToken mocks base method.
-func (m *MockIamUsecasesInterface) RefreshToken(ctx *context.AppContext, token string) (string, error) {
+func (m *MockIamUsecasesService) RefreshToken(ctx *context.AppContext, token string) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RefreshToken", ctx, token)
 	ret0, _ := ret[0].(string)
@@ -81,7 +81,7 @@ func (m *MockIamUsecasesInterface) RefreshToken(ctx *context.AppContext, token s
 }
 
 // RefreshToken indicates an expected call of RefreshToken.
-func (mr *MockIamUsecasesInterfaceMockRecorder) RefreshToken(ctx, token any) *gomock.Call {
+func (mr *MockIamUsecasesServiceMockRecorder) RefreshToken(ctx, token any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RefreshToken", reflect.TypeOf((*MockIamUsecasesInterface)(nil).RefreshToken), ctx, token)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RefreshToken", reflect.TypeOf((*MockIamUsecasesService)(nil).RefreshToken), ctx, token)
 }

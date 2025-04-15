@@ -6,7 +6,7 @@ import (
 	"MydroX/anicetus/internal/config"
 	"MydroX/anicetus/internal/users/dto"
 	"MydroX/anicetus/internal/users/mocks"
-	loggerpkg "MydroX/anicetus/pkg/logger"
+	"MydroX/anicetus/pkg/logger"
 	uuidpkg "MydroX/anicetus/pkg/uuid"
 
 	"encoding/json"
@@ -19,7 +19,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
-	"go.uber.org/zap"
 )
 
 const (
@@ -34,12 +33,11 @@ type testServer struct {
 	mockUsecase *mocks.MockUsersUsecases
 }
 
-func testRouter(logger *loggerpkg.Logger, controller ControllerInterface) *gin.Engine {
+func testRouter(controller ControllerInterface) *gin.Engine {
 	router := gin.Default()
 
-	err := router.SetTrustedProxies(nil)
-	if err != nil {
-		logger.Zap.Fatal("error setting trusted proxies", zap.Error(err))
+	if err := router.SetTrustedProxies(nil); err != nil {
+		panic(fmt.Sprintf("failed to set trusted proxies: %v", err))
 	}
 
 	api := router.Group("api")
@@ -51,13 +49,16 @@ func testRouter(logger *loggerpkg.Logger, controller ControllerInterface) *gin.E
 }
 
 func newServerTest(t *testing.T) testServer {
-	logger := loggerpkg.New("TEST")
+	log, err := logger.New("TEST")
+	if err != nil {
+		panic(err)
+	}
 
 	ctrl := gomock.NewController(t)
 	usecasesMock := mocks.NewMockUsersUsecases(ctrl)
 
-	c := New(logger, usecasesMock, &config.Config{})
-	router := testRouter(logger, c)
+	c := New(log, usecasesMock, &config.Config{})
+	router := testRouter(c)
 
 	return testServer{
 		router:      router,
@@ -205,7 +206,7 @@ func Test_Get(t *testing.T) {
 		UUID:     uuid,
 		Username: "testusername",
 		Email:    "test@test.com",
-		Role:     "USER",
+		Role:     []string{"USER"},
 	}
 
 	t.Run("[V1] Get user with success", func(t *testing.T) {
@@ -258,7 +259,7 @@ func Test_Update(t *testing.T) {
 			UUID:     uuid,
 			Username: "testusername",
 			Email:    "test@test.com",
-			Role:     "USER",
+			Role:     []string{"USER"},
 			Password: "thisisatestpassword1234!@#$",
 		}
 		userJSON, _ := json.Marshal(user)
@@ -285,7 +286,7 @@ func Test_Update(t *testing.T) {
 			UUID:     uuid,
 			Username: "testusername",
 			Email:    "",
-			Role:     "USER",
+			Role:     []string{"USER"},
 			Password: "thisisatestpassword1234!@#$",
 		}
 		userJSON, _ := json.Marshal(user)
@@ -302,7 +303,7 @@ func Test_Update(t *testing.T) {
 			UUID:     uuid,
 			Username: "testusername",
 			Email:    "test@test.com",
-			Role:     "USER",
+			Role:     []string{"USER"},
 			Password: "thisisatestpassword1234!@#$",
 		}
 		userJSON, _ := json.Marshal(user)
@@ -503,8 +504,8 @@ func Test_GetAllUsers(t *testing.T) {
 
 		usecaseResp := dto.GetAllUsersResponse{
 			Users: []*dto.User{
-				{UUID: uuid, Username: "test", Email: "test@test.com", Role: "USER"},
-				{UUID: uuid, Username: "test", Email: "test2@test.com", Role: "USER"},
+				{UUID: uuid, Username: "test", Email: "test@test.com", Role: []string{"USER"}},
+				{UUID: uuid, Username: "test", Email: "test2@test.com", Role: []string{"USER"}},
 			},
 		}
 

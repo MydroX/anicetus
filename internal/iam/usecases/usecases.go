@@ -14,9 +14,10 @@ import (
 	usersmodels "MydroX/anicetus/internal/users/models"
 	usersrepository "MydroX/anicetus/internal/users/repository"
 	"MydroX/anicetus/pkg/argon2id"
-	"MydroX/anicetus/pkg/logger"
 	passwordpkg "MydroX/anicetus/pkg/password"
 	"MydroX/anicetus/pkg/uuid"
+
+	"go.uber.org/zap"
 )
 
 const (
@@ -24,13 +25,13 @@ const (
 )
 
 type usecases struct {
-	logger          *logger.Logger
+	logger          *zap.SugaredLogger
 	usersRepository usersrepository.UsersRepository
-	iamRepository   iamrepository.IamRepository
+	iamRepository   iamrepository.IamStore
 	sessionConfig   *config.Session
 }
 
-func New(l *logger.Logger, ur usersrepository.UsersRepository, iamr iamrepository.IamRepository, sessionConfig *config.Session) IamUsecasesInterface {
+func New(l *zap.SugaredLogger, ur usersrepository.UsersRepository, iamr iamrepository.IamStore, sessionConfig *config.Session) IamUsecasesService {
 	return &usecases{
 		logger:          l,
 		usersRepository: ur,
@@ -86,9 +87,9 @@ func login(
 	accessToken, err = jwt.CreateAccessToken(
 		&jwt.AccessClaims{
 			BaseClaims: jwt.BaseClaims{
-				UserUUID:           user.UUID,
-				TokenType:          jwt.AccessToken,
-				ExpirationDuration: time.Duration(u.sessionConfig.AccessToken.Expiration),
+				UserUUID:  user.UUID,
+				TokenType: jwt.AccessToken,
+				Exp:       int64(u.sessionConfig.AccessToken.Expiration),
 			},
 		},
 		u.sessionConfig.AccessToken.Secret,
@@ -104,9 +105,9 @@ func login(
 	refreshToken, err = jwt.CreateRefreshToken(
 		&jwt.RefreshClaims{
 			BaseClaims: jwt.BaseClaims{
-				UserUUID:           user.UUID,
-				TokenType:          jwt.RefreshToken,
-				ExpirationDuration: time.Duration(u.sessionConfig.RefreshToken.Expiration),
+				UserUUID:  user.UUID,
+				TokenType: jwt.RefreshToken,
+				Exp:       int64(u.sessionConfig.RefreshToken.Expiration),
 			},
 			SessionUUID: uuid.NewWithPrefix(sessionPrefix),
 		},

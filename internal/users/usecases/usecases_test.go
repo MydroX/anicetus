@@ -12,7 +12,7 @@ import (
 	"MydroX/anicetus/internal/users/mocks"
 	"MydroX/anicetus/internal/users/models"
 
-	loggerpkg "MydroX/anicetus/pkg/logger"
+	"MydroX/anicetus/pkg/logger"
 	"MydroX/anicetus/pkg/uuid"
 
 	"github.com/stretchr/testify/assert"
@@ -23,8 +23,11 @@ func createTestUsecase(t *testing.T) (*mocks.MockUsersRepository, UsersUsecases)
 	ctrl := gomock.NewController(t)
 	repository := mocks.NewMockUsersRepository(ctrl)
 
-	logger := loggerpkg.New("TEST")
-	u := New(logger, repository, &config.Session{})
+	log, err := logger.New("TEST")
+	if err != nil {
+		panic(err)
+	}
+	u := New(log, repository, &config.Session{})
 
 	return repository, u
 }
@@ -104,7 +107,7 @@ func Test_Get(t *testing.T) {
 			UUID:     userUUID,
 			Username: "test",
 			Email:    "test@test.com",
-			Role:     "USER",
+			Role:     []string{"USER"},
 		}
 
 		r.EXPECT().GetUserByUUID(gomock.Any(), userUUID).Return(&user, nil)
@@ -280,7 +283,7 @@ func Test_GetAllUsers(t *testing.T) {
 				UUID:     userUUID,
 				Username: "test",
 				Email:    "test@test.com",
-				Role:     "USER",
+				Role:     []string{"USER"},
 			},
 		}
 

@@ -7,7 +7,7 @@ import (
 
 //go:generate mockgen -source=usecases_interface.go -destination=../mocks/mock_usescases.go -package=mocks
 
-type IamUsecasesInterface interface {
+type IamUsecasesService interface {
 	Login(ctx *context.AppContext, req *dto.LoginRequest) (accessToken, refreshToken string, err error)
 	Logout(ctx *context.AppContext, token string) error
 	RefreshToken(ctx *context.AppContext, token string) (string, error)

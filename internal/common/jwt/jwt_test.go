@@ -5,7 +5,6 @@ import (
 	"errors"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
@@ -45,9 +44,11 @@ func TestCreateAccessToken(t *testing.T) {
 			name: "Valid access token",
 			claims: &AccessClaims{
 				BaseClaims: BaseClaims{
-					UserUUID:           testUserUUID,
-					TokenType:          AccessToken,
-					ExpirationDuration: time.Hour,
+					UserUUID:  testUserUUID,
+					TokenType: AccessToken,
+					Exp:       3600,
+					Issuer:    "test-issuer",
+					Audience:  "test-audience",
 				},
 				Permissions: []string{"read", "write"},
 			},
@@ -58,9 +59,9 @@ func TestCreateAccessToken(t *testing.T) {
 			name: "Missing secret key",
 			claims: &AccessClaims{
 				BaseClaims: BaseClaims{
-					UserUUID:           testUserUUID,
-					TokenType:          AccessToken,
-					ExpirationDuration: time.Hour,
+					UserUUID:  testUserUUID,
+					TokenType: AccessToken,
+					Exp:       3600,
 				},
 			},
 			secretKey:   "",
@@ -119,9 +120,11 @@ func TestCreateRefreshToken(t *testing.T) {
 			name: "Valid refresh token",
 			claims: &RefreshClaims{
 				BaseClaims: BaseClaims{
-					UserUUID:           testUserUUID,
-					TokenType:          RefreshToken,
-					ExpirationDuration: time.Hour * 24 * 7, // 7 days
+					UserUUID:  testUserUUID,
+					TokenType: RefreshToken,
+					Exp:       604800, // 7 days
+					Issuer:    "test-issuer",
+					Audience:  "test-audience",
 				},
 				SessionUUID: testSessionUUID,
 			},
@@ -132,9 +135,9 @@ func TestCreateRefreshToken(t *testing.T) {
 			name: "Missing secret key",
 			claims: &RefreshClaims{
 				BaseClaims: BaseClaims{
-					UserUUID:           testUserUUID,
-					TokenType:          RefreshToken,
-					ExpirationDuration: time.Hour * 24 * 7,
+					UserUUID:  testUserUUID,
+					TokenType: RefreshToken,
+					Exp:       604800,
 				},
 				SessionUUID: testSessionUUID,
 			},
@@ -182,11 +185,20 @@ func TestParseAccessToken(t *testing.T) {
 	cleanup := setupTestEnv()
 	defer cleanup()
 
+	// Setup default token config
+	config := &TokenConfig{
+		ExpectedIssuer:   "test-issuer",
+		ExpectedAudience: "test-audience",
+		ClockSkewSeconds: 30,
+	}
+
 	validClaims := &AccessClaims{
 		BaseClaims: BaseClaims{
-			UserUUID:           testUserUUID,
-			TokenType:          AccessToken,
-			ExpirationDuration: time.Hour,
+			UserUUID:  testUserUUID,
+			TokenType: AccessToken,
+			Exp:       3600,
+			Issuer:    "test-issuer",
+			Audience:  "test-audience",
 		},
 		Permissions: []string{"read", "write"},
 	}
@@ -197,9 +209,11 @@ func TestParseAccessToken(t *testing.T) {
 	// Create an expired token
 	expiredClaims := &AccessClaims{
 		BaseClaims: BaseClaims{
-			UserUUID:           testUserUUID,
-			TokenType:          AccessToken,
-			ExpirationDuration: -time.Hour, // Expired 1 hour ago
+			UserUUID:  testUserUUID,
+			TokenType: AccessToken,
+			Exp:       -3600, // Expired 1 hour ago
+			Issuer:    "test-issuer",
+			Audience:  "test-audience",
 		},
 		Permissions: []string{"read"},
 	}
@@ -209,9 +223,11 @@ func TestParseAccessToken(t *testing.T) {
 	// Create a refresh token (wrong type)
 	refreshClaims := &RefreshClaims{
 		BaseClaims: BaseClaims{
-			UserUUID:           testUserUUID,
-			TokenType:          RefreshToken,
-			ExpirationDuration: time.Hour,
+			UserUUID:  testUserUUID,
+			TokenType: RefreshToken,
+			Exp:       3600,
+			Issuer:    "test-issuer",
+			Audience:  "test-audience",
 		},
 		SessionUUID: testSessionUUID,
 	}
@@ -257,7 +273,7 @@ func TestParseAccessToken(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			claims, err := ParseAccessToken(tc.tokenString)
+			claims, err := ParseAccessToken(tc.tokenString, config)
 
 			if tc.expectError {
 				assert.Error(t, err)
@@ -281,11 +297,20 @@ func TestParseRefreshToken(t *testing.T) {
 	cleanup := setupTestEnv()
 	defer cleanup()
 
+	// Setup default token config
+	config := &TokenConfig{
+		ExpectedIssuer:   "test-issuer",
+		ExpectedAudience: "test-audience",
+		ClockSkewSeconds: 30,
+	}
+
 	validClaims := &RefreshClaims{
 		BaseClaims: BaseClaims{
-			UserUUID:           testUserUUID,
-			TokenType:          RefreshToken,
-			ExpirationDuration: time.Hour,
+			UserUUID:  testUserUUID,
+			TokenType: RefreshToken,
+			Exp:       3600,
+			Issuer:    "test-issuer",
+			Audience:  "test-audience",
 		},
 		SessionUUID: testSessionUUID,
 	}
@@ -293,35 +318,33 @@ func TestParseRefreshToken(t *testing.T) {
 	validToken, err := CreateRefreshToken(validClaims, testSecretKey)
 	require.NoError(t, err)
 
-	_ = validToken
-
 	// Create an expired token
 	expiredClaims := &RefreshClaims{
 		BaseClaims: BaseClaims{
-			UserUUID:           testUserUUID,
-			TokenType:          RefreshToken,
-			ExpirationDuration: -time.Hour, // Expired 1 hour ago
+			UserUUID:  testUserUUID,
+			TokenType: RefreshToken,
+			Exp:       -3600, // Expired 1 hour ago
+			Issuer:    "test-issuer",
+			Audience:  "test-audience",
 		},
 		SessionUUID: testSessionUUID,
 	}
 	expiredToken, err := CreateRefreshToken(expiredClaims, testSecretKey)
 	require.NoError(t, err)
 
-	_ = expiredToken
-
 	// Create an access token (wrong type)
 	accessClaims := &AccessClaims{
 		BaseClaims: BaseClaims{
-			UserUUID:           testUserUUID,
-			TokenType:          AccessToken,
-			ExpirationDuration: time.Hour,
+			UserUUID:  testUserUUID,
+			TokenType: AccessToken,
+			Exp:       3600,
+			Issuer:    "test-issuer",
+			Audience:  "test-audience",
 		},
 		Permissions: []string{"read"},
 	}
 	accessToken, err := CreateAccessToken(accessClaims, testSecretKey)
 	require.NoError(t, err)
-
-	_ = accessToken
 
 	tests := []struct {
 		name        string
@@ -362,7 +385,7 @@ func TestParseRefreshToken(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			claims, err := ParseRefreshToken(tc.tokenString)
+			claims, err := ParseRefreshToken(tc.tokenString, config)
 
 			if tc.expectError {
 				assert.Error(t, err)
@@ -386,12 +409,21 @@ func TestParseToken(t *testing.T) {
 	cleanup := setupTestEnv()
 	defer cleanup()
 
+	// Setup default token config
+	config := &TokenConfig{
+		ExpectedIssuer:   "test-issuer",
+		ExpectedAudience: "test-audience",
+		ClockSkewSeconds: 30,
+	}
+
 	// Create valid access token
 	accessClaims := &AccessClaims{
 		BaseClaims: BaseClaims{
-			UserUUID:           testUserUUID,
-			TokenType:          AccessToken,
-			ExpirationDuration: time.Hour,
+			UserUUID:  testUserUUID,
+			TokenType: AccessToken,
+			Exp:       3600,
+			Issuer:    "test-issuer",
+			Audience:  "test-audience",
 		},
 		Permissions: []string{"read"},
 	}
@@ -401,9 +433,11 @@ func TestParseToken(t *testing.T) {
 	// Create valid refresh token
 	refreshClaims := &RefreshClaims{
 		BaseClaims: BaseClaims{
-			UserUUID:           testUserUUID,
-			TokenType:          RefreshToken,
-			ExpirationDuration: time.Hour,
+			UserUUID:  testUserUUID,
+			TokenType: RefreshToken,
+			Exp:       3600,
+			Issuer:    "test-issuer",
+			Audience:  "test-audience",
 		},
 		SessionUUID: testSessionUUID,
 	}
@@ -413,9 +447,11 @@ func TestParseToken(t *testing.T) {
 	// Create an expired token
 	expiredClaims := &AccessClaims{
 		BaseClaims: BaseClaims{
-			UserUUID:           testUserUUID,
-			TokenType:          AccessToken,
-			ExpirationDuration: -time.Hour, // Expired 1 hour ago
+			UserUUID:  testUserUUID,
+			TokenType: AccessToken,
+			Exp:       -3600, // Expired 1 hour ago
+			Issuer:    "test-issuer",
+			Audience:  "test-audience",
 		},
 		Permissions: []string{"read"},
 	}
@@ -463,7 +499,7 @@ func TestParseToken(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			claims, err := ParseToken(tc.tokenString)
+			claims, err := ParseToken(tc.tokenString, config)
 
 			if tc.expectError {
 				assert.Error(t, err)

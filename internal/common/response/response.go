@@ -3,10 +3,11 @@ package response
 import (
 	"MydroX/anicetus/internal/common/context"
 	"MydroX/anicetus/internal/common/errorsutil"
-	loggerpkg "MydroX/anicetus/pkg/logger"
 	"errors"
 	"fmt"
 	"net/http"
+
+	"go.uber.org/zap"
 )
 
 type errorResponse struct {
@@ -29,9 +30,9 @@ func WithClientMessage(msg string) ErrorOptions {
 }
 
 // handleError sends an error response with the given HTTP status code
-func handleError(logger *loggerpkg.Logger, ctx *context.AppContext, appErr *errorsutil.AppError, options *errorOptions) {
+func handleError(logger *zap.SugaredLogger, ctx *context.AppContext, appErr *errorsutil.AppError, options *errorOptions) {
 	if appErr.Severity == "" {
-		logger.Zap.Warn(fmt.Sprintf("Severity is not set for request %s", ctx.EnsureTraceID()))
+		logger.Warn(fmt.Sprintf("Severity is not set for request %s", ctx.EnsureTraceID()))
 		appErr.Severity = errorsutil.SeverityError
 	}
 
@@ -42,7 +43,7 @@ func handleError(logger *loggerpkg.Logger, ctx *context.AppContext, appErr *erro
 	httpCode := appErr.MapErrorCodeToHTTPCode()
 
 	// Log error
-	logger.Zap.Error(fmt.Sprintf("%s | %d | %d | %s | %s \n%v", appErr.Severity, httpCode, appErr.Code, traceID, appErr.Message, appErr.Err))
+	logger.Error(fmt.Sprintf("%s | %d | %d | %s | %s \n%v", appErr.Severity, httpCode, appErr.Code, traceID, appErr.Message, appErr.Err))
 
 	ctx.GinContext().JSON(httpCode, errorResponse{
 		Message: options.clientMessage,
@@ -66,10 +67,10 @@ func applyOptions(opts ...ErrorOptions) *errorOptions {
 }
 
 // Error is the generic error handler
-func Error(logger *loggerpkg.Logger, ctx *context.AppContext, err error, opts ...ErrorOptions) {
+func Error(logger *zap.SugaredLogger, ctx *context.AppContext, err error, opts ...ErrorOptions) {
 	var apiErr *errorsutil.AppError
 	if ok := errors.As(err, &apiErr); !ok {
-		logger.Zap.Error(fmt.Sprintf("CRITICAL | [%s] | %s | %s ", ctx.EnsureTraceID(), "Something went wrong while handling error", err))
+		logger.Error(fmt.Sprintf("CRITICAL | [%s] | %s | %s ", ctx.EnsureTraceID(), "Something went wrong while handling error", err))
 		ctx.GinContext().JSON(http.StatusInternalServerError, errorResponse{
 			Message: "Internal server error, server has not been able to handle the error properly",
 			Code:    errorsutil.ERROR_UNKNOWN_ERROR,
@@ -89,7 +90,7 @@ func Error(logger *loggerpkg.Logger, ctx *context.AppContext, err error, opts ..
 }
 
 // BadRequest sends a 400 Bad Request response
-func BadRequest(logger *loggerpkg.Logger, ctx *context.AppContext, appErrCode int, message string) {
+func BadRequest(logger *zap.SugaredLogger, ctx *context.AppContext, appErrCode int, message string) {
 	appErr := &errorsutil.AppError{
 		Code:     appErrCode,
 		Message:  "Bad request: " + message,
