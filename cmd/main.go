@@ -32,7 +32,7 @@ func main() {
 	}
 
 	l.Info("connecting to database...")
-	connDB, err := db.Connect(appConfig.DB.Host, appConfig.DB.Username, appConfig.DB.Password, appConfig.DB.Name, appConfig.DB.Port)
+	connDB, err := db.Connect(appConfig.Database.Host, appConfig.Database.Username, appConfig.Database.Password, appConfig.Database.Name, appConfig.Database.Port)
 	if err != nil {
 		l.Fatal("error conecting to database", zap.Error(err))
 	}
@@ -44,12 +44,21 @@ func main() {
 		l.Fatal("error creating cache", zap.Error(err))
 	}
 
+	audienceManager := jwt.NewAudienceManager(l, connDB, c)
+
 	l.Info("loading allowed audiences in cache...")
-	err = jwt.AllowedAudiencesInCache(connDB, c, l)
+	err = audienceManager.CacheAllowedAudiences()
 	if err != nil {
 		l.Fatal("error loading allowed audiences in cache", zap.Error(err))
 	}
 
 	l.Info("starting server...")
-	app.NewServer(&appConfig, l, connDB)
+	app.NewServer(
+		&app.APIServices{
+			Config:        &appConfig,
+			Logger:        l,
+			DB:            connDB,
+			CacheInMemory: c,
+		},
+	)
 }

@@ -17,32 +17,32 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
-// MockIamRepository is a mock of IamRepository interface.
-type MockIamRepository struct {
+// MockIamStore is a mock of IamStore interface.
+type MockIamStore struct {
 	ctrl     *gomock.Controller
-	recorder *MockIamRepositoryMockRecorder
+	recorder *MockIamStoreMockRecorder
 	isgomock struct{}
 }
 
-// MockIamRepositoryMockRecorder is the mock recorder for MockIamRepository.
-type MockIamRepositoryMockRecorder struct {
-	mock *MockIamRepository
+// MockIamStoreMockRecorder is the mock recorder for MockIamStore.
+type MockIamStoreMockRecorder struct {
+	mock *MockIamStore
 }
 
-// NewMockIamRepository creates a new mock instance.
-func NewMockIamRepository(ctrl *gomock.Controller) *MockIamRepository {
-	mock := &MockIamRepository{ctrl: ctrl}
-	mock.recorder = &MockIamRepositoryMockRecorder{mock}
+// NewMockIamStore creates a new mock instance.
+func NewMockIamStore(ctrl *gomock.Controller) *MockIamStore {
+	mock := &MockIamStore{ctrl: ctrl}
+	mock.recorder = &MockIamStoreMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockIamRepository) EXPECT() *MockIamRepositoryMockRecorder {
+func (m *MockIamStore) EXPECT() *MockIamStoreMockRecorder {
 	return m.recorder
 }
 
 // SaveSession mocks base method.
-func (m *MockIamRepository) SaveSession(ctx *context.AppContext, session *models.Session) error {
+func (m *MockIamStore) SaveSession(ctx *context.AppContext, session *models.Session) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SaveSession", ctx, session)
 	ret0, _ := ret[0].(error)
@@ -50,9 +50,9 @@ func (m *MockIamRepository) SaveSession(ctx *context.AppContext, session *models
 }
 
 // SaveSession indicates an expected call of SaveSession.
-func (mr *MockIamRepositoryMockRecorder) SaveSession(ctx, session any) *gomock.Call {
+func (mr *MockIamStoreMockRecorder) SaveSession(ctx, session any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveSession", reflect.TypeOf((*MockIamRepository)(nil).SaveSession), ctx, session)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveSession", reflect.TypeOf((*MockIamStore)(nil).SaveSession), ctx, session)
 }
 
 // MockAudienceStore is a mock of AudienceStore interface.

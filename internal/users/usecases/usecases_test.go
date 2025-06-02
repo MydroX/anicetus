@@ -27,7 +27,7 @@ func createTestUsecase(t *testing.T) (*mocks.MockUsersRepository, UsersUsecases)
 	if err != nil {
 		panic(err)
 	}
-	u := New(log, repository, &config.Session{})
+	u := New(log, repository, &config.Config{})
 
 	return repository, u
 }

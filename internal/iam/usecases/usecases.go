@@ -28,15 +28,17 @@ type usecases struct {
 	logger          *zap.SugaredLogger
 	usersRepository usersrepository.UsersRepository
 	iamRepository   iamrepository.IamStore
-	sessionConfig   *config.Session
+	config          *config.Config
+	jwt             *jwt.Service
 }
 
-func New(l *zap.SugaredLogger, ur usersrepository.UsersRepository, iamr iamrepository.IamStore, sessionConfig *config.Session) IamUsecasesService {
+func New(l *zap.SugaredLogger, ur usersrepository.UsersRepository, iamr iamrepository.IamStore, config *config.Config, jwt *jwt.Service) IamUsecasesService {
 	return &usecases{
 		logger:          l,
 		usersRepository: ur,
 		iamRepository:   iamr,
-		sessionConfig:   sessionConfig,
+		config:          config,
+		jwt:             jwt,
 	}
 }
 
@@ -84,15 +86,9 @@ func login(
 		)
 	}
 
-	accessToken, err = jwt.CreateAccessToken(
-		&jwt.AccessClaims{
-			BaseClaims: jwt.BaseClaims{
-				UserUUID:  user.UUID,
-				TokenType: jwt.AccessToken,
-				Exp:       int64(u.sessionConfig.AccessToken.Expiration),
-			},
-		},
-		u.sessionConfig.AccessToken.Secret,
+	accessToken, err = u.jwt.CreateAccessToken(
+		user.UUID,
+		nil, // TEMP
 	)
 	if err != nil {
 		return "", "", errorsutil.New(
@@ -102,16 +98,9 @@ func login(
 		)
 	}
 
-	refreshToken, err = jwt.CreateRefreshToken(
-		&jwt.RefreshClaims{
-			BaseClaims: jwt.BaseClaims{
-				UserUUID:  user.UUID,
-				TokenType: jwt.RefreshToken,
-				Exp:       int64(u.sessionConfig.RefreshToken.Expiration),
-			},
-			SessionUUID: uuid.NewWithPrefix(sessionPrefix),
-		},
-		u.sessionConfig.RefreshToken.Secret,
+	refreshToken, err = u.jwt.CreateRefreshToken(
+		user.UUID,
+		uuid.NewWithPrefix(sessionPrefix),
 	)
 	if err != nil {
 		return "", "", errorsutil.New(
@@ -122,11 +111,11 @@ func login(
 	}
 
 	hashParams := argon2id.New(
-		argon2id.Iterations(uint32(u.sessionConfig.HashConfig.Iterations)),
-		argon2id.Memory(uint32(u.sessionConfig.HashConfig.Memory)),
-		argon2id.Parallelism(uint8(u.sessionConfig.HashConfig.Parallelism)),
-		argon2id.KeyLength(uint32(u.sessionConfig.HashConfig.KeyLength)),
-		argon2id.SaltLength(uint32(u.sessionConfig.HashConfig.SaltLength)),
+		argon2id.Iterations(uint32(u.config.Session.Hash.Iterations)),
+		argon2id.Memory(uint32(u.config.Session.Hash.Memory)),
+		argon2id.Parallelism(uint8(u.config.Session.Hash.Parallelism)),
+		argon2id.KeyLength(uint32(u.config.Session.Hash.KeyLength)),
+		argon2id.SaltLength(uint32(u.config.Session.Hash.SaltLength)),
 	)
 
 	refreshTokenHashed, hashErr := argon2id.Hash(refreshToken, hashParams)
@@ -138,7 +127,7 @@ func login(
 		)
 	}
 
-	expirationTimeRefresh := time.Now().Add(time.Second * time.Duration(u.sessionConfig.RefreshToken.Expiration))
+	expirationTimeRefresh := time.Now().Add(time.Second * time.Duration(u.config.JWT.RefreshToken.Expiration))
 
 	session := models.Session{
 		UUID:           uuid.NewWithPrefix(sessionPrefix),

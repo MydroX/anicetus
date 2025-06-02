@@ -1,4 +1,3 @@
-//revive:disable:unused-receiver
 package repository
 
 type Queries struct{}

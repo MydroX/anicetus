@@ -3,10 +3,12 @@ package api
 import (
 	"fmt"
 
+	"github.com/dgraph-io/ristretto/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 
+	"MydroX/anicetus/internal/common/jwt"
 	"MydroX/anicetus/internal/config"
 	iamcontroller "MydroX/anicetus/internal/iam/controller"
 	iamrepository "MydroX/anicetus/internal/iam/repository"
@@ -15,6 +17,13 @@ import (
 	usersrepository "MydroX/anicetus/internal/users/repository"
 	usersusecases "MydroX/anicetus/internal/users/usecases"
 )
+
+type APIServices struct {
+	Config        *config.Config
+	Logger        *zap.SugaredLogger
+	DB            *pgxpool.Pool
+	CacheInMemory *ristretto.Cache[string, string]
+}
 
 type service struct {
 	usersController userscontroller.ControllerInterface
@@ -48,25 +57,33 @@ func Router(logger *zap.SugaredLogger, service service) *gin.Engine {
 }
 
 // NewServer is a function to start the server for the service.
-func NewServer(c *config.Config, logger *zap.SugaredLogger, db *pgxpool.Pool) {
-	usersRepository := usersrepository.New(logger, db)
-	iamRepository := iamrepository.NewIAMStore(logger, db)
+func NewServer(s *APIServices) {
+	audienceManager := jwt.NewAudienceManager(s.Logger, s.DB, s.CacheInMemory)
 
-	usersUsecase := usersusecases.New(logger, usersRepository, &c.Session)
-	iamUsecase := iamusecases.New(logger, usersRepository, iamRepository, &c.Session)
+	jwtService := jwt.NewJWTService(jwt.TokenConfig{
+		SecretKey:        s.Config.JWT.Secret,
+		ClockSkewSeconds: s.Config.JWT.SkewSeconds,
+		ExpectedIssuer:   s.Config.JWT.Issuer,
+	}, audienceManager)
 
-	usersController := userscontroller.New(logger, usersUsecase, c)
-	iamController := iamcontroller.New(logger, iamUsecase, c)
+	usersRepository := usersrepository.New(s.Logger, s.DB)
+	iamRepository := iamrepository.NewIAMStore(s.Logger, s.DB)
+
+	usersUsecase := usersusecases.New(s.Logger, usersRepository, s.Config)
+	iamUsecase := iamusecases.New(s.Logger, usersRepository, iamRepository, s.Config, jwtService)
+
+	usersController := userscontroller.New(s.Logger, usersUsecase, s.Config)
+	iamController := iamcontroller.New(s.Logger, iamUsecase, s.Config)
 
 	service := service{
 		usersController: usersController,
 		iamController:   iamController,
 	}
 
-	router := Router(logger, service)
+	router := Router(s.Logger, service)
 
-	err := router.Run(fmt.Sprintf(":%s", c.Port))
+	err := router.Run(fmt.Sprintf(":%s", s.Config.Port))
 	if err != nil {
-		logger.Fatal("error starting server", zap.Error(err))
+		s.Logger.Fatal("error starting server", zap.Error(err))
 	}
 }

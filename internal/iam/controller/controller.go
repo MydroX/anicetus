@@ -59,8 +59,8 @@ func (c *controller) Login(ginCtx *gin.Context) {
 		return
 	}
 
-	ginCtx.SetCookie("access_token", accessToken, c.config.Session.AccessToken.Expiration, "/", c.config.App.Domain, true, true)
-	ginCtx.SetCookie("refresh_token", refreshToken, c.config.Session.RefreshToken.Expiration, "/", c.config.App.Domain, true, true)
+	ginCtx.SetCookie("access_token", accessToken, c.config.JWT.AccessToken.Expiration, "/", c.config.App.Domain, true, true)
+	ginCtx.SetCookie("refresh_token", refreshToken, c.config.JWT.RefreshToken.Expiration, "/", c.config.App.Domain, true, true)
 
 	resp := dto.LoginResponse{
 		AccessToken:  accessToken,

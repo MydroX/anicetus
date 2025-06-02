@@ -20,32 +20,34 @@ import (
 	passwordpkg "MydroX/anicetus/pkg/password"
 )
 
-func createTestUsecase(t *testing.T) (*usersmocks.MockUsersRepository, *iammocks.MockIamRepository, IamUsecasesService) {
+func createTestUsecase(t *testing.T) (*usersmocks.MockUsersRepository, *iammocks.MockIamStore, IamUsecasesService) {
 	ctrl := gomock.NewController(t)
 	usersRepositoryMock := usersmocks.NewMockUsersRepository(ctrl)
-	iamRepositoryMock := iammocks.NewMockIamRepository(ctrl)
+	iamRepositoryMock := iammocks.NewMockIamStore(ctrl)
 
 	l, err := logger.New("TEST")
 	if err != nil {
 		panic(err)
 	}
-	u := New(l, usersRepositoryMock, iamRepositoryMock, &config.Session{
-		HashConfig: config.HashConfig{
-			SaltLength:  16,
-			Iterations:  4,
-			Memory:      64 * 1024,
-			Parallelism: 4,
-			KeyLength:   32,
+	u := New(l, usersRepositoryMock, iamRepositoryMock, &config.Config{
+		Session: config.Session{
+			Hash: config.Hash{
+				SaltLength:  16,
+				Iterations:  4,
+				Memory:      64 * 1024,
+				Parallelism: 4,
+				KeyLength:   32,
+			},
 		},
-		AccessToken: config.AccessToken{
-			Expiration: 3600,
-			Secret:     "testsecret",
+		JWT: config.JWT{
+			AccessToken: config.AccessToken{
+				Expiration: 3600,
+			},
+			RefreshToken: config.RefreshToken{
+				Expiration: 7200,
+			},
 		},
-		RefreshToken: config.RefreshToken{
-			Expiration: 7200,
-			Secret:     "testsecret",
-		},
-	})
+	}, nil)
 
 	return usersRepositoryMock, iamRepositoryMock, u
 }
