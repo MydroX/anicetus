@@ -29,7 +29,7 @@ linters:
           severity: warning
           disabled: false
           exclude:
-            - ""
+            - "**/*_test.go"
         - name: argument-limit
           arguments:
             - 6
@@ -78,7 +78,7 @@ linters:
           severity: warning
           disabled: false
           exclude:
-            - ""
+            - "**/*_test.go"
         - name: comment-spacings
           arguments:
             - mypragma
@@ -423,7 +423,7 @@ linters:
           severity: warning
           disabled: false
           exclude:
-            - ""
+            - "**/sql.go"
         - name: use-any
           severity: warning
           disabled: false

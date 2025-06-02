@@ -1,4 +1,3 @@
-//revive:disable:cognitive-complexity
 package uuid
 
 import (

@@ -1,4 +1,3 @@
-//revive:disable
 package repository
 
 import (
@@ -985,7 +984,7 @@ func TestGetAllUsers(t *testing.T) {
 				poolMock.ExpectQuery(getAllQuery).
 					WillReturnRows(rows)
 			},
-			expectedUsers: []*models.User{},
+			expectedUsers: make([]*models.User, 0),
 			expectedError: false,
 			checkResult: func(t *testing.T, users []*models.User, err error) {
 				assert.NoError(t, err)

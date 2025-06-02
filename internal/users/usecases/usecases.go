@@ -15,16 +15,16 @@ import (
 )
 
 type usecases struct {
-	logger        *zap.SugaredLogger
-	repository    repository.UsersRepository
-	sessionConfig *config.Session
+	logger     *zap.SugaredLogger
+	repository repository.UsersRepository
+	config     *config.Config
 }
 
-func New(l *zap.SugaredLogger, r repository.UsersRepository, sessionConfig *config.Session) UsersUsecases {
+func New(l *zap.SugaredLogger, r repository.UsersRepository, config *config.Config) UsersUsecases {
 	return &usecases{
-		logger:        l,
-		repository:    r,
-		sessionConfig: sessionConfig,
+		logger:     l,
+		repository: r,
+		config:     config,
 	}
 }
 
