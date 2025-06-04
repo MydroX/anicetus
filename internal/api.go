@@ -58,13 +58,13 @@ func Router(logger *zap.SugaredLogger, service service) *gin.Engine {
 
 // NewServer is a function to start the server for the service.
 func NewServer(s *APIServices) {
-	audienceManager := jwt.NewAudienceManager(s.Logger, s.DB, s.CacheInMemory)
+	// audienceManager := jwt.NewAudienceManager(s.Logger, s.DB, s.CacheInMemory)
 
 	jwtService := jwt.NewJWTService(jwt.TokenConfig{
 		SecretKey:        s.Config.JWT.Secret,
 		ClockSkewSeconds: s.Config.JWT.SkewSeconds,
 		ExpectedIssuer:   s.Config.JWT.Issuer,
-	}, audienceManager)
+	})
 
 	usersRepository := usersrepository.New(s.Logger, s.DB)
 	iamRepository := iamrepository.NewIAMStore(s.Logger, s.DB)

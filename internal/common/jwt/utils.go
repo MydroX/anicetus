@@ -44,40 +44,6 @@ func (s *Service) validateStandardClaims(claims jwt.MapClaims) error {
 		}
 	}
 
-	// Validate audience if present
-	if aud, ok := claims[claimAud].(string); ok {
-		valid, err := s.validateAudience(aud)
-		if err != nil {
-			return WrapError(err, "failed to validate audience")
-		}
-		if !valid {
-			return WrapError(
-				ErrInvalidAudience,
-				fmt.Sprintf("audience %s not in allowed list", aud),
-			)
-		}
-	} else if audArray, ok := claims[claimAud].([]interface{}); ok {
-		valid := false
-		for _, a := range audArray {
-			audStr, ok := a.(string)
-			if !ok {
-				continue
-			}
-
-			isValid, err := s.validateAudience(audStr)
-			if err != nil {
-				return WrapError(err, "failed to validate audience")
-			}
-			if isValid {
-				valid = true
-				break
-			}
-		}
-		if !valid {
-			return WrapError(ErrInvalidAudience, "no valid audience found in token")
-		}
-	}
-
 	// Validate expiration time (required)
 	if exp, ok := claims[claimExp].(float64); !ok {
 		return WrapError(ErrMissingExpiration, "")

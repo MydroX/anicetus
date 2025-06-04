@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"errors"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -8,20 +9,20 @@ import (
 
 // Service implements the TokenService interface
 type Service struct {
-	config           TokenConfig
-	audienceProvider AudienceProvider
+	config TokenConfig
+	// audienceProvider AudienceProvider
 }
 
 // NewJWTService creates a new JWT service with the given configuration
-func NewJWTService(config TokenConfig, audienceProvider AudienceProvider) *Service {
+func NewJWTService(config TokenConfig) *Service {
 	return &Service{
-		config:           config,
-		audienceProvider: audienceProvider,
+		config: config,
+		// audienceProvider: audienceProvider,
 	}
 }
 
 // CreateAccessToken creates a new access token
-func (s *Service) CreateAccessToken(userUUID string, permissions []string) (string, error) {
+func (s *Service) CreateAccessToken(userUUID string, permissions, audiences []string) (string, error) {
 	if s.config.SecretKey == "" {
 		return "", WrapError(ErrMissingSecretKey, "")
 	}
@@ -31,11 +32,6 @@ func (s *Service) CreateAccessToken(userUUID string, permissions []string) (stri
 	}
 
 	expT := jwt.NewNumericDate(time.Now().Add(time.Duration(s.config.AccessTokenDuration) * time.Second))
-
-	audiences, err := s.audienceProvider.GetAllowedAudiences()
-	if err != nil {
-		return "", WrapError(err, "failed to get allowed audiences")
-	}
 
 	claims := AccessTokenClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -59,7 +55,7 @@ func (s *Service) CreateAccessToken(userUUID string, permissions []string) (stri
 }
 
 // CreateRefreshToken creates a refresh token with session info
-func (s *Service) CreateRefreshToken(userUUID string, sessionUUID string) (string, error) {
+func (s *Service) CreateRefreshToken(userUUID, sessionUUID string, audiences []string) (string, error) {
 	if s.config.SecretKey == "" {
 		return "", WrapError(ErrMissingSecretKey, "")
 	}
@@ -69,11 +65,6 @@ func (s *Service) CreateRefreshToken(userUUID string, sessionUUID string) (strin
 	}
 
 	expT := jwt.NewNumericDate(time.Now().Add(time.Duration(s.config.RefreshTokenDuration) * time.Second))
-
-	audiences, err := s.audienceProvider.GetAllowedAudiences()
-	if err != nil {
-		return "", WrapError(err, "failed to get allowed audiences")
-	}
 
 	claims := RefreshTokenClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -100,7 +91,7 @@ func (s *Service) CreateRefreshToken(userUUID string, sessionUUID string) (strin
 func (s *Service) ParseAccessToken(tokenString string) (*AccessClaims, error) {
 	token, err := jwt.Parse(tokenString, s.keyFunc)
 	if err != nil {
-		return nil, s.handleParseError(err, "access token")
+		return nil, handleParseError(err, "access token")
 	}
 
 	if !token.Valid {
@@ -162,7 +153,7 @@ func (s *Service) ParseAccessToken(tokenString string) (*AccessClaims, error) {
 func (s *Service) ParseRefreshToken(tokenString string) (*RefreshClaims, error) {
 	token, err := jwt.Parse(tokenString, s.keyFunc)
 	if err != nil {
-		return nil, s.handleParseError(err, "refresh token")
+		return nil, handleParseError(err, "refresh token")
 	}
 
 	if !token.Valid {
@@ -220,7 +211,7 @@ func (s *Service) ParseRefreshToken(tokenString string) (*RefreshClaims, error) 
 func (s *Service) ParseToken(tokenString string) (*BaseClaims, error) {
 	token, err := jwt.Parse(tokenString, s.keyFunc)
 	if err != nil {
-		return nil, s.handleParseError(err, "token")
+		return nil, handleParseError(err, "token")
 	}
 
 	if !token.Valid {
@@ -261,35 +252,8 @@ func (s *Service) ParseToken(tokenString string) (*BaseClaims, error) {
 	return baseClaims, nil
 }
 
-// validateAudience checks if the provided audience is allowed
-func (s *Service) validateAudience(audience string) (bool, error) {
-	// If no audience provider is available, use the configured audiences
-	if s.audienceProvider == nil {
-		for _, allowed := range s.config.ExpectedAudiences {
-			if audience == allowed {
-				return true, nil
-			}
-		}
-		return false, nil
-	}
-
-	// Otherwise, check against dynamic audiences from the provider
-	allowed, err := s.audienceProvider.GetAllowedAudiences()
-	if err != nil {
-		return false, err
-	}
-
-	for _, a := range allowed {
-		if audience == a {
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-
 // keyFunc validates the signing method and gets the key for verification
-func (s *Service) keyFunc(token *jwt.Token) (interface{}, error) {
+func (s *Service) keyFunc(token *jwt.Token) (any, error) {
 	if s.config.SecretKey == "" {
 		return nil, ErrMissingSecretKey
 	}
@@ -305,16 +269,16 @@ func (s *Service) keyFunc(token *jwt.Token) (interface{}, error) {
 }
 
 // handleParseError handles common parse errors with better context
-func (s *Service) handleParseError(err error, tokenType string) error {
+func handleParseError(err error, tokenType string) error {
 	if err == nil {
 		return nil
 	}
 
-	if err == jwt.ErrTokenExpired {
-		return WrapError(ErrTokenExpired, "")
+	if errors.Is(err, jwt.ErrTokenExpired) {
+		return ErrTokenExpired
 	}
-	if err == jwt.ErrTokenMalformed {
-		return WrapError(ErrInvalidTokenFormat, "")
+	if errors.Is(err, jwt.ErrTokenMalformed) {
+		return ErrInvalidTokenFormat
 	}
 	return WrapError(err, "failed to parse "+tokenType)
 }

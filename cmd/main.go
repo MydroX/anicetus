@@ -2,7 +2,6 @@ package main
 
 import (
 	app "MydroX/anicetus/internal"
-	"MydroX/anicetus/internal/common/jwt"
 	cfg "MydroX/anicetus/internal/config"
 	"MydroX/anicetus/pkg/cache"
 	"MydroX/anicetus/pkg/config"
@@ -42,14 +41,6 @@ func main() {
 	c, err := cache.New()
 	if err != nil {
 		l.Fatal("error creating cache", zap.Error(err))
-	}
-
-	audienceManager := jwt.NewAudienceManager(l, connDB, c)
-
-	l.Info("loading allowed audiences in cache...")
-	err = audienceManager.CacheAllowedAudiences()
-	if err != nil {
-		l.Fatal("error loading allowed audiences in cache", zap.Error(err))
 	}
 
 	l.Info("starting server...")
