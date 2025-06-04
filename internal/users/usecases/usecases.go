@@ -10,7 +10,6 @@ import (
 	"MydroX/anicetus/internal/users/repository"
 	passwordpkg "MydroX/anicetus/pkg/password"
 	uuidpkg "MydroX/anicetus/pkg/uuid"
-
 	"go.uber.org/zap"
 )
 
@@ -20,18 +19,18 @@ type usecases struct {
 	config     *config.Config
 }
 
-func New(l *zap.SugaredLogger, r repository.UsersRepository, config *config.Config) UsersUsecases {
+func New(l *zap.SugaredLogger, r repository.UsersRepository, cfg *config.Config) UsersUsecases {
 	return &usecases{
 		logger:     l,
 		repository: r,
-		config:     config,
+		config:     cfg,
 	}
 }
 
 func (u *usecases) Create(ctx *context.AppContext, req *dto.CreateUserRequest) error {
 	passwordHashed, err := passwordpkg.Hash(req.Password)
 	if err != nil {
-		return &errorsutil.AppError{Code: errorsutil.ERROR_INTERNAL, Err: err}
+		return &errorsutil.AppError{Code: errorsutil.ErrorInternal, Err: err}
 	}
 
 	user := models.User{
@@ -79,20 +78,23 @@ func (u *usecases) Update(ctx *context.AppContext, userParams *dto.UpdateUserReq
 func (u *usecases) UpdatePassword(ctx *context.AppContext, uuid, newPassword string) error {
 	newPasswordCrypted, err := passwordpkg.Hash(newPassword)
 	if err != nil {
-		return &errorsutil.AppError{Code: errorsutil.ERROR_INTERNAL, Err: err}
+		return &errorsutil.AppError{Code: errorsutil.ErrorInternal, Err: err}
 	}
 
 	apiErr := u.repository.UpdatePassword(ctx, uuid, newPasswordCrypted)
+
 	return apiErr
 }
 
 func (u *usecases) UpdateEmail(ctx *context.AppContext, uuid, email string) error {
 	err := u.repository.UpdateEmail(ctx, uuid, email)
+
 	return err
 }
 
 func (u *usecases) Delete(ctx *context.AppContext, uuid string) error {
 	err := u.repository.DeleteUser(ctx, uuid)
+
 	return err
 }
 
@@ -103,7 +105,7 @@ func (u *usecases) GetAllUsers(ctx *context.AppContext) (*dto.GetAllUsersRespons
 	}
 
 	res := dto.GetAllUsersResponse{
-		Users: make([]*dto.User, 0),
+		Users: []*dto.User{},
 	}
 
 	for _, user := range users {

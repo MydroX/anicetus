@@ -9,28 +9,18 @@ import (
 
 // Service implements the TokenService interface
 type Service struct {
-	config TokenConfig
-	// audienceProvider AudienceProvider
+	config tokenConfig
 }
 
 // NewJWTService creates a new JWT service with the given configuration
-func NewJWTService(config TokenConfig) *Service {
+func NewJWTService(config tokenConfig) *Service {
 	return &Service{
 		config: config,
-		// audienceProvider: audienceProvider,
 	}
 }
 
 // CreateAccessToken creates a new access token
 func (s *Service) CreateAccessToken(userUUID string, permissions, audiences []string) (string, error) {
-	if s.config.SecretKey == "" {
-		return "", WrapError(ErrMissingSecretKey, "")
-	}
-
-	if s.config.AccessTokenDuration <= 0 {
-		s.config.AccessTokenDuration = DefaultAccessTokenDuration
-	}
-
 	expT := jwt.NewNumericDate(time.Now().Add(time.Duration(s.config.AccessTokenDuration) * time.Second))
 
 	claims := AccessTokenClaims{
@@ -46,6 +36,7 @@ func (s *Service) CreateAccessToken(userUUID string, permissions, audiences []st
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
+
 	ss, err := token.SignedString([]byte(s.config.SecretKey))
 	if err != nil {
 		return "", WrapError(err, "failed to sign access token")
@@ -56,14 +47,6 @@ func (s *Service) CreateAccessToken(userUUID string, permissions, audiences []st
 
 // CreateRefreshToken creates a refresh token with session info
 func (s *Service) CreateRefreshToken(userUUID, sessionUUID string, audiences []string) (string, error) {
-	if s.config.SecretKey == "" {
-		return "", WrapError(ErrMissingSecretKey, "")
-	}
-
-	if s.config.RefreshTokenDuration <= 0 {
-		s.config.RefreshTokenDuration = DefaultRefreshTokenDuration
-	}
-
 	expT := jwt.NewNumericDate(time.Now().Add(time.Duration(s.config.RefreshTokenDuration) * time.Second))
 
 	claims := RefreshTokenClaims{
@@ -79,6 +62,7 @@ func (s *Service) CreateRefreshToken(userUUID, sessionUUID string, audiences []s
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
+
 	ss, err := token.SignedString([]byte(s.config.SecretKey))
 	if err != nil {
 		return "", WrapError(err, "failed to sign refresh token")
@@ -89,6 +73,27 @@ func (s *Service) CreateRefreshToken(userUUID, sessionUUID string, audiences []s
 
 // ParseAccessToken parses and validates an access token
 func (s *Service) ParseAccessToken(tokenString string) (*AccessClaims, error) {
+	claims, err := s.parseAndValidateToken(tokenString)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.validateAccessTokenType(claims); err != nil {
+		return nil, err
+	}
+
+	userUUID, err := s.extractUserUUID(claims)
+	if err != nil {
+		return nil, err
+	}
+
+	permissions := s.extractPermissions(claims)
+
+	return s.buildAccessClaims(claims, userUUID, permissions), nil
+}
+
+// parseAndValidateToken handles the common token parsing and validation
+func (s *Service) parseAndValidateToken(tokenString string) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(tokenString, s.keyFunc)
 	if err != nil {
 		return nil, handleParseError(err, "access token")
@@ -103,38 +108,55 @@ func (s *Service) ParseAccessToken(tokenString string) (*AccessClaims, error) {
 		return nil, WrapError(ErrInvalidClaimsType, "")
 	}
 
-	// Validate standard claims
-	if err := s.validateStandardClaims(claims); err != nil {
-		return nil, err
-	}
+	return claims, s.validateStandardClaims(claims)
+}
 
-	// Verify this is an access token
+// validateAccessTokenType verifies the token type is access token
+func (_ *Service) validateAccessTokenType(claims jwt.MapClaims) error {
 	tokenType, ok := claims[claimTokenType].(string)
 	if !ok {
-		return nil, WrapError(ErrMissingTokenType, "")
+		return WrapError(ErrMissingTokenType, "")
 	}
 
 	if TokenType(tokenType) != AccessToken {
-		return nil, WrapError(ErrNotAccessToken, "")
+		return WrapError(ErrNotAccessToken, "")
 	}
 
+	return nil
+}
+
+// extractUserUUID extracts and validates the user UUID from claims
+func (_ *Service) extractUserUUID(claims jwt.MapClaims) (string, error) {
 	userUUID, ok := claims[claimUserUUID].(string)
 	if !ok || userUUID == "" {
-		return nil, WrapError(ErrMissingUserUUID, "")
+		return "", WrapError(ErrMissingUserUUID, "")
 	}
 
-	// Extract permissions
+	return userUUID, nil
+}
+
+// extractPermissions safely extracts permissions from claims
+func (_ *Service) extractPermissions(claims jwt.MapClaims) []string {
 	var permissions []string
-	if perms, ok := claims[claimPermissions].([]any); ok {
-		for _, p := range perms {
-			if perm, ok := p.(string); ok {
-				permissions = append(permissions, perm)
-			}
-		}
+
+	perms, ok := claims[claimPermissions].([]any)
+	if !ok {
+		return permissions // Return empty slice if permissions claim is missing or wrong type
 	}
 
-	// Build claims object
-	accessClaims := &AccessClaims{
+	for _, p := range perms {
+		if perm, ok := p.(string); ok {
+			permissions = append(permissions, perm)
+		}
+		// Silently skip invalid permission entries rather than failing
+	}
+
+	return permissions
+}
+
+// buildAccessClaims constructs the final AccessClaims object
+func (_ *Service) buildAccessClaims(claims jwt.MapClaims, userUUID string, permissions []string) *AccessClaims {
+	return &AccessClaims{
 		BaseClaims: BaseClaims{
 			UserUUID:  userUUID,
 			TokenType: AccessToken,
@@ -145,54 +167,59 @@ func (s *Service) ParseAccessToken(tokenString string) (*AccessClaims, error) {
 		},
 		Permissions: permissions,
 	}
-
-	return accessClaims, nil
 }
 
 // ParseRefreshToken parses and validates a refresh token
 func (s *Service) ParseRefreshToken(tokenString string) (*RefreshClaims, error) {
-	token, err := jwt.Parse(tokenString, s.keyFunc)
+	claims, err := s.parseAndValidateToken(tokenString)
 	if err != nil {
-		return nil, handleParseError(err, "refresh token")
-	}
-
-	if !token.Valid {
-		return nil, WrapError(ErrInvalidToken, "")
-	}
-
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		return nil, WrapError(ErrInvalidClaimsType, "")
-	}
-
-	// Validate standard claims
-	if err := s.validateStandardClaims(claims); err != nil {
 		return nil, err
 	}
 
-	// Verify this is a refresh token
+	if err := s.validateRefreshTokenType(claims); err != nil {
+		return nil, err
+	}
+
+	userUUID, err := s.extractUserUUID(claims)
+	if err != nil {
+		return nil, err
+	}
+
+	sessionUUID, err := s.extractSessionUUID(claims)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.buildRefreshClaims(claims, userUUID, sessionUUID), nil
+}
+
+// validateRefreshTokenType verifies the token type is refresh token
+func (_ *Service) validateRefreshTokenType(claims jwt.MapClaims) error {
 	tokenType, ok := claims[claimTokenType].(string)
 	if !ok {
-		return nil, WrapError(ErrMissingTokenType, "")
+		return WrapError(ErrMissingTokenType, "")
 	}
 
 	if TokenType(tokenType) != RefreshToken {
-		return nil, WrapError(ErrNotRefreshToken, "")
+		return WrapError(ErrNotRefreshToken, "")
 	}
 
-	// Extract required fields with validation
+	return nil
+}
+
+// extractSessionUUID extracts and validates the session UUID from claims
+func (_ *Service) extractSessionUUID(claims jwt.MapClaims) (string, error) {
 	sessionUUID, ok := claims[claimSessionUUID].(string)
 	if !ok || sessionUUID == "" {
-		return nil, WrapError(ErrMissingSessionUUID, "")
+		return "", WrapError(ErrMissingSessionUUID, "")
 	}
 
-	userUUID, ok := claims[claimUserUUID].(string)
-	if !ok || userUUID == "" {
-		return nil, WrapError(ErrMissingUserUUID, "")
-	}
+	return sessionUUID, nil
+}
 
-	// Build claims object
-	refreshClaims := &RefreshClaims{
+// buildRefreshClaims constructs the final RefreshClaims object
+func (_ *Service) buildRefreshClaims(claims jwt.MapClaims, userUUID, sessionUUID string) *RefreshClaims {
+	return &RefreshClaims{
 		BaseClaims: BaseClaims{
 			UserUUID:  userUUID,
 			TokenType: RefreshToken,
@@ -203,8 +230,6 @@ func (s *Service) ParseRefreshToken(tokenString string) (*RefreshClaims, error) 
 		},
 		SessionUUID: sessionUUID,
 	}
-
-	return refreshClaims, nil
 }
 
 // ParseToken parses a token and returns base claims without validating token type
@@ -277,8 +302,10 @@ func handleParseError(err error, tokenType string) error {
 	if errors.Is(err, jwt.ErrTokenExpired) {
 		return ErrTokenExpired
 	}
+
 	if errors.Is(err, jwt.ErrTokenMalformed) {
 		return ErrInvalidTokenFormat
 	}
+
 	return WrapError(err, "failed to parse "+tokenType)
 }

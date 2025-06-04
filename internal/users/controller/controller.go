@@ -57,13 +57,13 @@ func (c *controller) CreateUser(ginCtx *gin.Context) {
 
 	err := ginCtx.BindJSON(&request)
 	if err != nil {
-		response.BadRequest(c.logger, ctx, errorsutil.ERROR_FAIL_TO_BIND, errorsutil.MessageFailToBind)
+		response.BadRequest(c.logger, ctx, errorsutil.ErrorFailToBind, errorsutil.MessageFailToBind)
 		return
 	}
 
 	err = c.validate.Struct(request)
 	if err != nil {
-		response.BadRequest(c.logger, ctx, errorsutil.ERROR_INVALID_INPUT, errorsutil.MessageInvalidInput)
+		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidInput, errorsutil.MessageInvalidInput)
 		return
 	}
 
@@ -72,14 +72,14 @@ func (c *controller) CreateUser(ginCtx *gin.Context) {
 	match := usernameRegex.MatchString(request.Username)
 	if !match {
 		// TODO: Need to change the message depending on the parameters set in rules
-		response.BadRequest(c.logger, ctx, errorsutil.ERROR_INVALID_USERNAME, UsernameError)
+		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidUsername, UsernameError)
 		return
 	}
 
 	err = c.passwordValidator.Validate(request.Password)
 	if err != nil {
 		// TODO: Need to change the message depending on the parameters set in rules
-		response.BadRequest(c.logger, ctx, errorsutil.ERROR_INVALID_PASSWORD, PasswordError)
+		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidPassword, PasswordError)
 		return
 	}
 
@@ -100,7 +100,7 @@ func (c *controller) GetUser(ginCtx *gin.Context) {
 
 	_, err := uuid.ValidateWithPrefix(userUUID)
 	if err != nil {
-		response.BadRequest(c.logger, ctx, errorsutil.ERROR_INVALID_UUID, errorsutil.MessageInvalidUUID)
+		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidUUID, errorsutil.MessageInvalidUUID)
 		return
 	}
 
@@ -120,13 +120,13 @@ func (c *controller) UpdateUser(ginCtx *gin.Context) {
 
 	err := ginCtx.BindJSON(&request)
 	if err != nil {
-		response.BadRequest(c.logger, ctx, errorsutil.ERROR_FAIL_TO_BIND, errorsutil.MessageFailToBind)
+		response.BadRequest(c.logger, ctx, errorsutil.ErrorFailToBind, errorsutil.MessageFailToBind)
 		return
 	}
 
 	err = c.validate.Struct(request)
 	if err != nil {
-		response.BadRequest(c.logger, ctx, errorsutil.ERROR_INVALID_INPUT, errorsutil.MessageInvalidInput)
+		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidInput, errorsutil.MessageInvalidInput)
 		return
 	}
 
@@ -148,19 +148,19 @@ func (c *controller) UpdateEmail(ginCtx *gin.Context) {
 
 	_, err := uuid.ValidateWithPrefix(userUUID)
 	if err != nil {
-		response.BadRequest(c.logger, ctx, errorsutil.ERROR_INVALID_UUID, errorsutil.MessageInvalidUUID)
+		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidUUID, errorsutil.MessageInvalidUUID)
 		return
 	}
 
 	err = ginCtx.BindJSON(&request)
 	if err != nil {
-		response.BadRequest(c.logger, ctx, errorsutil.ERROR_FAIL_TO_BIND, errorsutil.MessageFailToBind)
+		response.BadRequest(c.logger, ctx, errorsutil.ErrorFailToBind, errorsutil.MessageFailToBind)
 		return
 	}
 
 	err = c.validate.Struct(request)
 	if err != nil {
-		response.BadRequest(c.logger, ctx, errorsutil.ERROR_INVALID_INPUT, errorsutil.MessageInvalidInput)
+		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidInput, errorsutil.MessageInvalidInput)
 		return
 	}
 
@@ -182,25 +182,25 @@ func (c *controller) UpdatePassword(ginCtx *gin.Context) {
 
 	_, err := uuid.ValidateWithPrefix(userUUID)
 	if err != nil {
-		response.BadRequest(c.logger, ctx, errorsutil.ERROR_INVALID_UUID, errorsutil.MessageInvalidUUID)
+		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidUUID, errorsutil.MessageInvalidUUID)
 		return
 	}
 
 	err = ginCtx.BindJSON(&request)
 	if err != nil {
-		response.BadRequest(c.logger, ctx, errorsutil.ERROR_FAIL_TO_BIND, errorsutil.MessageFailToBind)
+		response.BadRequest(c.logger, ctx, errorsutil.ErrorFailToBind, errorsutil.MessageFailToBind)
 		return
 	}
 
 	err = c.validate.Struct(request)
 	if err != nil {
-		response.BadRequest(c.logger, ctx, errorsutil.ERROR_INVALID_INPUT, errorsutil.MessageInvalidInput)
+		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidInput, errorsutil.MessageInvalidInput)
 		return
 	}
 
 	err = c.passwordValidator.Validate(request.Password)
 	if err != nil {
-		response.BadRequest(c.logger, ctx, errorsutil.ERROR_INVALID_PASSWORD, PasswordError)
+		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidPassword, PasswordError)
 		return
 	}
 
@@ -221,7 +221,7 @@ func (c *controller) DeleteUser(ginCtx *gin.Context) {
 
 	_, err := uuid.ValidateWithPrefix(userUUID)
 	if err != nil {
-		response.BadRequest(c.logger, ctx, errorsutil.ERROR_INVALID_UUID, errorsutil.MessageInvalidUUID)
+		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidUUID, errorsutil.MessageInvalidUUID)
 		return
 	}
 

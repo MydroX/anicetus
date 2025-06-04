@@ -134,7 +134,7 @@ func Test_Login(t *testing.T) {
 		input := createValidLoginRequest()
 		userJSON, _ := json.Marshal(input)
 
-		userNotFoundErr := errorsutil.New(errorsutil.ERROR_NOT_FOUND, "user not found", nil)
+		userNotFoundErr := errorsutil.New(errorsutil.ErrorNotFound, "user not found", nil)
 		s.mockUsecase.EXPECT().Login(gomock.Any(), &input).Return("", "", userNotFoundErr)
 
 		w := makeLoginRequest(s.router, string(userJSON))
@@ -143,14 +143,14 @@ func Test_Login(t *testing.T) {
 		_ = json.Unmarshal(w.Body.Bytes(), &resp)
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
-		assert.Equal(t, errorsutil.ERROR_NOT_FOUND, resp.Code)
+		assert.Equal(t, errorsutil.ErrorNotFound, resp.Code)
 	})
 
 	t.Run("[V1] Login - Usecase error", func(t *testing.T) {
 		input := createValidLoginRequest()
 		userJSON, _ := json.Marshal(input)
 
-		internalErr := errorsutil.New(errorsutil.ERROR_INTERNAL, "internal error", nil)
+		internalErr := errorsutil.New(errorsutil.ErrorInternal, "internal error", nil)
 		s.mockUsecase.EXPECT().Login(gomock.Any(), &input).Return("", "", internalErr)
 
 		w := makeLoginRequest(s.router, string(userJSON))

@@ -118,7 +118,7 @@ func TestSaveSession(t *testing.T) {
 
 				var appErr *errorsutil.AppError
 				if assert.True(t, errors.As(err, &appErr), "Expected an AppError") {
-					assert.Equal(t, errorsutil.ERROR_UNIQUE_VIOLATION, appErr.Code)
+					assert.Equal(t, errorsutil.ErrorUniqueViolation, appErr.Code)
 				}
 			},
 		},
@@ -152,7 +152,7 @@ func TestSaveSession(t *testing.T) {
 
 				var appErr *errorsutil.AppError
 				if assert.True(t, errors.As(err, &appErr), "Expected an AppError") {
-					assert.Equal(t, errorsutil.ERROR_CONSTRAINT_VIOLATION, appErr.Code)
+					assert.Equal(t, errorsutil.ErrorConstraintViolation, appErr.Code)
 				}
 			},
 		},

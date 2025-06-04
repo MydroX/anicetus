@@ -45,6 +45,7 @@ func (e *JWTError) Error() string {
 	if e.Message != "" {
 		return fmt.Sprintf("%s: %v", e.Message, e.Err)
 	}
+
 	return e.Err.Error()
 }
 
