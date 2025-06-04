@@ -8,6 +8,7 @@ import (
 
 func New(env string) (*zap.SugaredLogger, error) {
 	var zapLogger *zap.Logger
+
 	var err error
 
 	switch env {

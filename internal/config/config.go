@@ -1,3 +1,4 @@
+//revive:disable:max-public-structs
 package config
 
 type Config struct {
@@ -45,11 +46,11 @@ type Session struct {
 }
 
 type Hash struct {
-	SaltLength  int `yaml:"salt_length"`
-	Iterations  int `yaml:"iterations"`
-	Memory      int `yaml:"memory"`
-	Parallelism int `yaml:"parallelism"`
-	KeyLength   int `yaml:"key_length"`
+	SaltLength  uint32 `yaml:"salt_length"`
+	Iterations  uint32 `yaml:"iterations"`
+	Memory      uint32 `yaml:"memory"`
+	Parallelism uint8  `yaml:"parallelism"`
+	KeyLength   uint32 `yaml:"key_length"`
 }
 
 type IP struct {

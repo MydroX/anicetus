@@ -4,11 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/dgraph-io/ristretto/v2"
-	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"go.uber.org/zap"
-
 	"MydroX/anicetus/internal/common/jwt"
 	"MydroX/anicetus/internal/config"
 	iamcontroller "MydroX/anicetus/internal/iam/controller"
@@ -17,6 +12,10 @@ import (
 	userscontroller "MydroX/anicetus/internal/users/controller"
 	usersrepository "MydroX/anicetus/internal/users/repository"
 	usersusecases "MydroX/anicetus/internal/users/usecases"
+	"github.com/dgraph-io/ristretto/v2"
+	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/zap"
 )
 
 type APIServices struct {
@@ -60,7 +59,6 @@ func Router(logger *zap.SugaredLogger, service service) *gin.Engine {
 // NewServer is a function to start the server for the service.
 func NewServer(s *APIServices) {
 	// audienceManager := jwt.NewAudienceManager(s.Logger, s.DB, s.CacheInMemory)
-
 	tokenConfig, err := jwt.NewTokenConfigFromEnv(s.Config)
 	if err != nil {
 		s.Logger.Fatal("error creating token config", zap.Error(err))

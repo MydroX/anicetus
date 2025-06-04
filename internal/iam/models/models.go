@@ -3,9 +3,9 @@ package models
 import "time"
 
 type Session struct {
-	Id             uint64
+	ID             uint64
 	UUID           string
-	UserId         string
+	UserID         string
 	RefreshToken   string
 	LastUsedAt     time.Time
 	OS             string

@@ -1,14 +1,14 @@
 package iam
 
 import (
+	"net/http"
+
 	"MydroX/anicetus/internal/common/context"
 	"MydroX/anicetus/internal/common/errorsutil"
 	"MydroX/anicetus/internal/common/response"
 	"MydroX/anicetus/internal/config"
 	"MydroX/anicetus/internal/iam/dto"
 	"MydroX/anicetus/internal/iam/usecases"
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"go.uber.org/zap"
@@ -34,28 +34,33 @@ func New(l *zap.SugaredLogger, u usecases.IamUsecasesService, c *config.Config) 
 
 func (c *controller) Login(ginCtx *gin.Context) {
 	var request dto.LoginRequest
+
 	ctx := context.NewAppContext(ginCtx)
 	ctx.EnsureTraceID()
 
 	if err := ginCtx.BindJSON(&request); err != nil {
 		response.BadRequest(c.logger, ctx, errorsutil.ErrorFailToBind, errorsutil.MessageFailToBind)
+
 		return
 	}
 
 	jwtErr := c.validate.Struct(request)
 	if jwtErr != nil {
 		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidInput, errorsutil.MessageInvalidInput)
+
 		return
 	}
 
 	if request.Username == "" && request.Email == "" {
 		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidInput, "username or email is required")
+
 		return
 	}
 
 	accessToken, refreshToken, jwtErr := c.usecases.Login(ctx, &request)
 	if jwtErr != nil {
 		response.Error(c.logger, ctx, jwtErr)
+
 		return
 	}
 

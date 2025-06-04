@@ -1,19 +1,19 @@
 package response
 
 import (
-	"MydroX/anicetus/internal/common/context"
-	"MydroX/anicetus/internal/common/errorsutil"
 	"errors"
 	"fmt"
 	"net/http"
 
+	"MydroX/anicetus/internal/common/context"
+	"MydroX/anicetus/internal/common/errorsutil"
 	"go.uber.org/zap"
 )
 
 type errorResponse struct {
 	Message string `json:"message"`
 	Code    int    `json:"code"`
-	TraceId string `json:"trace_id"`
+	TraceID string `json:"trace_id"`
 }
 
 type ErrorOptions func(*errorOptions)
@@ -33,6 +33,7 @@ func WithClientMessage(msg string) ErrorOptions {
 func handleError(logger *zap.SugaredLogger, ctx *context.AppContext, appErr *errorsutil.AppError, options *errorOptions) {
 	if appErr.Severity == "" {
 		logger.Warn(fmt.Sprintf("Severity is not set for request %s", ctx.EnsureTraceID()))
+
 		appErr.Severity = errorsutil.SeverityError
 	}
 
@@ -48,7 +49,7 @@ func handleError(logger *zap.SugaredLogger, ctx *context.AppContext, appErr *err
 	ctx.GinContext().JSON(httpCode, errorResponse{
 		Message: options.clientMessage,
 		Code:    appErr.Code,
-		TraceId: traceID,
+		TraceID: traceID,
 	})
 }
 
@@ -74,7 +75,7 @@ func Error(logger *zap.SugaredLogger, ctx *context.AppContext, err error, opts .
 		ctx.GinContext().JSON(http.StatusInternalServerError, errorResponse{
 			Message: "Internal server error, server has not been able to handle the error properly",
 			Code:    errorsutil.ErrorUnknownError,
-			TraceId: ctx.EnsureTraceID(),
+			TraceID: ctx.EnsureTraceID(),
 		})
 
 		return

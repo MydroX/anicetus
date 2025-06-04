@@ -1,14 +1,14 @@
 package main
 
 import (
+	"log"
+
 	app "MydroX/anicetus/internal"
 	cfg "MydroX/anicetus/internal/config"
 	"MydroX/anicetus/pkg/cache"
 	"MydroX/anicetus/pkg/config"
 	"MydroX/anicetus/pkg/db"
 	"MydroX/anicetus/pkg/logger"
-	"log"
-
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
@@ -20,6 +20,7 @@ func main() {
 	}
 
 	var appConfig cfg.Config
+
 	err = viper.Unmarshal(&appConfig)
 	if err != nil {
 		log.Fatalf("error unmarshalling config: %v", err)
@@ -31,13 +32,22 @@ func main() {
 	}
 
 	l.Info("connecting to database...")
-	connDB, err := db.Connect(appConfig.Database.Host, appConfig.Database.Username, appConfig.Database.Password, appConfig.Database.Name, appConfig.Database.Port)
+
+	connDB, err := db.Connect(
+		appConfig.Database.Host,
+		appConfig.Database.Username,
+		appConfig.Database.Password,
+		appConfig.Database.Name,
+		appConfig.Database.Port,
+	)
 	if err != nil {
 		l.Fatal("error conecting to database", zap.Error(err))
 	}
+
 	defer connDB.Close()
 
 	l.Info("creating in memory cache...")
+
 	c, err := cache.New()
 	if err != nil {
 		l.Fatal("error creating cache", zap.Error(err))
