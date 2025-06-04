@@ -89,6 +89,7 @@ func login(
 	accessToken, err = u.jwt.CreateAccessToken(
 		user.UUID,
 		nil, // TEMP
+		[]string{},
 	)
 	if err != nil {
 		return "", "", errorsutil.New(
@@ -101,6 +102,7 @@ func login(
 	refreshToken, err = u.jwt.CreateRefreshToken(
 		user.UUID,
 		uuid.NewWithPrefix(sessionPrefix),
+		[]string{},
 	)
 	if err != nil {
 		return "", "", errorsutil.New(
