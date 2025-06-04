@@ -21,6 +21,11 @@ const (
 	encodedHashParts = 6
 
 	hashParamPartsCount = 2
+
+	// Security limits
+	MaxMemory      = 1024 * 1024 * 1024 // 1GB max
+	MaxIterations  = 100                // Reasonable max iterations
+	MaxParallelism = 255                // uint8 max
 )
 
 type HashParams struct {
@@ -223,9 +228,14 @@ func parseParams(paramsStr string) (*HashParams, error) {
 
 // parseMemory handles the memory parameter
 func parseMemory(value string, params *HashParams) error {
-	memory, err := strconv.Atoi(value)
+	memory, err := strconv.ParseUint(value, 10, 32)
 	if err != nil {
 		return fmt.Errorf("invalid memory parameter: %w", err)
+	}
+
+	// Additional security check for reasonable memory limits
+	if memory > MaxMemory {
+		return fmt.Errorf("memory parameter exceeds maximum allowed: %d", memory)
 	}
 
 	params.Memory = uint32(memory)
@@ -235,9 +245,14 @@ func parseMemory(value string, params *HashParams) error {
 
 // parseIterations handles the iterations parameter
 func parseIterations(value string, params *HashParams) error {
-	iterations, err := strconv.Atoi(value)
+	iterations, err := strconv.ParseUint(value, 10, 32)
 	if err != nil {
 		return fmt.Errorf("invalid iterations parameter: %w", err)
+	}
+
+	// Additional security check for reasonable iteration limits
+	if iterations > MaxIterations {
+		return fmt.Errorf("iterations parameter exceeds maximum allowed: %d", iterations)
 	}
 
 	params.Iterations = uint32(iterations)
@@ -247,7 +262,7 @@ func parseIterations(value string, params *HashParams) error {
 
 // parseParallelism handles the parallelism parameter
 func parseParallelism(value string, params *HashParams) error {
-	parallelism, err := strconv.Atoi(value)
+	parallelism, err := strconv.ParseUint(value, 10, 8)
 	if err != nil {
 		return fmt.Errorf("invalid parallelism parameter: %w", err)
 	}
