@@ -16,7 +16,7 @@ func TestParseAccessToken(t *testing.T) {
 	mockAudienceProvider := NewMockAudienceProvider(ctrl)
 	mockAudienceProvider.EXPECT().GetAllowedAudiences().Return([]string{"test-audience"}, nil).AnyTimes()
 
-	config := TokenConfig{
+	config := tokenConfig{
 		SecretKey:        "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
 		ExpectedIssuer:   "test-issuer",
 		ClockSkewSeconds: 60,
@@ -126,7 +126,7 @@ func TestParseRefreshToken(t *testing.T) {
 	mockAudienceProvider := NewMockAudienceProvider(ctrl)
 	mockAudienceProvider.EXPECT().GetAllowedAudiences().Return([]string{"test-audience"}, nil).AnyTimes()
 
-	config := TokenConfig{
+	config := tokenConfig{
 		SecretKey:        "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
 		ExpectedIssuer:   "test-issuer",
 		ClockSkewSeconds: 60,
@@ -198,7 +198,7 @@ func TestParseToken(t *testing.T) {
 	mockAudienceProvider := NewMockAudienceProvider(ctrl)
 	mockAudienceProvider.EXPECT().GetAllowedAudiences().Return([]string{"test-audience"}, nil).AnyTimes()
 
-	config := TokenConfig{
+	config := tokenConfig{
 		SecretKey:        "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
 		ExpectedIssuer:   "test-issuer",
 		ClockSkewSeconds: 60,
@@ -301,7 +301,7 @@ func TestCreateAccessToken(t *testing.T) {
 			Return([]string{"test-audience"}, nil).AnyTimes()
 
 		// Configurer le service
-		config := TokenConfig{
+		config := tokenConfig{
 			SecretKey:           "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
 			ExpectedIssuer:      "test-issuer",
 			AccessTokenDuration: 3600,
@@ -357,7 +357,7 @@ func TestCreateAccessToken(t *testing.T) {
 			Return([]string{"test-audience"}, nil).AnyTimes()
 
 		// Configurer le service avec une durée de 0
-		config := TokenConfig{
+		config := tokenConfig{
 			SecretKey:           "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
 			ExpectedIssuer:      "test-issuer",
 			AccessTokenDuration: 0, // Durée zéro, devrait utiliser la valeur par défaut
@@ -380,12 +380,12 @@ func TestCreateAccessToken(t *testing.T) {
 		exp, _ := claims["exp"].(float64)
 
 		// L'expiration doit être proche de maintenant + durée par défaut
-		assert.InDelta(t, time.Now().Add(time.Duration(DefaultAccessTokenDuration)*time.Second).Unix(), int64(exp), 5)
+		assert.InDelta(t, time.Now().Add(time.Duration(60)*time.Second).Unix(), int64(exp), 5)
 	})
 
 	t.Run("missing secret key", func(t *testing.T) {
 		// Configurer le service avec une clé secrète vide
-		config := TokenConfig{
+		config := tokenConfig{
 			SecretKey:      "", // Clé vide
 			ExpectedIssuer: "test-issuer",
 		}
@@ -413,7 +413,7 @@ func TestCreateRefreshToken(t *testing.T) {
 			Return([]string{"test-audience"}, nil).AnyTimes()
 
 		// Configurer le service
-		config := TokenConfig{
+		config := tokenConfig{
 			SecretKey:            "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
 			ExpectedIssuer:       "test-issuer",
 			RefreshTokenDuration: 86400, // 24 heures
@@ -462,7 +462,7 @@ func TestCreateRefreshToken(t *testing.T) {
 			Return([]string{"test-audience"}, nil).AnyTimes()
 
 		// Configurer le service avec une durée de 0
-		config := TokenConfig{
+		config := tokenConfig{
 			SecretKey:            "test-secret-key-long-enough-for-signing-jwt-tokens-securement",
 			ExpectedIssuer:       "test-issuer",
 			RefreshTokenDuration: 0, // Durée zéro, devrait utiliser la valeur par défaut
@@ -485,12 +485,12 @@ func TestCreateRefreshToken(t *testing.T) {
 		exp, _ := claims["exp"].(float64)
 
 		// L'expiration doit être proche de maintenant + durée par défaut
-		assert.InDelta(t, time.Now().Add(time.Duration(DefaultRefreshTokenDuration)*time.Second).Unix(), int64(exp), 5)
+		assert.InDelta(t, time.Now().Add(time.Duration(60)*time.Second).Unix(), int64(exp), 5)
 	})
 
 	t.Run("missing secret key", func(t *testing.T) {
 		// Configurer le service avec une clé secrète vide
-		config := TokenConfig{
+		config := tokenConfig{
 			SecretKey:      "", // Clé vide
 			ExpectedIssuer: "test-issuer",
 		}
@@ -513,7 +513,7 @@ func TestCreateRefreshToken(t *testing.T) {
 			Return([]string{"test-audience"}, nil).AnyTimes()
 
 		// Configurer le service
-		config := TokenConfig{
+		config := tokenConfig{
 			SecretKey:      "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
 			ExpectedIssuer: "test-issuer",
 		}

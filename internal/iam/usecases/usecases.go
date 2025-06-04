@@ -65,7 +65,7 @@ func (u *usecases) Login(ctx *context.AppContext, req *dto.LoginRequest) (access
 		return accessToken, refreshToken, err
 	}
 	return "", "", errorsutil.New(
-		errorsutil.ERROR_INVALID_INPUT,
+		errorsutil.ErrorInvalidInput,
 		"username or email must be provided",
 		errors.New("username or email must be provided"),
 	)
@@ -80,7 +80,7 @@ func login(
 ) (accessToken, refreshToken string, err error) {
 	if !passwordpkg.CheckPasswordHash(reqPwd, user.Password) {
 		return "", "", errorsutil.New(
-			errorsutil.ERROR_INVALID_INPUT,
+			errorsutil.ErrorInvalidInput,
 			"invalid password",
 			errors.New("invalid password"),
 		)
@@ -93,7 +93,7 @@ func login(
 	)
 	if err != nil {
 		return "", "", errorsutil.New(
-			errorsutil.ERROR_CREATE_TOKEN,
+			errorsutil.ErrorCreateToken,
 			"failed to create access token",
 			err,
 		)
@@ -106,7 +106,7 @@ func login(
 	)
 	if err != nil {
 		return "", "", errorsutil.New(
-			errorsutil.ERROR_CREATE_TOKEN,
+			errorsutil.ErrorCreateToken,
 			"failed to create refresh token",
 			err,
 		)
@@ -123,7 +123,7 @@ func login(
 	refreshTokenHashed, hashErr := argon2id.Hash(refreshToken, hashParams)
 	if hashErr != nil {
 		return "", "", errorsutil.New(
-			errorsutil.ERROR_FAILED_TO_HASH_PASSWORD,
+			errorsutil.ErrorFailedToHashPassword,
 			"failed to hash refresh token",
 			hashErr,
 		)

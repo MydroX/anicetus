@@ -73,9 +73,10 @@ func Error(logger *zap.SugaredLogger, ctx *context.AppContext, err error, opts .
 		logger.Error(fmt.Sprintf("CRITICAL | [%s] | %s | %s ", ctx.EnsureTraceID(), "Something went wrong while handling error", err))
 		ctx.GinContext().JSON(http.StatusInternalServerError, errorResponse{
 			Message: "Internal server error, server has not been able to handle the error properly",
-			Code:    errorsutil.ERROR_UNKNOWN_ERROR,
+			Code:    errorsutil.ErrorUnknownError,
 			TraceId: ctx.EnsureTraceID(),
 		})
+
 		return
 	}
 
@@ -83,7 +84,7 @@ func Error(logger *zap.SugaredLogger, ctx *context.AppContext, err error, opts .
 	options := applyOptions(opts...)
 
 	if apiErr.Code == 0 {
-		apiErr.Code = errorsutil.ERROR_UNKNOWN_ERROR
+		apiErr.Code = errorsutil.ErrorUnknownError
 	}
 
 	handleError(logger, ctx, apiErr, options)

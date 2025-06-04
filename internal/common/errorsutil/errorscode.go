@@ -9,33 +9,33 @@ import "net/http"
 const (
 
 	// Common errors (10xxx)
-	ERROR_FAIL_TO_BIND     = 10001 // Failed to bind request
-	ERROR_INVALID_INPUT    = 10002 // Invalid input
-	ERROR_INVALID_UUID     = 10003 // Invalid UUID
-	ERROR_NOT_FOUND        = 10004 // Not found
-	ERROR_DUPLICATE_ENTITY = 10005 // Duplicate entity
-	ERROR_UNAUTHORIZED     = 10006 // Unauthorized
-	ERROR_TOO_MANY_REQUEST = 10007 // Too many requests
+	ErrorFailToBind      = 10001 // Failed to bind request
+	ErrorInvalidInput    = 10002 // Invalid input
+	ErrorInvalidUUID     = 10003 // Invalid UUID
+	ErrorNotFound        = 10004 // Not found
+	ErrorDuplicateEntity = 10005 // Duplicate entity
+	ErrorUnauthorized    = 10006 // Unauthorized
+	ErrorTooManyRequest  = 10007 // Too many requests
 
-	ERROR_INTERNAL      = 10008 // Internal server error
-	ERROR_UNKNOWN_ERROR = 10999 // Unknown error
+	ErrorInternal     = 10008 // Internal server error
+	ErrorUnknownError = 10999 // Unknown error
 
 	// User errors (11xxx)
-	ERROR_INVALID_USERNAME        = 11001 // Username does not meet the requirements
-	ERROR_FAILED_TO_HASH_PASSWORD = 11002 // Failed to hash password
-	ERROR_INVALID_PASSWORD        = 11003 // Password does not meet the requirements
+	ErrorInvalidUsername      = 11001 // Username does not meet the requirements
+	ErrorFailedToHashPassword = 11002 // Failed to hash password
+	ErrorInvalidPassword      = 11003 // Password does not meet the requirements
 
 	// IAM errors (12xxx)
-	ERROR_HASH_TOKEN   = 12001 // Failed to hash token
-	ERROR_CREATE_TOKEN = 12002 // Failed to create token
+	ErrorHashToken   = 12001 // Failed to hash token
+	ErrorCreateToken = 12002 // Failed to create token
 
 	// Database errors (99xxx)
-	ERROR_UNIQUE_VIOLATION      = 99001 // Unique constraint violation
-	ERROR_FOREIGN_KEY_VIOLATION = 99002 // Foreign key constraint violation
-	ERROR_CONSTRAINT_VIOLATION  = 99003 // Check constraint violation
-	ERROR_NOT_NULL_VIOLATION    = 99004 // Not null constraint violation
-	ERROR_DATABASE_UNAVAILABLE  = 99005 // Database unavailable
-	ERROR_UNKNOWN_ERROR_DB      = 99999 // Unknown database error
+	ErrorUniqueViolation     = 99001 // Unique constraint violation
+	ErrorForeignKeyViolation = 99002 // Foreign key constraint violation
+	ErrorConstraintViolation = 99003 // Check constraint violation
+	ErrorNotNullViolation    = 99004 // Not null constraint violation
+	ErrorDatabaseUnavailable = 99005 // Database unavailable
+	ErrorUnknownErrorDB      = 99999 // Unknown database error
 )
 
 const (
@@ -46,35 +46,35 @@ const (
 
 var errorCodeMap = map[int]int{
 	// 400 Bad Request
-	ERROR_FAIL_TO_BIND:         http.StatusBadRequest,
-	ERROR_INVALID_INPUT:        http.StatusBadRequest,
-	ERROR_INVALID_UUID:         http.StatusBadRequest,
-	ERROR_INVALID_USERNAME:     http.StatusBadRequest,
-	ERROR_INVALID_PASSWORD:     http.StatusBadRequest,
-	ERROR_CONSTRAINT_VIOLATION: http.StatusBadRequest,
-	ERROR_NOT_NULL_VIOLATION:   http.StatusBadRequest,
+	ErrorFailToBind:          http.StatusBadRequest,
+	ErrorInvalidInput:        http.StatusBadRequest,
+	ErrorInvalidUUID:         http.StatusBadRequest,
+	ErrorInvalidUsername:     http.StatusBadRequest,
+	ErrorInvalidPassword:     http.StatusBadRequest,
+	ErrorConstraintViolation: http.StatusBadRequest,
+	ErrorNotNullViolation:    http.StatusBadRequest,
 
 	// 401 Unauthorized
-	ERROR_UNAUTHORIZED: http.StatusUnauthorized,
+	ErrorUnauthorized: http.StatusUnauthorized,
 
 	// 403 Forbidden
 
 	// 404 Not Found
-	ERROR_NOT_FOUND: http.StatusNotFound,
+	ErrorNotFound: http.StatusNotFound,
 
 	// 409 Conflict
-	ERROR_DUPLICATE_ENTITY:      http.StatusConflict,
-	ERROR_UNIQUE_VIOLATION:      http.StatusConflict,
-	ERROR_FOREIGN_KEY_VIOLATION: http.StatusConflict,
+	ErrorDuplicateEntity:     http.StatusConflict,
+	ErrorUniqueViolation:     http.StatusConflict,
+	ErrorForeignKeyViolation: http.StatusConflict,
 
 	// 429 Too Many Requests
-	ERROR_TOO_MANY_REQUEST: http.StatusTooManyRequests,
+	ErrorTooManyRequest: http.StatusTooManyRequests,
 
 	// 500 Internal Server Error
-	ERROR_INTERNAL:                http.StatusInternalServerError,
-	ERROR_UNKNOWN_ERROR:           http.StatusInternalServerError,
-	ERROR_FAILED_TO_HASH_PASSWORD: http.StatusInternalServerError,
-	ERROR_HASH_TOKEN:              http.StatusInternalServerError,
+	ErrorInternal:             http.StatusInternalServerError,
+	ErrorUnknownError:         http.StatusInternalServerError,
+	ErrorFailedToHashPassword: http.StatusInternalServerError,
+	ErrorHashToken:            http.StatusInternalServerError,
 }
 
 func (e *AppError) MapErrorCodeToHTTPCode() int {

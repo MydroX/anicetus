@@ -38,18 +38,18 @@ func (c *controller) Login(ginCtx *gin.Context) {
 	ctx.EnsureTraceID()
 
 	if err := ginCtx.BindJSON(&request); err != nil {
-		response.BadRequest(c.logger, ctx, errorsutil.ERROR_FAIL_TO_BIND, errorsutil.MessageFailToBind)
+		response.BadRequest(c.logger, ctx, errorsutil.ErrorFailToBind, errorsutil.MessageFailToBind)
 		return
 	}
 
 	jwtErr := c.validate.Struct(request)
 	if jwtErr != nil {
-		response.BadRequest(c.logger, ctx, errorsutil.ERROR_INVALID_INPUT, errorsutil.MessageInvalidInput)
+		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidInput, errorsutil.MessageInvalidInput)
 		return
 	}
 
 	if request.Username == "" && request.Email == "" {
-		response.BadRequest(c.logger, ctx, errorsutil.ERROR_INVALID_INPUT, "username or email is required")
+		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidInput, "username or email is required")
 		return
 	}
 

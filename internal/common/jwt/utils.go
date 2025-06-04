@@ -12,6 +12,7 @@ func extractStringClaim(claims jwt.MapClaims, key string) string {
 	if val, ok := claims[key].(string); ok {
 		return val
 	}
+
 	return ""
 }
 
@@ -19,6 +20,7 @@ func extractInt64Claim(claims jwt.MapClaims, key string) int64 {
 	if val, ok := claims[key].(float64); ok {
 		return int64(val)
 	}
+
 	return 0
 }
 
@@ -26,6 +28,7 @@ func extractTimeClaim(claims jwt.MapClaims, key string) time.Time {
 	if val, ok := claims[key].(float64); ok {
 		return time.Unix(int64(val), 0)
 	}
+
 	return time.Time{}
 }
 

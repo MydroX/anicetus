@@ -49,56 +49,56 @@ func New(code int, message string, err error) error {
 
 func NotFound(id string) *AppError {
 	return &AppError{
-		Code:    ERROR_NOT_FOUND,
+		Code:    ErrorNotFound,
 		Message: fmt.Sprintf("Entity with ID %s not found", id),
 	}
 }
 
 func DuplicateEntity(id string) *AppError {
 	return &AppError{
-		Code:    ERROR_DUPLICATE_ENTITY,
+		Code:    ErrorDuplicateEntity,
 		Message: fmt.Sprintf("Entity with ID %s already exists", id),
 	}
 }
 
 func FailToBind() *AppError {
 	return &AppError{
-		Code:    ERROR_FAIL_TO_BIND,
+		Code:    ErrorFailToBind,
 		Message: "Failed to bind request",
 	}
 }
 
 func FailToValidate() *AppError {
 	return &AppError{
-		Code:    ERROR_INVALID_INPUT,
+		Code:    ErrorInvalidInput,
 		Message: "Failed to validate request",
 	}
 }
 
 func InvalidUUID() *AppError {
 	return &AppError{
-		Code:    ERROR_INVALID_UUID,
+		Code:    ErrorInvalidUUID,
 		Message: "Invalid UUID",
 	}
 }
 
 func InvalidUsername() *AppError {
 	return &AppError{
-		Code:    ERROR_INVALID_USERNAME,
+		Code:    ErrorInvalidUsername,
 		Message: "Invalid username",
 	}
 }
 
 func FailedToHashPassword() *AppError {
 	return &AppError{
-		Code:    ERROR_FAILED_TO_HASH_PASSWORD,
+		Code:    ErrorFailedToHashPassword,
 		Message: "Failed to hash password",
 	}
 }
 
 func InvalidPassword() *AppError {
 	return &AppError{
-		Code:    ERROR_INVALID_PASSWORD,
+		Code:    ErrorInvalidPassword,
 		Message: "Invalid password",
 	}
 }
@@ -108,7 +108,7 @@ func SQLErrorParser(err error) error {
 
 	if err == pgx.ErrNoRows {
 		return &AppError{
-			Code:    ERROR_NOT_FOUND,
+			Code:    ErrorNotFound,
 			Message: "Entity not found",
 			Err:     err,
 		}
@@ -116,7 +116,7 @@ func SQLErrorParser(err error) error {
 
 	if strings.Contains(err.Error(), "failed to connect") {
 		return &AppError{
-			Code:     ERROR_DATABASE_UNAVAILABLE,
+			Code:     ErrorDatabaseUnavailable,
 			Message:  databaseUnavailableErrorMsg,
 			Err:      err,
 			Severity: SeverityCritical,
@@ -125,7 +125,7 @@ func SQLErrorParser(err error) error {
 
 	if ok := errors.As(err, &pgErr); !ok {
 		return &AppError{
-			Code:     ERROR_UNKNOWN_ERROR_DB,
+			Code:     ErrorUnknownErrorDB,
 			Message:  "Internal error from database",
 			Err:      err,
 			Severity: SeverityCritical,
@@ -135,37 +135,37 @@ func SQLErrorParser(err error) error {
 	switch pgErr.Code {
 	case pgerrcode.AdminShutdown, pgerrcode.CrashShutdown, pgerrcode.CannotConnectNow:
 		return &AppError{
-			Code:    ERROR_DATABASE_UNAVAILABLE,
+			Code:    ErrorDatabaseUnavailable,
 			Message: pgErr.Message,
 			Err:     err,
 		}
 	case pgerrcode.UniqueViolation:
 		return &AppError{
-			Code:    ERROR_UNIQUE_VIOLATION,
+			Code:    ErrorUniqueViolation,
 			Message: pgErr.Message,
 			Err:     err,
 		}
 	case pgerrcode.ForeignKeyViolation:
 		return &AppError{
-			Code:    ERROR_FOREIGN_KEY_VIOLATION,
+			Code:    ErrorForeignKeyViolation,
 			Message: pgErr.Message,
 			Err:     err,
 		}
 	case pgerrcode.CheckViolation:
 		return &AppError{
-			Code:    ERROR_CONSTRAINT_VIOLATION,
+			Code:    ErrorConstraintViolation,
 			Message: pgErr.Message,
 			Err:     err,
 		}
 	case pgerrcode.NotNullViolation:
 		return &AppError{
-			Code:    ERROR_NOT_NULL_VIOLATION,
+			Code:    ErrorNotNullViolation,
 			Message: pgErr.Message,
 			Err:     err,
 		}
 	default:
 		return &AppError{
-			Code:     ERROR_INTERNAL,
+			Code:     ErrorInternal,
 			Message:  "Internal error from database",
 			Err:      err,
 			Severity: SeverityCritical,

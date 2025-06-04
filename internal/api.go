@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/dgraph-io/ristretto/v2"
 	"github.com/gin-gonic/gin"
@@ -40,7 +41,7 @@ func Router(logger *zap.SugaredLogger, service service) *gin.Engine {
 	}
 
 	router.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{
+		c.JSON(http.StatusOK, gin.H{
 			"message": "ok",
 		})
 	})
@@ -60,11 +61,12 @@ func Router(logger *zap.SugaredLogger, service service) *gin.Engine {
 func NewServer(s *APIServices) {
 	// audienceManager := jwt.NewAudienceManager(s.Logger, s.DB, s.CacheInMemory)
 
-	jwtService := jwt.NewJWTService(jwt.TokenConfig{
-		SecretKey:        s.Config.JWT.Secret,
-		ClockSkewSeconds: s.Config.JWT.SkewSeconds,
-		ExpectedIssuer:   s.Config.JWT.Issuer,
-	})
+	tokenConfig, err := jwt.NewTokenConfigFromEnv(s.Config)
+	if err != nil {
+		s.Logger.Fatal("error creating token config", zap.Error(err))
+	}
+
+	jwtService := jwt.NewJWTService(tokenConfig)
 
 	usersRepository := usersrepository.New(s.Logger, s.DB)
 	iamRepository := iamrepository.NewIAMStore(s.Logger, s.DB)
@@ -82,7 +84,7 @@ func NewServer(s *APIServices) {
 
 	router := Router(s.Logger, service)
 
-	err := router.Run(fmt.Sprintf(":%s", s.Config.Port))
+	err = router.Run(fmt.Sprintf(":%s", s.Config.Port))
 	if err != nil {
 		s.Logger.Fatal("error starting server", zap.Error(err))
 	}

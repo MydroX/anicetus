@@ -74,7 +74,7 @@ func TestCreateUser(t *testing.T) {
 					WillReturnError(pgErr)
 			},
 			expectedError: "duplicate key value violates unique constraint",
-			errorCode:     errorsutil.ERROR_UNIQUE_VIOLATION,
+			errorCode:     errorsutil.ErrorUniqueViolation,
 		},
 		{
 			name: "Not null violation error",
@@ -91,7 +91,7 @@ func TestCreateUser(t *testing.T) {
 					WillReturnError(pgErr)
 			},
 			expectedError: "null value in column \"email\" violates not-null constraint",
-			errorCode:     errorsutil.ERROR_NOT_NULL_VIOLATION,
+			errorCode:     errorsutil.ErrorNotNullViolation,
 		},
 	}
 
@@ -205,14 +205,14 @@ func TestGetUserByUUID(t *testing.T) {
 			},
 			expectedUser:    nil,
 			expectedError:   true,
-			expectedErrCode: errorsutil.ERROR_NOT_FOUND,
+			expectedErrCode: errorsutil.ErrorNotFound,
 			checkFunc: func(t *testing.T, user *models.User, err error) {
 				assert.Error(t, err)
 				assert.Nil(t, user)
 
 				var appErr *errorsutil.AppError
 				if assert.True(t, errors.As(err, &appErr), "Expected an AppError") {
-					assert.Equal(t, errorsutil.ERROR_NOT_FOUND, appErr.Code)
+					assert.Equal(t, errorsutil.ErrorNotFound, appErr.Code)
 				}
 			},
 		},
@@ -310,7 +310,7 @@ func TestUpdateUser(t *testing.T) {
 			expectedUser:    nil,
 			expectedError:   true,
 			expectedErrMsg:  "no rows",
-			expectedErrCode: errorsutil.ERROR_NOT_FOUND,
+			expectedErrCode: errorsutil.ErrorNotFound,
 		},
 		"Unique Violation": {
 			user: inputUser,
@@ -329,7 +329,7 @@ func TestUpdateUser(t *testing.T) {
 			expectedUser:    nil,
 			expectedError:   true,
 			expectedErrMsg:  "duplicate key value",
-			expectedErrCode: errorsutil.ERROR_UNIQUE_VIOLATION,
+			expectedErrCode: errorsutil.ErrorUniqueViolation,
 		},
 	}
 
@@ -426,7 +426,7 @@ func TestUpdatePassword(t *testing.T) {
 			},
 			expectedError:   true,
 			expectedErrMsg:  "user not found",
-			expectedErrCode: errorsutil.ERROR_NOT_FOUND,
+			expectedErrCode: errorsutil.ErrorNotFound,
 		},
 		"Database Error": {
 			uuid:     testUUID,
@@ -442,7 +442,7 @@ func TestUpdatePassword(t *testing.T) {
 			},
 			expectedError:   true,
 			expectedErrMsg:  "database connection error",
-			expectedErrCode: errorsutil.ERROR_DATABASE_UNAVAILABLE,
+			expectedErrCode: errorsutil.ErrorDatabaseUnavailable,
 		},
 	}
 
@@ -529,7 +529,7 @@ func TestUpdateEmail(t *testing.T) {
 			},
 			expectedError:   true,
 			expectedErrMsg:  "user not found",
-			expectedErrCode: errorsutil.ERROR_NOT_FOUND,
+			expectedErrCode: errorsutil.ErrorNotFound,
 		},
 		"Unique Violation": {
 			uuid:  testUUID,
@@ -548,7 +548,7 @@ func TestUpdateEmail(t *testing.T) {
 			},
 			expectedError:   true,
 			expectedErrMsg:  "duplicate key value",
-			expectedErrCode: errorsutil.ERROR_UNIQUE_VIOLATION,
+			expectedErrCode: errorsutil.ErrorUniqueViolation,
 		},
 	}
 
@@ -641,7 +641,7 @@ func TestDeleteUser(t *testing.T) {
 
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "database connection error")
-				assert.Equal(t, errorsutil.ERROR_DATABASE_UNAVAILABLE, appErr.Code)
+				assert.Equal(t, errorsutil.ErrorDatabaseUnavailable, appErr.Code)
 			},
 		},
 		"User Not Found": {
@@ -656,7 +656,7 @@ func TestDeleteUser(t *testing.T) {
 				assert.Error(t, err)
 				var appErr *errorsutil.AppError
 				if assert.True(t, errors.As(err, &appErr), "Expected an AppError") {
-					assert.Equal(t, errorsutil.ERROR_NOT_FOUND, appErr.Code)
+					assert.Equal(t, errorsutil.ErrorNotFound, appErr.Code)
 					assert.Contains(t, appErr.Message, "user not found")
 				}
 			},
@@ -764,7 +764,7 @@ func TestGetUserByEmail(t *testing.T) {
 
 				var appErr *errorsutil.AppError
 				if assert.True(t, errors.As(err, &appErr), "Expected an AppError") {
-					assert.Equal(t, errorsutil.ERROR_NOT_FOUND, appErr.Code)
+					assert.Equal(t, errorsutil.ErrorNotFound, appErr.Code)
 					assert.Contains(t, appErr.Message, "not found")
 				}
 			},
@@ -872,7 +872,7 @@ func TestGetUserByUsername(t *testing.T) {
 
 				var appErr *errorsutil.AppError
 				if assert.True(t, errors.As(err, &appErr), "Expected an AppError") {
-					assert.Equal(t, errorsutil.ERROR_NOT_FOUND, appErr.Code)
+					assert.Equal(t, errorsutil.ErrorNotFound, appErr.Code)
 					assert.Contains(t, appErr.Message, "not found")
 				}
 			},
@@ -1004,7 +1004,7 @@ func TestGetAllUsers(t *testing.T) {
 				assert.Nil(t, users)
 				var appErr *errorsutil.AppError
 				if assert.ErrorAs(t, err, &appErr) {
-					assert.Equal(t, errorsutil.ERROR_NOT_FOUND, appErr.Code)
+					assert.Equal(t, errorsutil.ErrorNotFound, appErr.Code)
 				}
 			},
 		},

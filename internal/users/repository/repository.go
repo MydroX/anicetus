@@ -64,7 +64,7 @@ func (r *repository) UpdatePassword(ctx *context.AppContext, uuid, password stri
 	}
 
 	if res.RowsAffected() == 0 {
-		return errorsutil.New(errorsutil.ERROR_NOT_FOUND, errorUserNotFound, nil)
+		return errorsutil.New(errorsutil.ErrorNotFound, errorUserNotFound, nil)
 	}
 
 	return nil
@@ -77,7 +77,7 @@ func (r *repository) UpdateEmail(ctx *context.AppContext, uuid, email string) er
 	}
 
 	if res.RowsAffected() == 0 {
-		return &errorsutil.AppError{Code: errorsutil.ERROR_NOT_FOUND, Err: err, Message: errorUserNotFound}
+		return &errorsutil.AppError{Code: errorsutil.ErrorNotFound, Err: err, Message: errorUserNotFound}
 	}
 
 	return nil
@@ -90,7 +90,7 @@ func (r *repository) DeleteUser(ctx *context.AppContext, uuid string) error {
 	}
 
 	if res.RowsAffected() == 0 {
-		return &errorsutil.AppError{Code: errorsutil.ERROR_NOT_FOUND, Err: err, Message: errorUserNotFound}
+		return &errorsutil.AppError{Code: errorsutil.ErrorNotFound, Err: err, Message: errorUserNotFound}
 	}
 
 	return nil
@@ -127,7 +127,7 @@ func (r *repository) GetAllUsers(ctx *context.AppContext) ([]*models.User, error
 		var user models.User
 		err := rows.Scan(&user.UUID, &user.Username, &user.Email, &user.Password, &user.Role, &user.CreatedAt, &user.UpdatedAt)
 		if err != nil {
-			return nil, &errorsutil.AppError{Code: errorsutil.ERROR_INTERNAL, Err: fmt.Errorf("error scanning user: %v", err)}
+			return nil, &errorsutil.AppError{Code: errorsutil.ErrorInternal, Err: fmt.Errorf("error scanning user: %v", err)}
 		}
 		users = append(users, &user)
 	}
