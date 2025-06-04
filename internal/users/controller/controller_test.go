@@ -201,7 +201,7 @@ func Test_Create(t *testing.T) {
 func Test_Get(t *testing.T) {
 	s := newServerTest(t)
 
-	uuid := uuidpkg.NewWithPrefix(uuidutil.PREFIX_USER)
+	uuid := uuidpkg.NewWithPrefix(uuidutil.PrefixUser)
 	user := dto.GetUserResponse{
 		UUID:     uuid,
 		Username: "testusername",
@@ -252,7 +252,7 @@ func Test_Get(t *testing.T) {
 func Test_Update(t *testing.T) {
 	s := newServerTest(t)
 
-	uuid := uuidpkg.NewWithPrefix(uuidutil.PREFIX_USER)
+	uuid := uuidpkg.NewWithPrefix(uuidutil.PrefixUser)
 
 	t.Run("[V1] Update with success", func(t *testing.T) {
 		user := dto.UpdateUserRequest{
@@ -321,7 +321,7 @@ func Test_Update(t *testing.T) {
 func Test_UpdateEmail(t *testing.T) {
 	s := newServerTest(t)
 
-	uuid := uuidpkg.NewWithPrefix(uuidutil.PREFIX_USER)
+	uuid := uuidpkg.NewWithPrefix(uuidutil.PrefixUser)
 
 	t.Run("[V1] Update email with success", func(t *testing.T) {
 		user := dto.UpdateEmailRequest{
@@ -386,7 +386,7 @@ func Test_UpdateEmail(t *testing.T) {
 func Test_UpdatePassword(t *testing.T) {
 	s := newServerTest(t)
 
-	uuid := uuidpkg.NewWithPrefix(uuidutil.PREFIX_USER)
+	uuid := uuidpkg.NewWithPrefix(uuidutil.PrefixUser)
 
 	t.Run("[V1] Update password with success", func(t *testing.T) {
 		user := dto.UpdatePasswordRequest{
@@ -464,7 +464,7 @@ func Test_UpdatePassword(t *testing.T) {
 func Test_Delete(t *testing.T) {
 	s := newServerTest(t)
 
-	uuid := uuidpkg.NewWithPrefix(uuidutil.PREFIX_USER)
+	uuid := uuidpkg.NewWithPrefix(uuidutil.PrefixUser)
 
 	t.Run("[V1] Delete with success", func(t *testing.T) {
 		req, _ := http.NewRequest("DELETE", v1+users+"/"+uuid, nil)
@@ -497,7 +497,7 @@ func Test_Delete(t *testing.T) {
 
 func Test_GetAllUsers(t *testing.T) {
 	s := newServerTest(t)
-	uuid := uuidpkg.NewWithPrefix(uuidutil.PREFIX_USER)
+	uuid := uuidpkg.NewWithPrefix(uuidutil.PrefixUser)
 
 	t.Run("[V1] Get all users with success", func(t *testing.T) {
 		req, _ := http.NewRequest("GET", v1+users+"/", nil)

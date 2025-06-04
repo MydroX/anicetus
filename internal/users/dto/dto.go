@@ -3,7 +3,7 @@ package dto
 type CreateUserRequest struct {
 	Username string `json:"username" validate:"required,min=4,max=18"`
 	Password string `json:"password" validate:"required,min=14,max=72"`
-	Email    string `json:"email" validate:"required,email"`
+	Email    string `json:"email"    validate:"required,email"`
 }
 
 type GetUserResponse struct {
@@ -25,10 +25,10 @@ type User struct {
 }
 
 type UpdateUserRequest struct {
-	UUID     string   `json:"uuid" validate:"required,min=36,max=46"`
+	UUID     string   `json:"uuid"     validate:"required,min=36,max=46"`
 	Username string   `json:"username" validate:"required,min=4,max=18"`
 	Password string   `json:"password" validate:"required,min=14,max=72"`
-	Email    string   `json:"email" validate:"required,email"`
+	Email    string   `json:"email"    validate:"required,email"`
 	Role     []string `json:"role"     validate:"required"`
 }
 

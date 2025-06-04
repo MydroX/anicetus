@@ -16,7 +16,6 @@ import (
 	"MydroX/anicetus/pkg/argon2id"
 	passwordpkg "MydroX/anicetus/pkg/password"
 	"MydroX/anicetus/pkg/uuid"
-
 	"go.uber.org/zap"
 )
 
@@ -29,16 +28,22 @@ type usecases struct {
 	usersRepository usersrepository.UsersRepository
 	iamRepository   iamrepository.IamStore
 	config          *config.Config
-	jwt             *jwt.Service
+	jwtService      *jwt.Service
 }
 
-func New(l *zap.SugaredLogger, ur usersrepository.UsersRepository, iamr iamrepository.IamStore, config *config.Config, jwt *jwt.Service) IamUsecasesService {
+func New(
+	l *zap.SugaredLogger,
+	ur usersrepository.UsersRepository,
+	iamr iamrepository.IamStore,
+	cfg *config.Config,
+	jwtService *jwt.Service,
+) IamUsecasesService {
 	return &usecases{
 		logger:          l,
 		usersRepository: ur,
 		iamRepository:   iamr,
-		config:          config,
-		jwt:             jwt,
+		config:          cfg,
+		jwtService:      jwtService,
 	}
 }
 
@@ -64,6 +69,7 @@ func (u *usecases) Login(ctx *context.AppContext, req *dto.LoginRequest) (access
 
 		return accessToken, refreshToken, err
 	}
+
 	return "", "", errorsutil.New(
 		errorsutil.ErrorInvalidInput,
 		"username or email must be provided",
@@ -86,7 +92,7 @@ func login(
 		)
 	}
 
-	accessToken, err = u.jwt.CreateAccessToken(
+	accessToken, err = u.jwtService.CreateAccessToken(
 		user.UUID,
 		nil, // TEMP
 		[]string{},
@@ -99,7 +105,7 @@ func login(
 		)
 	}
 
-	refreshToken, err = u.jwt.CreateRefreshToken(
+	refreshToken, err = u.jwtService.CreateRefreshToken(
 		user.UUID,
 		uuid.NewWithPrefix(sessionPrefix),
 		[]string{},
@@ -133,7 +139,7 @@ func login(
 
 	session := models.Session{
 		UUID:           uuid.NewWithPrefix(sessionPrefix),
-		UserId:         user.UUID,
+		UserID:         user.UUID,
 		OS:             s.OS,
 		Browser:        s.Browser,
 		BrowserVersion: s.BrowserVersion,

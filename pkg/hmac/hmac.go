@@ -13,10 +13,12 @@ func HashWithSalt(input, saltKey string) (string, error) {
 	}
 
 	h := hmac.New(sha256.New, key)
+
 	_, err = h.Write([]byte(input))
 	if err != nil {
 		return "", err
 	}
+
 	hash := h.Sum(nil)
 
 	return base64.StdEncoding.EncodeToString(hash), nil

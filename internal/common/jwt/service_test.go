@@ -13,7 +13,7 @@ func TestParseAccessToken(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	config := tokenConfig{
+	config := TokenConfig{
 		SecretKey:        "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
 		ExpectedIssuer:   "test-issuer",
 		ClockSkewSeconds: 60,
@@ -118,7 +118,7 @@ func TestParseRefreshToken(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	config := tokenConfig{
+	config := TokenConfig{
 		SecretKey:        "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
 		ExpectedIssuer:   "test-issuer",
 		ClockSkewSeconds: 60,
@@ -186,7 +186,7 @@ func TestParseToken(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	config := tokenConfig{
+	config := TokenConfig{
 		SecretKey:        "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
 		ExpectedIssuer:   "test-issuer",
 		ClockSkewSeconds: 60,
@@ -282,7 +282,7 @@ func TestCreateAccessToken(t *testing.T) {
 
 	t.Run("successful token creation", func(t *testing.T) {
 		// Configure service
-		config := tokenConfig{
+		config := TokenConfig{
 			SecretKey:           "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
 			ExpectedIssuer:      "test-issuer",
 			AccessTokenDuration: 3600,
@@ -330,7 +330,7 @@ func TestCreateAccessToken(t *testing.T) {
 
 	t.Run("missing secret key", func(t *testing.T) {
 		// Configure service with empty secret key
-		config := tokenConfig{
+		config := TokenConfig{
 			SecretKey:      "", // Empty key
 			ExpectedIssuer: "test-issuer",
 		}
@@ -357,7 +357,7 @@ func TestCreateRefreshToken(t *testing.T) {
 
 	t.Run("successful token creation", func(t *testing.T) {
 		// Configure service
-		config := tokenConfig{
+		config := TokenConfig{
 			SecretKey:            "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
 			ExpectedIssuer:       "test-issuer",
 			RefreshTokenDuration: 86400, // 24 hours
@@ -398,7 +398,7 @@ func TestCreateRefreshToken(t *testing.T) {
 
 	t.Run("missing secret key", func(t *testing.T) {
 		// Configure service with empty secret key
-		config := tokenConfig{
+		config := TokenConfig{
 			SecretKey:      "", // Empty key
 			ExpectedIssuer: "test-issuer",
 		}
@@ -420,7 +420,7 @@ func TestCreateRefreshToken(t *testing.T) {
 
 	t.Run("empty session UUID", func(t *testing.T) {
 		// Configure service
-		config := tokenConfig{
+		config := TokenConfig{
 			SecretKey:      "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
 			ExpectedIssuer: "test-issuer",
 		}

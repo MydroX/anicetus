@@ -71,6 +71,11 @@ linters:
         - name: cognitive-complexity
           arguments:
             - 12 # Default value (7) is too low.
+        - name: max-public-structs
+          arguments:
+            - 8 # Default value (5) is too low.
+        - name: get-return
+          disabled: true # Do not force to use `Get` prefix for getters.
     staticcheck:
       checks:
         # Do not force to write `foo.Baz` if the developer explicitely want to write `foo.Bar.Baz` where `Bar` is an
@@ -81,6 +86,7 @@ formatters:
   enable:
     - gci
     - gofmt
+    - gofumpt
     - goimports
     - golines
 

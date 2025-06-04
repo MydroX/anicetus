@@ -120,6 +120,17 @@ func (v *Validator) validateCharacters(password string) error {
 	}
 
 	counts := countCharacterTypes(password)
+	missingReqs := v.getMissingRequirements(counts)
+
+	if len(missingReqs) > 0 {
+		return fmt.Errorf("password must contain %s", strings.Join(missingReqs, ", "))
+	}
+
+	return nil
+}
+
+// getMissingRequirements returns a list of missing character requirements
+func (v *Validator) getMissingRequirements(counts charCounts) []string {
 	var missingReqs []string
 
 	if v.hasUpper && counts.upper == 0 {
@@ -138,11 +149,7 @@ func (v *Validator) validateCharacters(password string) error {
 		missingReqs = append(missingReqs, "at least one special character")
 	}
 
-	if len(missingReqs) > 0 {
-		return fmt.Errorf("password must contain %s", strings.Join(missingReqs, ", "))
-	}
-
-	return nil
+	return missingReqs
 }
 
 // getCharacterRequirements returns a list of enabled character requirements
@@ -202,11 +209,13 @@ func Hash(password string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return string(bytes), nil
 }
 
 // CheckPasswordHash compares a password against a hash
 func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+
 	return err == nil
 }

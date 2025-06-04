@@ -37,8 +37,8 @@ const (
 	claimNbf         = "nbf"
 )
 
-// tokenConfig holds configuration for the JWT service
-type tokenConfig struct {
+// TokenConfig holds configuration for the JWT service
+type TokenConfig struct {
 	// Secret key used for signing tokens
 	SecretKey string
 
@@ -58,14 +58,14 @@ type tokenConfig struct {
 	RefreshTokenDuration int
 }
 
-func NewTokenConfigFromEnv(cfg *config.Config) (tokenConfig, error) {
+func NewTokenConfigFromEnv(cfg *config.Config) (TokenConfig, error) {
 	// Validate JWT secret - mandatory for security
 	if err := validateTokenConfig(cfg); err != nil {
-		return tokenConfig{}, errors.New("invalid JWT configuration: " + err.Error())
+		return TokenConfig{}, errors.New("invalid JWT configuration: " + err.Error())
 	}
 
 	// Create config with validated values
-	tokenCfg := tokenConfig{
+	tokenCfg := TokenConfig{
 		SecretKey:            cfg.JWT.Secret,
 		ExpectedIssuer:       cfg.JWT.Issuer,
 		ExpectedAudiences:    []string{cfg.JWT.Issuer}, // Default to issuer as audience

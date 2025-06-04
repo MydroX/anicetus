@@ -1,6 +1,9 @@
 package controller
 
 import (
+	"net/http"
+	"regexp"
+
 	"MydroX/anicetus/internal/common/context"
 	"MydroX/anicetus/internal/common/errorsutil"
 	"MydroX/anicetus/internal/common/response"
@@ -9,14 +12,12 @@ import (
 	"MydroX/anicetus/internal/users/usecases"
 	"MydroX/anicetus/pkg/password"
 	"MydroX/anicetus/pkg/uuid"
-	"net/http"
-	"regexp"
-
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"go.uber.org/zap"
 )
 
+//revive:disable:line-length-limit
 const (
 	UUID              = "uuid"
 	UsernameError     = "username needs to be between 4 and 18 characters long and can only contain letters, numbers, and the following characters: . _ -"
@@ -52,27 +53,32 @@ func New(l *zap.SugaredLogger, u usecases.UsersUsecases, c *config.Config) Contr
 
 func (c *controller) CreateUser(ginCtx *gin.Context) {
 	var request dto.CreateUserRequest
+
 	ctx := context.NewAppContext(ginCtx)
 	ctx.EnsureTraceID()
 
 	err := ginCtx.BindJSON(&request)
 	if err != nil {
 		response.BadRequest(c.logger, ctx, errorsutil.ErrorFailToBind, errorsutil.MessageFailToBind)
+
 		return
 	}
 
 	err = c.validate.Struct(request)
 	if err != nil {
 		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidInput, errorsutil.MessageInvalidInput)
+
 		return
 	}
 
 	// ^[A-Za-z0-9._-]{4,18}$  // username
 	usernameRegex, _ := regexp.Compile("[A-Za-z0-9._-]{4,18}$")
+
 	match := usernameRegex.MatchString(request.Username)
 	if !match {
 		// TODO: Need to change the message depending on the parameters set in rules
 		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidUsername, UsernameError)
+
 		return
 	}
 
@@ -80,12 +86,14 @@ func (c *controller) CreateUser(ginCtx *gin.Context) {
 	if err != nil {
 		// TODO: Need to change the message depending on the parameters set in rules
 		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidPassword, PasswordError)
+
 		return
 	}
 
 	err = c.usecases.Create(ctx, &request)
 	if err != nil {
 		response.Error(c.logger, ctx, err)
+
 		return
 	}
 
@@ -101,12 +109,14 @@ func (c *controller) GetUser(ginCtx *gin.Context) {
 	_, err := uuid.ValidateWithPrefix(userUUID)
 	if err != nil {
 		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidUUID, errorsutil.MessageInvalidUUID)
+
 		return
 	}
 
 	resp, err := c.usecases.Get(ctx, userUUID)
 	if err != nil {
 		response.Error(c.logger, ctx, err)
+
 		return
 	}
 
@@ -115,24 +125,28 @@ func (c *controller) GetUser(ginCtx *gin.Context) {
 
 func (c *controller) UpdateUser(ginCtx *gin.Context) {
 	var request dto.UpdateUserRequest
+
 	ctx := context.NewAppContext(ginCtx)
 	ctx.EnsureTraceID()
 
 	err := ginCtx.BindJSON(&request)
 	if err != nil {
 		response.BadRequest(c.logger, ctx, errorsutil.ErrorFailToBind, errorsutil.MessageFailToBind)
+
 		return
 	}
 
 	err = c.validate.Struct(request)
 	if err != nil {
 		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidInput, errorsutil.MessageInvalidInput)
+
 		return
 	}
 
 	apiErr := c.usecases.Update(ctx, &request)
 	if apiErr != nil {
 		response.Error(c.logger, ctx, err)
+
 		return
 	}
 
@@ -141,6 +155,7 @@ func (c *controller) UpdateUser(ginCtx *gin.Context) {
 
 func (c *controller) UpdateEmail(ginCtx *gin.Context) {
 	var request dto.UpdateEmailRequest
+
 	ctx := context.NewAppContext(ginCtx)
 	ctx.EnsureTraceID()
 
@@ -149,24 +164,28 @@ func (c *controller) UpdateEmail(ginCtx *gin.Context) {
 	_, err := uuid.ValidateWithPrefix(userUUID)
 	if err != nil {
 		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidUUID, errorsutil.MessageInvalidUUID)
+
 		return
 	}
 
 	err = ginCtx.BindJSON(&request)
 	if err != nil {
 		response.BadRequest(c.logger, ctx, errorsutil.ErrorFailToBind, errorsutil.MessageFailToBind)
+
 		return
 	}
 
 	err = c.validate.Struct(request)
 	if err != nil {
 		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidInput, errorsutil.MessageInvalidInput)
+
 		return
 	}
 
 	apiErr := c.usecases.UpdateEmail(ctx, userUUID, request.Email)
 	if apiErr != nil {
 		response.Error(c.logger, ctx, err)
+
 		return
 	}
 
@@ -175,6 +194,7 @@ func (c *controller) UpdateEmail(ginCtx *gin.Context) {
 
 func (c *controller) UpdatePassword(ginCtx *gin.Context) {
 	var request dto.UpdatePasswordRequest
+
 	ctx := context.NewAppContext(ginCtx)
 	ctx.EnsureTraceID()
 
@@ -183,30 +203,35 @@ func (c *controller) UpdatePassword(ginCtx *gin.Context) {
 	_, err := uuid.ValidateWithPrefix(userUUID)
 	if err != nil {
 		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidUUID, errorsutil.MessageInvalidUUID)
+
 		return
 	}
 
 	err = ginCtx.BindJSON(&request)
 	if err != nil {
 		response.BadRequest(c.logger, ctx, errorsutil.ErrorFailToBind, errorsutil.MessageFailToBind)
+
 		return
 	}
 
 	err = c.validate.Struct(request)
 	if err != nil {
 		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidInput, errorsutil.MessageInvalidInput)
+
 		return
 	}
 
 	err = c.passwordValidator.Validate(request.Password)
 	if err != nil {
 		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidPassword, PasswordError)
+
 		return
 	}
 
 	err = c.usecases.UpdatePassword(ctx, userUUID, request.Password)
 	if err != nil {
 		response.Error(c.logger, ctx, err)
+
 		return
 	}
 
@@ -222,12 +247,14 @@ func (c *controller) DeleteUser(ginCtx *gin.Context) {
 	_, err := uuid.ValidateWithPrefix(userUUID)
 	if err != nil {
 		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidUUID, errorsutil.MessageInvalidUUID)
+
 		return
 	}
 
 	apiErr := c.usecases.Delete(ctx, userUUID)
 	if apiErr != nil {
 		response.Error(c.logger, ctx, err)
+
 		return
 	}
 
@@ -241,6 +268,7 @@ func (c *controller) GetAllUsers(ginCtx *gin.Context) {
 	resp, err := c.usecases.GetAllUsers(ctx)
 	if err != nil {
 		response.Error(c.logger, ctx, err)
+
 		return
 	}
 

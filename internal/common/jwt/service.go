@@ -9,11 +9,11 @@ import (
 
 // Service implements the TokenService interface
 type Service struct {
-	config tokenConfig
+	config TokenConfig
 }
 
 // NewJWTService creates a new JWT service with the given configuration
-func NewJWTService(config tokenConfig) *Service {
+func NewJWTService(config TokenConfig) *Service {
 	return &Service{
 		config: config,
 	}

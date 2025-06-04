@@ -43,7 +43,7 @@ func TestSaveSession(t *testing.T) {
 	// Test session data
 	testSession := &models.Session{
 		UUID:           "session_123e4567-e89b-12d3-a456-426614174000",
-		UserId:         "user_123e4567-e89b-12d3-a456-426614174000",
+		UserID:         "user_123e4567-e89b-12d3-a456-426614174000",
 		LastUsedAt:     now,
 		OS:             "Windows",
 		OSVersion:      "10",
@@ -67,7 +67,7 @@ func TestSaveSession(t *testing.T) {
 				poolMock.ExpectExec(saveSessionQuery).
 					WithArgs(
 						testSession.UUID,
-						testSession.UserId,
+						testSession.UserID,
 						testSession.RefreshToken,
 						testSession.LastUsedAt,
 						testSession.OS,
@@ -99,7 +99,7 @@ func TestSaveSession(t *testing.T) {
 				poolMock.ExpectExec(saveSessionQuery).
 					WithArgs(
 						testSession.UUID,
-						testSession.UserId,
+						testSession.UserID,
 						testSession.RefreshToken,
 						testSession.LastUsedAt,
 						testSession.OS,
@@ -133,7 +133,7 @@ func TestSaveSession(t *testing.T) {
 				poolMock.ExpectExec(saveSessionQuery).
 					WithArgs(
 						testSession.UUID,
-						testSession.UserId,
+						testSession.UserID,
 						testSession.RefreshToken,
 						testSession.LastUsedAt,
 						testSession.OS,

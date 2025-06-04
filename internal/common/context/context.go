@@ -49,18 +49,21 @@ func (a *AppContext) EnsureTraceID() string {
 		if strTraceID, ok := traceID.(string); ok {
 			return strTraceID
 		}
+
 		return ""
 	}
 
 	// Check if it came from an HTTP header
 	if traceID := a.gc.GetHeader(string(TraceIDKey)); traceID != "" {
 		a.Set(TraceIDKey, traceID)
+
 		return traceID
 	}
 
 	// Generate a new trace ID
 	traceID := uuid.New().String()
 	a.Set(TraceIDKey, traceID)
+
 	return traceID
 }
 

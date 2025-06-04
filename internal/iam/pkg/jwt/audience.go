@@ -2,9 +2,9 @@
 package jwt
 
 import (
-	iamrepository "MydroX/anicetus/internal/iam/repository"
 	"encoding/json"
 
+	iamrepository "MydroX/anicetus/internal/iam/repository"
 	"github.com/dgraph-io/ristretto/v2"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
@@ -34,6 +34,7 @@ func NewAudienceManager(logger *zap.SugaredLogger, db *pgxpool.Pool, cache *rist
 func (am *AudienceManager) CacheAllowedAudiences() error {
 	// Get audiences from repository
 	repository := iamrepository.NewAudienceStore(am.logger, am.db)
+
 	audiences, err := repository.GetAllowedAudiences()
 	if err != nil {
 		return err
@@ -53,6 +54,7 @@ func (am *AudienceManager) CacheAllowedAudiences() error {
 
 	// Force write to storage - Ristretto uses a buffer
 	am.cacheClient.Wait()
+
 	return nil
 }
 
@@ -63,10 +65,12 @@ func (am *AudienceManager) GetAllowedAudiences() ([]string, error) {
 	if found {
 		// Cache hit - unmarshal the value
 		var audiences []string
+
 		err := json.Unmarshal([]byte(value), &audiences)
 		if err == nil {
 			return audiences, nil
 		}
+
 		am.logger.Warn("Failed to unmarshal audiences from cache", "error", err.Error())
 	}
 

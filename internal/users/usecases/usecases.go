@@ -34,7 +34,7 @@ func (u *usecases) Create(ctx *context.AppContext, req *dto.CreateUserRequest) e
 	}
 
 	user := models.User{
-		UUID:     uuidpkg.NewWithPrefix(uuidutil.PREFIX_USER),
+		UUID:     uuidpkg.NewWithPrefix(uuidutil.PrefixUser),
 		Username: req.Username,
 		Email:    req.Email,
 		Password: passwordHashed,
