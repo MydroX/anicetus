@@ -1,8 +1,9 @@
 package jwt
 
 import (
-	"MydroX/anicetus/internal/config"
 	"errors"
+
+	"MydroX/anicetus/internal/config"
 )
 
 // Constants for security and validation
