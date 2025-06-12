@@ -49,10 +49,6 @@ func (e *JWTError) Error() string {
 	return e.Err.Error()
 }
 
-func (e *JWTError) Unwrap() error {
-	return e.Err
-}
-
 func (e *JWTError) Is(target error) bool {
 	return errors.Is(e.Err, target)
 }

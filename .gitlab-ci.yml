@@ -1,5 +1,5 @@
 variables:
-  GOLANG_VERSION: '1.24.1-alpine3.21'
+  GOLANG_VERSION: '1.24.4-alpine3.21'
   GOLANGCI_LINT_VERSION: 'v2.0.1-alpine'
 
 image: golang:$GOLANG_VERSION
