@@ -10,7 +10,7 @@ CREATE TABLE allowed_audiences (
     active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    UNIQUE(issuer, audience)
+    UNIQUE(audience)
 );
 -- +goose StatementEnd
 
