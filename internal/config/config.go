@@ -6,8 +6,13 @@ type Config struct {
 	Port     string   `yaml:"port"`
 	App      App      `yaml:"app"`
 	Database Database `yaml:"database"`
+	Valkey   Valkey   `yaml:"valkey"`
 	JWT      JWT      `yaml:"jwt"`
 	Session  Session  `yaml:"session"`
+}
+
+type Valkey struct {
+	Address string `yaml:"address"`
 }
 
 type App struct {

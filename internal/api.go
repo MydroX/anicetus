@@ -13,17 +13,18 @@ import (
 	userscontroller "MydroX/anicetus/internal/users/controller"
 	usersrepository "MydroX/anicetus/internal/users/repository"
 	usersusecases "MydroX/anicetus/internal/users/usecases"
-	"github.com/dgraph-io/ristretto/v2"
+
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/valkey-io/valkey-go"
 	"go.uber.org/zap"
 )
 
 type APIServices struct {
-	Config        *config.Config
-	Logger        *zap.SugaredLogger
-	DB            *pgxpool.Pool
-	CacheInMemory *ristretto.Cache[string, string]
+	Config *config.Config
+	Logger *zap.SugaredLogger
+	DB     *pgxpool.Pool
+	Valkey valkey.Client
 }
 
 type service struct {
@@ -69,7 +70,7 @@ func NewServer(s *APIServices) {
 	usersRepository := usersrepository.New(s.Logger, s.DB)
 	iamRepository := iamrepository.NewIAMStore(s.Logger, s.DB)
 	audienceStore := iamrepository.NewAudienceStore(s.Logger, s.DB)
-	audienceManager := iamusecases.NewAudienceManager(s.Logger, audienceStore, s.CacheInMemory)
+	audienceManager := iamusecases.NewAudienceManager(s.Logger, audienceStore, s.Valkey)
 
 	if cacheErr := audienceManager.CacheAllowedAudiences(context.Background()); cacheErr != nil {
 		s.Logger.Warnw("Failed to prime audience cache", "error", cacheErr)

@@ -193,7 +193,7 @@ func (u *usecases) RegisterAudience(ctx *context.AppContext, req *dto.RegisterAu
 		return err
 	}
 
-	u.audienceManager.InvalidateAllAudiencesCache()
+	u.audienceManager.InvalidateAllAudiencesCache(ctx.StdContext())
 
 	return nil
 }
@@ -204,7 +204,7 @@ func (u *usecases) RevokeAudience(ctx *context.AppContext, audience string) erro
 		return err
 	}
 
-	u.audienceManager.InvalidateAllAudiencesCache()
+	u.audienceManager.InvalidateAllAudiencesCache(ctx.StdContext())
 
 	return nil
 }
@@ -223,7 +223,7 @@ func (u *usecases) AssignAudienceToUser(ctx *context.AppContext, userUUID string
 		return err
 	}
 
-	u.audienceManager.InvalidateUserAudiencesCache(userUUID)
+	u.audienceManager.InvalidateUserAudiencesCache(ctx.StdContext(), userUUID)
 
 	return nil
 }

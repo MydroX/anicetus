@@ -13,8 +13,8 @@ import (
 	usersmodels "MydroX/anicetus/internal/users/models"
 	usersmocks "MydroX/anicetus/internal/users/mocks"
 	passwordpkg "MydroX/anicetus/pkg/password"
-	"MydroX/anicetus/pkg/cache"
 	"github.com/google/uuid"
+	valkeymock "github.com/valkey-io/valkey-go/mock"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -67,12 +67,10 @@ func createTestUsecase(t *testing.T) (
 
 	jwtService := jwt.NewJWTService(tokenConfig)
 
-	c, err := cache.New()
-	if err != nil {
-		t.Fatal(err)
-	}
+	valkeyClient := valkeymock.NewClient(ctrl)
+	valkeyClient.EXPECT().Do(gomock.Any(), gomock.Any()).Return(valkeymock.Result(valkeymock.ValkeyNil())).AnyTimes()
 
-	audienceManager := NewAudienceManager(nil, audienceStoreMock, c)
+	audienceManager := NewAudienceManager(nil, audienceStoreMock, valkeyClient)
 
 	u := New(nil, usersRepositoryMock, iamRepositoryMock, cfg, jwtService, audienceStoreMock, audienceManager)
 

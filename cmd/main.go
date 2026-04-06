@@ -5,10 +5,11 @@ import (
 
 	app "MydroX/anicetus/internal"
 	cfg "MydroX/anicetus/internal/config"
-	"MydroX/anicetus/pkg/cache"
+	valkeyCache "MydroX/anicetus/pkg/cache/valkey"
 	"MydroX/anicetus/pkg/config"
 	"MydroX/anicetus/pkg/db"
 	"MydroX/anicetus/pkg/logger"
+
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
@@ -41,25 +42,27 @@ func main() {
 		appConfig.Database.Port,
 	)
 	if err != nil {
-		l.Fatal("error conecting to database", zap.Error(err))
+		l.Fatal("error connecting to database", zap.Error(err))
 	}
 
 	defer connDB.Close()
 
-	l.Info("creating in memory cache...")
+	l.Info("connecting to valkey...")
 
-	c, err := cache.New()
+	valkeyClient, err := valkeyCache.NewClient(appConfig.Valkey.Address)
 	if err != nil {
-		l.Fatal("error creating cache", zap.Error(err))
+		l.Fatal("error connecting to valkey", zap.Error(err))
 	}
+
+	defer valkeyClient.Close()
 
 	l.Info("starting server...")
 	app.NewServer(
 		&app.APIServices{
-			Config:        &appConfig,
-			Logger:        l,
-			DB:            connDB,
-			CacheInMemory: c,
+			Config: &appConfig,
+			Logger: l,
+			DB:     connDB,
+			Valkey: valkeyClient,
 		},
 	)
 }

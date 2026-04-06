@@ -6,7 +6,8 @@ import (
 	"fmt"
 
 	iamrepository "MydroX/anicetus/internal/iam/repository"
-	"github.com/dgraph-io/ristretto/v2"
+
+	"github.com/valkey-io/valkey-go"
 	"go.uber.org/zap"
 )
 
@@ -17,17 +18,17 @@ const (
 
 // AudienceManager handles caching and retrieval of allowed JWT audiences
 type AudienceManager struct {
-	logger      *zap.SugaredLogger
-	repository  iamrepository.AudienceStore
-	cacheClient *ristretto.Cache[string, string]
+	logger     *zap.SugaredLogger
+	repository iamrepository.AudienceStore
+	valkey     valkey.Client
 }
 
 // NewAudienceManager creates a new audience manager
-func NewAudienceManager(logger *zap.SugaredLogger, repo iamrepository.AudienceStore, cache *ristretto.Cache[string, string]) *AudienceManager {
+func NewAudienceManager(logger *zap.SugaredLogger, repo iamrepository.AudienceStore, client valkey.Client) *AudienceManager {
 	return &AudienceManager{
-		logger:      logger,
-		repository:  repo,
-		cacheClient: cache,
+		logger:     logger,
+		repository: repo,
+		valkey:     client,
 	}
 }
 
@@ -38,12 +39,12 @@ func (am *AudienceManager) CacheAllowedAudiences(ctx context.Context) error {
 		return err
 	}
 
-	return am.setSliceCache(audienceCacheKey, audiences)
+	return am.setSliceCache(ctx, audienceCacheKey, audiences)
 }
 
 // GetAllowedAudiences retrieves audiences from cache or database
 func (am *AudienceManager) GetAllowedAudiences(ctx context.Context) ([]string, error) {
-	if audiences, ok := am.getSliceCache(audienceCacheKey); ok {
+	if audiences, ok := am.getSliceCache(ctx, audienceCacheKey); ok {
 		return audiences, nil
 	}
 
@@ -65,7 +66,7 @@ func (am *AudienceManager) GetAllowedAudiences(ctx context.Context) ([]string, e
 func (am *AudienceManager) GetUserAudiences(ctx context.Context, userUUID string) ([]string, error) {
 	cacheKey := fmt.Sprintf("%s:%s", userAudienceCacheKey, userUUID)
 
-	if audiences, ok := am.getSliceCache(cacheKey); ok {
+	if audiences, ok := am.getSliceCache(ctx, cacheKey); ok {
 		return audiences, nil
 	}
 
@@ -74,46 +75,44 @@ func (am *AudienceManager) GetUserAudiences(ctx context.Context, userUUID string
 		return nil, err
 	}
 
-	_ = am.setSliceCache(cacheKey, audiences)
+	_ = am.setSliceCache(ctx, cacheKey, audiences)
 
 	return audiences, nil
 }
 
 // InvalidateUserAudiencesCache removes a user's audience cache entry
-func (am *AudienceManager) InvalidateUserAudiencesCache(userUUID string) {
+func (am *AudienceManager) InvalidateUserAudiencesCache(ctx context.Context, userUUID string) {
 	cacheKey := fmt.Sprintf("%s:%s", userAudienceCacheKey, userUUID)
-	am.cacheClient.Del(cacheKey)
+
+	am.valkey.Do(ctx, am.valkey.B().Del().Key(cacheKey).Build())
 }
 
 // InvalidateAllAudiencesCache removes the global audiences cache entry
-func (am *AudienceManager) InvalidateAllAudiencesCache() {
-	am.cacheClient.Del(audienceCacheKey)
+func (am *AudienceManager) InvalidateAllAudiencesCache(ctx context.Context) {
+	am.valkey.Do(ctx, am.valkey.B().Del().Key(audienceCacheKey).Build())
 }
 
-func (am *AudienceManager) setSliceCache(key string, values []string) error {
+func (am *AudienceManager) setSliceCache(ctx context.Context, key string, values []string) error {
 	data, err := json.Marshal(values)
 	if err != nil {
 		return err
 	}
 
-	am.cacheClient.Set(key, string(data), 1)
-	am.cacheClient.Wait()
-
-	return nil
+	return am.valkey.Do(ctx, am.valkey.B().Set().Key(key).Value(string(data)).Build()).Error()
 }
 
-func (am *AudienceManager) getSliceCache(key string) ([]string, bool) {
-	value, found := am.cacheClient.Get(key)
-	if !found {
+func (am *AudienceManager) getSliceCache(ctx context.Context, key string) ([]string, bool) {
+	result, err := am.valkey.Do(ctx, am.valkey.B().Get().Key(key).Build()).ToString()
+	if err != nil {
 		return nil, false
 	}
 
-	var result []string
-	if err := json.Unmarshal([]byte(value), &result); err != nil {
+	var audiences []string
+	if err := json.Unmarshal([]byte(result), &audiences); err != nil {
 		am.logger.Warnw("Failed to unmarshal cache value", "key", key, "error", err)
 
 		return nil, false
 	}
 
-	return result, true
+	return audiences, true
 }
