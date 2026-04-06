@@ -10,8 +10,8 @@
 package jwt
 
 import (
+	context "context"
 	reflect "reflect"
-	time "time"
 
 	gomock "go.uber.org/mock/gomock"
 )
@@ -41,33 +41,33 @@ func (m *MockTokenService) EXPECT() *MockTokenServiceMockRecorder {
 }
 
 // CreateAccessToken mocks base method.
-func (m *MockTokenService) CreateAccessToken(userUUID string, permissions []string, expiration time.Duration) (string, error) {
+func (m *MockTokenService) CreateAccessToken(userUUID string, permissions, audiences []string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateAccessToken", userUUID, permissions, expiration)
+	ret := m.ctrl.Call(m, "CreateAccessToken", userUUID, permissions, audiences)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateAccessToken indicates an expected call of CreateAccessToken.
-func (mr *MockTokenServiceMockRecorder) CreateAccessToken(userUUID, permissions, expiration any) *gomock.Call {
+func (mr *MockTokenServiceMockRecorder) CreateAccessToken(userUUID, permissions, audiences any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAccessToken", reflect.TypeOf((*MockTokenService)(nil).CreateAccessToken), userUUID, permissions, expiration)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAccessToken", reflect.TypeOf((*MockTokenService)(nil).CreateAccessToken), userUUID, permissions, audiences)
 }
 
 // CreateRefreshToken mocks base method.
-func (m *MockTokenService) CreateRefreshToken(userUUID, sessionUUID string, expiration time.Duration) (string, error) {
+func (m *MockTokenService) CreateRefreshToken(userUUID, sessionUUID string, audiences []string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateRefreshToken", userUUID, sessionUUID, expiration)
+	ret := m.ctrl.Call(m, "CreateRefreshToken", userUUID, sessionUUID, audiences)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateRefreshToken indicates an expected call of CreateRefreshToken.
-func (mr *MockTokenServiceMockRecorder) CreateRefreshToken(userUUID, sessionUUID, expiration any) *gomock.Call {
+func (mr *MockTokenServiceMockRecorder) CreateRefreshToken(userUUID, sessionUUID, audiences any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRefreshToken", reflect.TypeOf((*MockTokenService)(nil).CreateRefreshToken), userUUID, sessionUUID, expiration)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRefreshToken", reflect.TypeOf((*MockTokenService)(nil).CreateRefreshToken), userUUID, sessionUUID, audiences)
 }
 
 // ParseAccessToken mocks base method.
@@ -140,16 +140,31 @@ func (m *MockAudienceProvider) EXPECT() *MockAudienceProviderMockRecorder {
 }
 
 // GetAllowedAudiences mocks base method.
-func (m *MockAudienceProvider) GetAllowedAudiences() ([]string, error) {
+func (m *MockAudienceProvider) GetAllowedAudiences(ctx context.Context) ([]string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllowedAudiences")
+	ret := m.ctrl.Call(m, "GetAllowedAudiences", ctx)
 	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAllowedAudiences indicates an expected call of GetAllowedAudiences.
-func (mr *MockAudienceProviderMockRecorder) GetAllowedAudiences() *gomock.Call {
+func (mr *MockAudienceProviderMockRecorder) GetAllowedAudiences(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllowedAudiences", reflect.TypeOf((*MockAudienceProvider)(nil).GetAllowedAudiences))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllowedAudiences", reflect.TypeOf((*MockAudienceProvider)(nil).GetAllowedAudiences), ctx)
+}
+
+// GetUserAudiences mocks base method.
+func (m *MockAudienceProvider) GetUserAudiences(ctx context.Context, userUUID string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserAudiences", ctx, userUUID)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserAudiences indicates an expected call of GetUserAudiences.
+func (mr *MockAudienceProviderMockRecorder) GetUserAudiences(ctx, userUUID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserAudiences", reflect.TypeOf((*MockAudienceProvider)(nil).GetUserAudiences), ctx, userUUID)
 }

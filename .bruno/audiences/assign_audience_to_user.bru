@@ -1,0 +1,21 @@
+meta {
+  name: assign_audience_to_user
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/api/v1/audiences/users/{{user_uuid}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "audience": "api.anicetus.local"
+  }
+}
+
+vars:pre-request {
+  user_uuid: user_replace_me
+}

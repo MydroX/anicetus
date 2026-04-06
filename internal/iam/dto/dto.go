@@ -27,6 +27,21 @@ type LoginResponse struct {
 
 type RefreshTokenRequest struct{}
 
+type RegisterAudienceRequest struct {
+	Audience    string         `json:"audience"     validate:"required"`
+	ServiceName string         `json:"service_name" validate:"required"`
+	Description string         `json:"description"`
+	Permissions map[string]any `json:"permissions"`
+}
+
+type AssignAudienceRequest struct {
+	Audience string `json:"audience" validate:"required"`
+}
+
+type AudienceListResponse struct {
+	Audiences []string `json:"audiences"`
+}
+
 type Session struct {
 	IPv4Address    string `json:"ipv4_address"    validate:"required,ipv4"`
 	OS             string `json:"os"              validate:"required"`

@@ -1,0 +1,25 @@
+meta {
+  name: update_user
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{base_url}}/api/v1/users/{{user_uuid}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "uuid": "{{user_uuid}}",
+    "username": "UpdatedUser",
+    "password": "Password123!password",
+    "email": "updated@test.com",
+    "role": ["admin"]
+  }
+}
+
+vars:pre-request {
+  user_uuid: user_replace_me
+}

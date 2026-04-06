@@ -41,6 +41,50 @@ func (m *MockIamUsecasesService) EXPECT() *MockIamUsecasesServiceMockRecorder {
 	return m.recorder
 }
 
+// AssignAudienceToUser mocks base method.
+func (m *MockIamUsecasesService) AssignAudienceToUser(ctx *context.AppContext, userUUID string, req *dto.AssignAudienceRequest) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AssignAudienceToUser", ctx, userUUID, req)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AssignAudienceToUser indicates an expected call of AssignAudienceToUser.
+func (mr *MockIamUsecasesServiceMockRecorder) AssignAudienceToUser(ctx, userUUID, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AssignAudienceToUser", reflect.TypeOf((*MockIamUsecasesService)(nil).AssignAudienceToUser), ctx, userUUID, req)
+}
+
+// GetAllAudiences mocks base method.
+func (m *MockIamUsecasesService) GetAllAudiences(ctx *context.AppContext) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllAudiences", ctx)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllAudiences indicates an expected call of GetAllAudiences.
+func (mr *MockIamUsecasesServiceMockRecorder) GetAllAudiences(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllAudiences", reflect.TypeOf((*MockIamUsecasesService)(nil).GetAllAudiences), ctx)
+}
+
+// GetUserAudiences mocks base method.
+func (m *MockIamUsecasesService) GetUserAudiences(ctx *context.AppContext, userUUID string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserAudiences", ctx, userUUID)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserAudiences indicates an expected call of GetUserAudiences.
+func (mr *MockIamUsecasesServiceMockRecorder) GetUserAudiences(ctx, userUUID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserAudiences", reflect.TypeOf((*MockIamUsecasesService)(nil).GetUserAudiences), ctx, userUUID)
+}
+
 // Login mocks base method.
 func (m *MockIamUsecasesService) Login(ctx *context.AppContext, req *dto.LoginRequest) (string, string, error) {
 	m.ctrl.T.Helper()
@@ -84,4 +128,32 @@ func (m *MockIamUsecasesService) RefreshToken(ctx *context.AppContext, token str
 func (mr *MockIamUsecasesServiceMockRecorder) RefreshToken(ctx, token any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RefreshToken", reflect.TypeOf((*MockIamUsecasesService)(nil).RefreshToken), ctx, token)
+}
+
+// RegisterAudience mocks base method.
+func (m *MockIamUsecasesService) RegisterAudience(ctx *context.AppContext, req *dto.RegisterAudienceRequest) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RegisterAudience", ctx, req)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RegisterAudience indicates an expected call of RegisterAudience.
+func (mr *MockIamUsecasesServiceMockRecorder) RegisterAudience(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterAudience", reflect.TypeOf((*MockIamUsecasesService)(nil).RegisterAudience), ctx, req)
+}
+
+// RevokeAudience mocks base method.
+func (m *MockIamUsecasesService) RevokeAudience(ctx *context.AppContext, audience string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RevokeAudience", ctx, audience)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RevokeAudience indicates an expected call of RevokeAudience.
+func (mr *MockIamUsecasesServiceMockRecorder) RevokeAudience(ctx, audience any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RevokeAudience", reflect.TypeOf((*MockIamUsecasesService)(nil).RevokeAudience), ctx, audience)
 }

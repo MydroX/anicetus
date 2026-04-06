@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"context"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -11,10 +12,10 @@ import (
 // TokenService defines the interface for JWT token operations
 type TokenService interface {
 	// CreateAccessToken creates a new access token
-	CreateAccessToken(userUUID string, permissions []string, expiration time.Duration) (string, error)
+	CreateAccessToken(userUUID string, permissions, audiences []string) (string, error)
 
 	// CreateRefreshToken creates a refresh token with session info
-	CreateRefreshToken(userUUID string, sessionUUID string, expiration time.Duration) (string, error)
+	CreateRefreshToken(userUUID, sessionUUID string, audiences []string) (string, error)
 
 	// ParseAccessToken parses and validates an access token
 	ParseAccessToken(tokenString string) (*AccessClaims, error)
@@ -29,7 +30,10 @@ type TokenService interface {
 // AudienceProvider defines the interface for fetching allowed audiences
 type AudienceProvider interface {
 	// GetAllowedAudiences returns a list of allowed JWT audience values
-	GetAllowedAudiences() ([]string, error)
+	GetAllowedAudiences(ctx context.Context) ([]string, error)
+
+	// GetUserAudiences returns the audiences assigned to a specific user
+	GetUserAudiences(ctx context.Context, userUUID string) ([]string, error)
 }
 
 // TokenType defines the type of JWT token
@@ -47,7 +51,7 @@ type BaseClaims struct {
 	Exp       int64
 	IssuedAt  time.Time
 	Issuer    string
-	Audience  string
+	Audience  []string
 }
 
 // AccessClaims for the short-lived access token
