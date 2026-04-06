@@ -32,7 +32,6 @@ func New() (*ristretto.Cache[string, string], error) {
 	if err != nil {
 		return nil, err
 	}
-	defer cache.Close()
 
 	return cache, nil
 }

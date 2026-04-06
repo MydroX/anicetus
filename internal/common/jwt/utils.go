@@ -24,6 +24,25 @@ func extractInt64Claim(claims jwt.MapClaims, key string) int64 {
 	return 0
 }
 
+func extractStringSliceClaim(claims jwt.MapClaims, key string) []string {
+	switch v := claims[key].(type) {
+	case []any:
+		var result []string
+
+		for _, item := range v {
+			if s, ok := item.(string); ok {
+				result = append(result, s)
+			}
+		}
+
+		return result
+	case string:
+		return []string{v}
+	default:
+		return nil
+	}
+}
+
 func extractTimeClaim(claims jwt.MapClaims, key string) time.Time {
 	if val, ok := claims[key].(float64); ok {
 		return time.Unix(int64(val), 0)
@@ -39,6 +58,10 @@ func (s *Service) validateStandardClaims(claims jwt.MapClaims) error {
 
 	// Validate each claim type
 	if err := s.validateIssuer(claims); err != nil {
+		return err
+	}
+
+	if err := s.validateAudience(claims); err != nil {
 		return err
 	}
 
@@ -65,6 +88,28 @@ func (s *Service) validateIssuer(claims jwt.MapClaims) error {
 	}
 
 	return nil
+}
+
+// validateAudience validates the audience claim against expected audiences
+func (s *Service) validateAudience(claims jwt.MapClaims) error {
+	if len(s.config.ExpectedAudiences) == 0 {
+		return nil
+	}
+
+	tokenAudiences := extractStringSliceClaim(claims, claimAud)
+	if len(tokenAudiences) == 0 {
+		return WrapError(ErrInvalidAudience, "token has no audience claim")
+	}
+
+	for _, tokenAud := range tokenAudiences {
+		for _, expectedAud := range s.config.ExpectedAudiences {
+			if tokenAud == expectedAud {
+				return nil
+			}
+		}
+	}
+
+	return WrapError(ErrInvalidAudience, "token audience does not match any expected audience")
 }
 
 // validateExpiration validates the expiration claim

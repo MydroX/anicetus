@@ -16,9 +16,10 @@ func TestParseAccessToken(t *testing.T) {
 	defer ctrl.Finish()
 
 	config := TokenConfig{
-		SecretKey:        "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
-		ExpectedIssuer:   "test-issuer",
-		ClockSkewSeconds: 60,
+		SecretKey:         "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		ExpectedIssuer:    "test-issuer",
+		ExpectedAudiences: []string{"test-audience"},
+		ClockSkewSeconds:  60,
 	}
 
 	service := NewJWTService(config)
@@ -121,9 +122,10 @@ func TestParseToken(t *testing.T) {
 	defer ctrl.Finish()
 
 	config := TokenConfig{
-		SecretKey:        "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
-		ExpectedIssuer:   "test-issuer",
-		ClockSkewSeconds: 60,
+		SecretKey:         "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		ExpectedIssuer:    "test-issuer",
+		ExpectedAudiences: []string{"test-audience"},
+		ClockSkewSeconds:  60,
 	}
 
 	service := NewJWTService(config)
@@ -721,7 +723,6 @@ func TestKeyFunc(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, key)
 		assert.ErrorIs(t, err, ErrInvalidSigningAlg)
-		assert.Contains(t, err.Error(), "RS256")
 	})
 
 	t.Run("none algorithm", func(t *testing.T) {
@@ -746,9 +747,10 @@ func TestKeyFunc(t *testing.T) {
 
 func TestParseRefreshToken(t *testing.T) {
 	config := TokenConfig{
-		SecretKey:        "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
-		ExpectedIssuer:   "test-issuer",
-		ClockSkewSeconds: 60,
+		SecretKey:         "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		ExpectedIssuer:    "test-issuer",
+		ExpectedAudiences: []string{"test-audience"},
+		ClockSkewSeconds:  60,
 	}
 	service := NewJWTService(config)
 

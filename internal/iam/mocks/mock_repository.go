@@ -12,6 +12,7 @@ package mocks
 import (
 	context "MydroX/anicetus/internal/common/context"
 	models "MydroX/anicetus/internal/iam/models"
+	context0 "context"
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
@@ -79,60 +80,103 @@ func (m *MockAudienceStore) EXPECT() *MockAudienceStoreMockRecorder {
 	return m.recorder
 }
 
-// GetAllowedAudiences mocks base method.
-func (m *MockAudienceStore) GetAllowedAudiences() ([]string, error) {
+// AssignAudienceToUser mocks base method.
+func (m *MockAudienceStore) AssignAudienceToUser(ctx context0.Context, userUUID, audience string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllowedAudiences")
+	ret := m.ctrl.Call(m, "AssignAudienceToUser", ctx, userUUID, audience)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AssignAudienceToUser indicates an expected call of AssignAudienceToUser.
+func (mr *MockAudienceStoreMockRecorder) AssignAudienceToUser(ctx, userUUID, audience any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AssignAudienceToUser", reflect.TypeOf((*MockAudienceStore)(nil).AssignAudienceToUser), ctx, userUUID, audience)
+}
+
+// GetAllowedAudiences mocks base method.
+func (m *MockAudienceStore) GetAllowedAudiences(ctx context0.Context) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllowedAudiences", ctx)
 	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAllowedAudiences indicates an expected call of GetAllowedAudiences.
-func (mr *MockAudienceStoreMockRecorder) GetAllowedAudiences() *gomock.Call {
+func (mr *MockAudienceStoreMockRecorder) GetAllowedAudiences(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllowedAudiences", reflect.TypeOf((*MockAudienceStore)(nil).GetAllowedAudiences))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllowedAudiences", reflect.TypeOf((*MockAudienceStore)(nil).GetAllowedAudiences), ctx)
+}
+
+// GetUserAudiences mocks base method.
+func (m *MockAudienceStore) GetUserAudiences(ctx context0.Context, userUUID string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserAudiences", ctx, userUUID)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserAudiences indicates an expected call of GetUserAudiences.
+func (mr *MockAudienceStoreMockRecorder) GetUserAudiences(ctx, userUUID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserAudiences", reflect.TypeOf((*MockAudienceStore)(nil).GetUserAudiences), ctx, userUUID)
 }
 
 // IsValidAudience mocks base method.
-func (m *MockAudienceStore) IsValidAudience(audience string) (bool, error) {
+func (m *MockAudienceStore) IsValidAudience(ctx context0.Context, audience string) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsValidAudience", audience)
+	ret := m.ctrl.Call(m, "IsValidAudience", ctx, audience)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // IsValidAudience indicates an expected call of IsValidAudience.
-func (mr *MockAudienceStoreMockRecorder) IsValidAudience(audience any) *gomock.Call {
+func (mr *MockAudienceStoreMockRecorder) IsValidAudience(ctx, audience any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsValidAudience", reflect.TypeOf((*MockAudienceStore)(nil).IsValidAudience), audience)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsValidAudience", reflect.TypeOf((*MockAudienceStore)(nil).IsValidAudience), ctx, audience)
 }
 
 // RegisterAudience mocks base method.
-func (m *MockAudienceStore) RegisterAudience(audience string, metadata map[string]any) error {
+func (m *MockAudienceStore) RegisterAudience(ctx context0.Context, audience string, metadata map[string]any) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RegisterAudience", audience, metadata)
+	ret := m.ctrl.Call(m, "RegisterAudience", ctx, audience, metadata)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // RegisterAudience indicates an expected call of RegisterAudience.
-func (mr *MockAudienceStoreMockRecorder) RegisterAudience(audience, metadata any) *gomock.Call {
+func (mr *MockAudienceStoreMockRecorder) RegisterAudience(ctx, audience, metadata any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterAudience", reflect.TypeOf((*MockAudienceStore)(nil).RegisterAudience), audience, metadata)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterAudience", reflect.TypeOf((*MockAudienceStore)(nil).RegisterAudience), ctx, audience, metadata)
 }
 
 // RevokeAudience mocks base method.
-func (m *MockAudienceStore) RevokeAudience(audience string) error {
+func (m *MockAudienceStore) RevokeAudience(ctx context0.Context, audience string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RevokeAudience", audience)
+	ret := m.ctrl.Call(m, "RevokeAudience", ctx, audience)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // RevokeAudience indicates an expected call of RevokeAudience.
-func (mr *MockAudienceStoreMockRecorder) RevokeAudience(audience any) *gomock.Call {
+func (mr *MockAudienceStoreMockRecorder) RevokeAudience(ctx, audience any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RevokeAudience", reflect.TypeOf((*MockAudienceStore)(nil).RevokeAudience), audience)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RevokeAudience", reflect.TypeOf((*MockAudienceStore)(nil).RevokeAudience), ctx, audience)
+}
+
+// UnassignAudienceFromUser mocks base method.
+func (m *MockAudienceStore) UnassignAudienceFromUser(ctx context0.Context, userUUID, audience string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UnassignAudienceFromUser", ctx, userUUID, audience)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UnassignAudienceFromUser indicates an expected call of UnassignAudienceFromUser.
+func (mr *MockAudienceStoreMockRecorder) UnassignAudienceFromUser(ctx, userUUID, audience any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnassignAudienceFromUser", reflect.TypeOf((*MockAudienceStore)(nil).UnassignAudienceFromUser), ctx, userUUID, audience)
 }

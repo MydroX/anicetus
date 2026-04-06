@@ -1,0 +1,19 @@
+meta {
+  name: register_audience
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/api/v1/audiences
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "audience": "api.anicetus.local",
+    "service_name": "Main API",
+    "description": "Main API service"
+  }
+}

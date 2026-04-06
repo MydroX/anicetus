@@ -163,7 +163,7 @@ func (_ *Service) buildAccessClaims(claims jwt.MapClaims, userUUID string, permi
 			Exp:       extractInt64Claim(claims, claimExp),
 			IssuedAt:  extractTimeClaim(claims, claimIAT),
 			Issuer:    extractStringClaim(claims, claimIss),
-			Audience:  extractStringClaim(claims, claimAud),
+			Audience:  extractStringSliceClaim(claims, claimAud),
 		},
 		Permissions: permissions,
 	}
@@ -226,7 +226,7 @@ func (_ *Service) buildRefreshClaims(claims jwt.MapClaims, userUUID, sessionUUID
 			Exp:       extractInt64Claim(claims, claimExp),
 			IssuedAt:  extractTimeClaim(claims, claimIAT),
 			Issuer:    extractStringClaim(claims, claimIss),
-			Audience:  extractStringClaim(claims, claimAud),
+			Audience:  extractStringSliceClaim(claims, claimAud),
 		},
 		SessionUUID: sessionUUID,
 	}
@@ -271,7 +271,7 @@ func (s *Service) ParseToken(tokenString string) (*BaseClaims, error) {
 		Exp:       extractInt64Claim(claims, claimExp),
 		IssuedAt:  extractTimeClaim(claims, claimIAT),
 		Issuer:    extractStringClaim(claims, claimIss),
-		Audience:  extractStringClaim(claims, claimAud),
+		Audience:  extractStringSliceClaim(claims, claimAud),
 	}
 
 	return baseClaims, nil
@@ -286,7 +286,7 @@ func (s *Service) keyFunc(token *jwt.Token) (any, error) {
 	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 		return nil, WrapError(
 			ErrInvalidSigningAlg,
-			"unexpected signing method: "+token.Header["alg"].(string),
+			"unexpected signing method",
 		)
 	}
 

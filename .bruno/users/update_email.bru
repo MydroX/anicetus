@@ -1,0 +1,21 @@
+meta {
+  name: update_email
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{base_url}}/api/v1/users/{{user_uuid}}/email
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "newemail@test.com"
+  }
+}
+
+vars:pre-request {
+  user_uuid: user_replace_me
+}

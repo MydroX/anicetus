@@ -49,14 +49,16 @@ func TestValidateStandardClaims(t *testing.T) {
 	now := time.Now()
 	service := &Service{
 		config: TokenConfig{
-			ClockSkewSeconds: 60,
-			ExpectedIssuer:   "test-issuer",
+			ClockSkewSeconds:  60,
+			ExpectedIssuer:    "test-issuer",
+			ExpectedAudiences: []string{"test-issuer"},
 		},
 	}
 
 	// Valid token
 	claims := jwt.MapClaims{
 		claimIss: "test-issuer",
+		claimAud: []any{"test-issuer"},
 		claimExp: float64(now.Add(time.Hour).Unix()),
 		claimIAT: float64(now.Add(-time.Minute).Unix()),
 	}
@@ -182,14 +184,16 @@ func TestSecurityEdgeCases(t *testing.T) {
 	now := time.Now()
 	service := &Service{
 		config: TokenConfig{
-			ClockSkewSeconds: 60,
-			ExpectedIssuer:   "test-issuer",
+			ClockSkewSeconds:  60,
+			ExpectedIssuer:    "test-issuer",
+			ExpectedAudiences: []string{"test-issuer"},
 		},
 	}
 
 	// Clock skew boundary - token expired just beyond allowed skew
 	claims := jwt.MapClaims{
 		claimIss: "test-issuer",
+		claimAud: []any{"test-issuer"},
 		claimExp: float64(now.Add(-61 * time.Second).Unix()),
 		claimIAT: float64(now.Add(-time.Hour).Unix()),
 	}
@@ -199,9 +203,72 @@ func TestSecurityEdgeCases(t *testing.T) {
 	// Type confusion attack - non-string issuer
 	claims = jwt.MapClaims{
 		claimIss: 123, // Not a string
+		claimAud: []any{"test-issuer"},
 		claimExp: float64(now.Add(time.Hour).Unix()),
 		claimIAT: float64(now.Add(-time.Minute).Unix()),
 	}
 	err = service.validateStandardClaims(claims)
 	assert.NoError(t, err, "Should ignore non-string issuer types")
+}
+
+func TestExtractStringSliceClaim(t *testing.T) {
+	// Array of strings
+	claims := jwt.MapClaims{"aud": []any{"a", "b"}}
+	result := extractStringSliceClaim(claims, "aud")
+	assert.Equal(t, []string{"a", "b"}, result)
+
+	// Single string (RFC 7519 allows this)
+	claims = jwt.MapClaims{"aud": "single"}
+	result = extractStringSliceClaim(claims, "aud")
+	assert.Equal(t, []string{"single"}, result)
+
+	// Missing key
+	claims = jwt.MapClaims{}
+	result = extractStringSliceClaim(claims, "aud")
+	assert.Nil(t, result)
+
+	// Wrong type
+	claims = jwt.MapClaims{"aud": 123}
+	result = extractStringSliceClaim(claims, "aud")
+	assert.Nil(t, result)
+
+	// Mixed array - only strings extracted
+	claims = jwt.MapClaims{"aud": []any{"valid", 123, "also_valid"}}
+	result = extractStringSliceClaim(claims, "aud")
+	assert.Equal(t, []string{"valid", "also_valid"}, result)
+}
+
+func TestValidateAudience(t *testing.T) {
+	// Valid audience
+	service := &Service{
+		config: TokenConfig{ExpectedAudiences: []string{"api.myapp.com"}},
+	}
+	claims := jwt.MapClaims{claimAud: []any{"api.myapp.com"}}
+	err := service.validateAudience(claims)
+	assert.NoError(t, err)
+
+	// Multiple expected, one matches
+	service.config.ExpectedAudiences = []string{"api", "admin"}
+	claims = jwt.MapClaims{claimAud: []any{"api"}}
+	err = service.validateAudience(claims)
+	assert.NoError(t, err)
+
+	// No match
+	service.config.ExpectedAudiences = []string{"api"}
+	claims = jwt.MapClaims{claimAud: []any{"other"}}
+	err = service.validateAudience(claims)
+	assert.Error(t, err)
+	assert.ErrorIs(t, err, ErrInvalidAudience)
+
+	// Missing aud claim
+	claims = jwt.MapClaims{}
+	err = service.validateAudience(claims)
+	assert.Error(t, err)
+	assert.ErrorIs(t, err, ErrInvalidAudience)
+
+	// Empty ExpectedAudiences - skip validation
+	service.config.ExpectedAudiences = []string{}
+	claims = jwt.MapClaims{}
+	err = service.validateAudience(claims)
+	assert.NoError(t, err)
 }

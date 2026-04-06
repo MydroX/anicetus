@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -58,7 +59,6 @@ func Router(logger *zap.SugaredLogger, service service) *gin.Engine {
 
 // NewServer is a function to start the server for the service.
 func NewServer(s *APIServices) {
-	// audienceManager := jwt.NewAudienceManager(s.Logger, s.DB, s.CacheInMemory)
 	tokenConfig, err := jwt.NewTokenConfigFromEnv(s.Config)
 	if err != nil {
 		s.Logger.Fatal("error creating token config", zap.Error(err))
@@ -68,9 +68,15 @@ func NewServer(s *APIServices) {
 
 	usersRepository := usersrepository.New(s.Logger, s.DB)
 	iamRepository := iamrepository.NewIAMStore(s.Logger, s.DB)
+	audienceStore := iamrepository.NewAudienceStore(s.Logger, s.DB)
+	audienceManager := iamusecases.NewAudienceManager(s.Logger, audienceStore, s.CacheInMemory)
+
+	if cacheErr := audienceManager.CacheAllowedAudiences(context.Background()); cacheErr != nil {
+		s.Logger.Warnw("Failed to prime audience cache", "error", cacheErr)
+	}
 
 	usersUsecase := usersusecases.New(s.Logger, usersRepository, s.Config)
-	iamUsecase := iamusecases.New(s.Logger, usersRepository, iamRepository, s.Config, jwtService)
+	iamUsecase := iamusecases.New(s.Logger, usersRepository, iamRepository, s.Config, jwtService, audienceStore, audienceManager)
 
 	usersController := userscontroller.New(s.Logger, usersUsecase, s.Config)
 	iamController := iamcontroller.New(s.Logger, iamUsecase, s.Config)

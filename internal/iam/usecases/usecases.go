@@ -27,6 +27,8 @@ type usecases struct {
 	logger          *zap.SugaredLogger
 	usersRepository usersrepository.UsersRepository
 	iamRepository   iamrepository.IamStore
+	audienceStore   iamrepository.AudienceStore
+	audienceManager *AudienceManager
 	config          *config.Config
 	jwtService      *jwt.Service
 }
@@ -37,11 +39,15 @@ func New(
 	iamr iamrepository.IamStore,
 	cfg *config.Config,
 	jwtService *jwt.Service,
+	audienceStore iamrepository.AudienceStore,
+	audienceManager *AudienceManager,
 ) IamUsecasesService {
 	return &usecases{
 		logger:          l,
 		usersRepository: ur,
 		iamRepository:   iamr,
+		audienceStore:   audienceStore,
+		audienceManager: audienceManager,
 		config:          cfg,
 		jwtService:      jwtService,
 	}
@@ -92,10 +98,18 @@ func login(
 		)
 	}
 
+	// Fetch per-user audiences
+	audiences, audErr := u.audienceManager.GetUserAudiences(ctx.StdContext(), user.UUID)
+	if audErr != nil {
+		u.logger.Warnw("Failed to get user audiences, using empty", "error", audErr)
+
+		audiences = []string{}
+	}
+
 	accessToken, err = u.jwtService.CreateAccessToken(
 		user.UUID,
-		nil, // TEMP
-		[]string{},
+		nil, // TODO: permissions
+		audiences,
 	)
 	if err != nil {
 		return "", "", errorsutil.New(
@@ -108,7 +122,7 @@ func login(
 	refreshToken, err = u.jwtService.CreateRefreshToken(
 		user.UUID,
 		uuid.NewWithPrefix(sessionPrefix),
-		[]string{},
+		audiences,
 	)
 	if err != nil {
 		return "", "", errorsutil.New(
@@ -118,17 +132,25 @@ func login(
 		)
 	}
 
+	if err := u.saveSession(ctx, user.UUID, refreshToken, s); err != nil {
+		return "", "", err
+	}
+
+	return accessToken, refreshToken, nil
+}
+
+func (u *usecases) saveSession(ctx *context.AppContext, userUUID, refreshToken string, s *dto.Session) error {
 	hashParams := argon2id.New(
-		argon2id.Iterations(uint32(u.config.Session.Hash.Iterations)),
-		argon2id.Memory(uint32(u.config.Session.Hash.Memory)),
-		argon2id.Parallelism(uint8(u.config.Session.Hash.Parallelism)),
-		argon2id.KeyLength(uint32(u.config.Session.Hash.KeyLength)),
-		argon2id.SaltLength(uint32(u.config.Session.Hash.SaltLength)),
+		argon2id.Iterations(u.config.Session.Hash.Iterations),
+		argon2id.Memory(u.config.Session.Hash.Memory),
+		argon2id.Parallelism(u.config.Session.Hash.Parallelism),
+		argon2id.KeyLength(u.config.Session.Hash.KeyLength),
+		argon2id.SaltLength(u.config.Session.Hash.SaltLength),
 	)
 
 	refreshTokenHashed, hashErr := argon2id.Hash(refreshToken, hashParams)
 	if hashErr != nil {
-		return "", "", errorsutil.New(
+		return errorsutil.New(
 			errorsutil.ErrorFailedToHashPassword,
 			"failed to hash refresh token",
 			hashErr,
@@ -139,7 +161,7 @@ func login(
 
 	session := models.Session{
 		UUID:           uuid.NewWithPrefix(sessionPrefix),
-		UserID:         user.UUID,
+		UserID:         userUUID,
 		OS:             s.OS,
 		Browser:        s.Browser,
 		BrowserVersion: s.BrowserVersion,
@@ -150,13 +172,7 @@ func login(
 		RefreshToken:   refreshTokenHashed,
 	}
 
-	err = u.iamRepository.SaveSession(ctx, &session)
-	if err != nil {
-		// TODO
-		return "", "", err
-	}
-
-	return accessToken, refreshToken, nil
+	return u.iamRepository.SaveSession(ctx, &session)
 }
 
 // nolint
@@ -167,4 +183,51 @@ func (u *usecases) Logout(ctx *context.AppContext, token string) error {
 // nolint
 func (u *usecases) RefreshToken(ctx *context.AppContext, token string) (string, error) {
 	panic("not implemented") // TODO: Implement
+}
+
+func (u *usecases) RegisterAudience(ctx *context.AppContext, req *dto.RegisterAudienceRequest) error {
+	metadata := map[string]any{
+		"service_name": req.ServiceName,
+		"description":  req.Description,
+		"permissions":  req.Permissions,
+	}
+
+	err := u.audienceStore.RegisterAudience(ctx.StdContext(), req.Audience, metadata)
+	if err != nil {
+		return err
+	}
+
+	u.audienceManager.InvalidateAllAudiencesCache()
+
+	return nil
+}
+
+func (u *usecases) RevokeAudience(ctx *context.AppContext, audience string) error {
+	err := u.audienceStore.RevokeAudience(ctx.StdContext(), audience)
+	if err != nil {
+		return err
+	}
+
+	u.audienceManager.InvalidateAllAudiencesCache()
+
+	return nil
+}
+
+func (u *usecases) GetAllAudiences(ctx *context.AppContext) ([]string, error) {
+	return u.audienceManager.GetAllowedAudiences(ctx.StdContext())
+}
+
+func (u *usecases) GetUserAudiences(ctx *context.AppContext, userUUID string) ([]string, error) {
+	return u.audienceManager.GetUserAudiences(ctx.StdContext(), userUUID)
+}
+
+func (u *usecases) AssignAudienceToUser(ctx *context.AppContext, userUUID string, req *dto.AssignAudienceRequest) error {
+	err := u.audienceStore.AssignAudienceToUser(ctx.StdContext(), userUUID, req.Audience)
+	if err != nil {
+		return err
+	}
+
+	u.audienceManager.InvalidateUserAudiencesCache(userUUID)
+
+	return nil
 }
