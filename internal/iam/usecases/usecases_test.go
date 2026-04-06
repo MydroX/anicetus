@@ -12,10 +12,9 @@ import (
 	iammocks "MydroX/anicetus/internal/iam/mocks"
 	usersmodels "MydroX/anicetus/internal/users/models"
 	usersmocks "MydroX/anicetus/internal/users/mocks"
-	"MydroX/anicetus/internal/common/uuidutil"
 	passwordpkg "MydroX/anicetus/pkg/password"
 	"MydroX/anicetus/pkg/cache"
-	"MydroX/anicetus/pkg/uuid"
+	"github.com/google/uuid"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -83,7 +82,7 @@ func createTestUsecase(t *testing.T) (
 func TestLogin(t *testing.T) {
 	usersRepository, iamRepository, audienceStore, u := createTestUsecase(t)
 
-	userUUID := uuid.NewWithPrefix(uuidutil.PrefixUser)
+	userUUID := uuid.New().String()
 
 	t.Run("Login user with email", func(t *testing.T) {
 		ctx := context.NewAppContextTest()

@@ -1,9 +1,8 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE sessions (
-    id SERIAL PRIMARY KEY,
-    uuid VARCHAR(50) UNIQUE NOT NULL,
-    user_uuid VARCHAR(50) NOT NULL REFERENCES users(uuid),
+    uuid UUID PRIMARY KEY DEFAULT uuidv7(),
+    user_uuid UUID NOT NULL REFERENCES users(uuid),
     refresh_token_hash TEXT,
     last_used_at TIMESTAMP,
     os VARCHAR(50),

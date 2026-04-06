@@ -15,12 +15,8 @@ import (
 	usersrepository "MydroX/anicetus/internal/users/repository"
 	"MydroX/anicetus/pkg/argon2id"
 	passwordpkg "MydroX/anicetus/pkg/password"
-	"MydroX/anicetus/pkg/uuid"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
-)
-
-const (
-	sessionPrefix = "session"
 )
 
 type usecases struct {
@@ -121,7 +117,7 @@ func login(
 
 	refreshToken, err = u.jwtService.CreateRefreshToken(
 		user.UUID,
-		uuid.NewWithPrefix(sessionPrefix),
+		uuid.Must(uuid.NewV7()).String(),
 		audiences,
 	)
 	if err != nil {
@@ -160,7 +156,7 @@ func (u *usecases) saveSession(ctx *context.AppContext, userUUID, refreshToken s
 	expirationTimeRefresh := time.Now().Add(time.Second * time.Duration(u.config.JWT.RefreshToken.Expiration))
 
 	session := models.Session{
-		UUID:           uuid.NewWithPrefix(sessionPrefix),
+		UUID:           uuid.Must(uuid.NewV7()).String(),
 		UserID:         userUUID,
 		OS:             s.OS,
 		Browser:        s.Browser,

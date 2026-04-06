@@ -1,8 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE allowed_audiences (
-    id SERIAL PRIMARY KEY,
-    uuid VARCHAR(50) UNIQUE NOT NULL,
+    uuid UUID PRIMARY KEY DEFAULT uuidv7(),
     audience VARCHAR(255) NOT NULL,
     service_name VARCHAR(255) NOT NULL,
     description TEXT,

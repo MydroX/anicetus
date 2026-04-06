@@ -14,7 +14,7 @@ func (_ *Queries) GetAllowedAudiences() string {
 }
 
 func (_ *Queries) GetUserAudiences() string {
-	return `SELECT aa.audience FROM allowed_audiences aa JOIN user_audiences ua ON aa.id = ua.audience_id WHERE ua.user_uuid = $1 AND aa.active = true`
+	return `SELECT aa.audience FROM allowed_audiences aa JOIN user_audiences ua ON aa.uuid = ua.audience_uuid WHERE ua.user_uuid = $1 AND aa.active = true`
 }
 
 func (_ *Queries) IsValidAudience() string {
@@ -30,9 +30,9 @@ func (_ *Queries) RevokeAudience() string {
 }
 
 func (_ *Queries) AssignAudienceToUser() string {
-	return `INSERT INTO user_audiences (user_uuid, audience_id) SELECT $1, id FROM allowed_audiences WHERE audience = $2 AND active = true`
+	return `INSERT INTO user_audiences (user_uuid, audience_uuid) SELECT $1, uuid FROM allowed_audiences WHERE audience = $2 AND active = true`
 }
 
 func (_ *Queries) UnassignAudienceFromUser() string {
-	return `DELETE FROM user_audiences WHERE user_uuid = $1 AND audience_id = (SELECT id FROM allowed_audiences WHERE audience = $2)`
+	return `DELETE FROM user_audiences WHERE user_uuid = $1 AND audience_uuid = (SELECT uuid FROM allowed_audiences WHERE audience = $2)`
 }

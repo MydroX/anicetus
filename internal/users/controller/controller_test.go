@@ -2,12 +2,11 @@ package controller
 
 import (
 	"MydroX/anicetus/internal/common/errorsutil"
-	"MydroX/anicetus/internal/common/uuidutil"
 	"MydroX/anicetus/internal/config"
 	"MydroX/anicetus/internal/users/dto"
 	"MydroX/anicetus/internal/users/mocks"
 	"MydroX/anicetus/pkg/logger"
-	uuidpkg "MydroX/anicetus/pkg/uuid"
+	"github.com/google/uuid"
 
 	"encoding/json"
 	"fmt"
@@ -201,7 +200,7 @@ func Test_Create(t *testing.T) {
 func Test_Get(t *testing.T) {
 	s := newServerTest(t)
 
-	uuid := uuidpkg.NewWithPrefix(uuidutil.PrefixUser)
+	uuid := uuid.New().String()
 	user := dto.GetUserResponse{
 		UUID:     uuid,
 		Username: "testusername",
@@ -252,7 +251,7 @@ func Test_Get(t *testing.T) {
 func Test_Update(t *testing.T) {
 	s := newServerTest(t)
 
-	uuid := uuidpkg.NewWithPrefix(uuidutil.PrefixUser)
+	uuid := uuid.New().String()
 
 	t.Run("[V1] Update with success", func(t *testing.T) {
 		user := dto.UpdateUserRequest{
@@ -321,7 +320,7 @@ func Test_Update(t *testing.T) {
 func Test_UpdateEmail(t *testing.T) {
 	s := newServerTest(t)
 
-	uuid := uuidpkg.NewWithPrefix(uuidutil.PrefixUser)
+	uuid := uuid.New().String()
 
 	t.Run("[V1] Update email with success", func(t *testing.T) {
 		user := dto.UpdateEmailRequest{
@@ -386,7 +385,7 @@ func Test_UpdateEmail(t *testing.T) {
 func Test_UpdatePassword(t *testing.T) {
 	s := newServerTest(t)
 
-	uuid := uuidpkg.NewWithPrefix(uuidutil.PrefixUser)
+	uuid := uuid.New().String()
 
 	t.Run("[V1] Update password with success", func(t *testing.T) {
 		user := dto.UpdatePasswordRequest{
@@ -464,7 +463,7 @@ func Test_UpdatePassword(t *testing.T) {
 func Test_Delete(t *testing.T) {
 	s := newServerTest(t)
 
-	uuid := uuidpkg.NewWithPrefix(uuidutil.PrefixUser)
+	uuid := uuid.New().String()
 
 	t.Run("[V1] Delete with success", func(t *testing.T) {
 		req, _ := http.NewRequest("DELETE", v1+users+"/"+uuid, nil)
@@ -497,7 +496,7 @@ func Test_Delete(t *testing.T) {
 
 func Test_GetAllUsers(t *testing.T) {
 	s := newServerTest(t)
-	uuid := uuidpkg.NewWithPrefix(uuidutil.PrefixUser)
+	uuid := uuid.New().String()
 
 	t.Run("[V1] Get all users with success", func(t *testing.T) {
 		req, _ := http.NewRequest("GET", v1+users+"/", nil)
