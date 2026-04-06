@@ -34,7 +34,7 @@ type controller struct {
 }
 
 func New(l *zap.SugaredLogger, u usecases.UsersUsecases, c *config.Config) ControllerInterface {
-	validator := validator.New()
+	v := validator.New()
 
 	passwordValidator := password.NewValidator(
 		password.WithMinLength(passwordMinLength),
@@ -42,7 +42,7 @@ func New(l *zap.SugaredLogger, u usecases.UsersUsecases, c *config.Config) Contr
 	)
 
 	return &controller{
-		validate:          validator,
+		validate:          v,
 		logger:            l,
 		usecases:          u,
 		passwordValidator: passwordValidator,

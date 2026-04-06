@@ -29,7 +29,7 @@ type UpdateUserRequest struct {
 	Username string   `json:"username" validate:"required,min=4,max=18"`
 	Password string   `json:"password" validate:"required,min=14,max=72"`
 	Email    string   `json:"email" validate:"required,email"`
-	Role     []string `json:"role" validate:"required`
+	Role     []string `json:"role"     validate:"required"`
 }
 
 type UpdatePasswordRequest struct {

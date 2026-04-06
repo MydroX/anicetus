@@ -1,0 +1,18 @@
+profile: profile.cov
+
+threshold:
+  file: 0
+  package: 0
+  total: 0
+
+exclude:
+  paths:
+    - ^cmd/
+    - ^internal/config/
+    - ^internal/common/models/
+    - ^internal/common/pgxutil/
+    - ^pkg/config/
+    - ^pkg/db/
+    - ^pkg/logger/
+    - mock_.*\.go$
+    - mocks/

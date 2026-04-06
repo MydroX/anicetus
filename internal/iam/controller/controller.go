@@ -22,10 +22,10 @@ type controller struct {
 }
 
 func New(l *zap.SugaredLogger, u usecases.IamUsecasesService, c *config.Config) ControllerInterface {
-	validator := validator.New()
+	v := validator.New()
 
 	return &controller{
-		validate: validator,
+		validate: v,
 		logger:   l,
 		usecases: u,
 		config:   c,
