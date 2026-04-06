@@ -26,8 +26,9 @@ const (
 	ErrorInvalidPassword      = 11003 // Password does not meet the requirements
 
 	// IAM errors (12xxx)
-	ErrorHashToken   = 12001 // Failed to hash token
-	ErrorCreateToken = 12002 // Failed to create token
+	ErrorInvalidCredentials = 12001 // Invalid credentials
+	ErrorHashToken          = 12002 // Failed to hash token
+	ErrorCreateToken        = 12003 // Failed to create token
 
 	// Database errors (99xxx)
 	ErrorUniqueViolation     = 99001 // Unique constraint violation
@@ -41,7 +42,8 @@ const (
 const (
 	MessageFailToBind   = "Failed to bind request. Please check your request and try again"
 	MessageInvalidInput = "Invalid input. Please check your request and try again"
-	MessageInvalidUUID  = "Invalid UUID"
+	MessageInvalidUUID         = "Invalid UUID"
+	MessageInvalidCredentials  = "Invalid credentials"
 )
 
 var errorCodeMap = map[int]int{
@@ -55,7 +57,8 @@ var errorCodeMap = map[int]int{
 	ErrorNotNullViolation:    http.StatusBadRequest,
 
 	// 401 Unauthorized
-	ErrorUnauthorized: http.StatusUnauthorized,
+	ErrorUnauthorized:       http.StatusUnauthorized,
+	ErrorInvalidCredentials: http.StatusUnauthorized,
 
 	// 403 Forbidden
 

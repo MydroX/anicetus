@@ -19,12 +19,6 @@ import (
 	"go.uber.org/zap"
 )
 
-var errInvalidCredentials = &errorsutil.AppError{
-	Code:    errorsutil.ErrorUnauthorized,
-	Message: "invalid credentials",
-	Err:     errors.New("invalid credentials"),
-}
-
 type usecases struct {
 	logger          *zap.SugaredLogger
 	usersRepository usersrepository.UsersRepository
@@ -60,7 +54,7 @@ func (u *usecases) Login(ctx *context.AppContext, req *dto.LoginRequest) (access
 	case req.Email != "":
 		user, err := u.usersRepository.GetUserByEmail(ctx, req.Email)
 		if err != nil {
-			return "", "", errInvalidCredentials
+			return "", "", errorsutil.New(errorsutil.ErrorInvalidCredentials, errorsutil.MessageInvalidCredentials, nil)
 		}
 
 		return login(ctx, u, user, &req.Session, req.Password)
@@ -68,7 +62,7 @@ func (u *usecases) Login(ctx *context.AppContext, req *dto.LoginRequest) (access
 	case req.Username != "":
 		user, err := u.usersRepository.GetUserByUsername(ctx, req.Username)
 		if err != nil {
-			return "", "", errInvalidCredentials
+			return "", "", errorsutil.New(errorsutil.ErrorInvalidCredentials, errorsutil.MessageInvalidCredentials, nil)
 		}
 
 		return login(ctx, u, user, &req.Session, req.Password)
@@ -89,7 +83,7 @@ func login(
 	reqPwd string,
 ) (accessToken, refreshToken string, err error) {
 	if !passwordpkg.CheckPasswordHash(reqPwd, user.Password) {
-		return "", "", errInvalidCredentials
+		return "", "", errorsutil.New(errorsutil.ErrorInvalidCredentials, errorsutil.MessageInvalidCredentials, nil)
 	}
 
 	// Fetch per-user audiences
