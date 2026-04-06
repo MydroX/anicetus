@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"MydroX/anicetus/internal/common/context"
+	"context"
 	"MydroX/anicetus/internal/common/errorsutil"
 	"MydroX/anicetus/internal/users/models"
 	"MydroX/anicetus/pkg/logger"
@@ -20,7 +20,7 @@ import (
 
 func TestCreateUser(t *testing.T) {
 	// Test setup
-	ctx := context.NewAppContextTest()
+	ctx := context.Background()
 	log, err := logger.New("TEST")
 	if err != nil {
 		panic(err)
@@ -127,7 +127,7 @@ func TestCreateUser(t *testing.T) {
 
 func TestGetUserByUUID(t *testing.T) {
 	// Test setup
-	ctx := context.NewAppContextTest()
+	ctx := context.Background()
 	log, err := logger.New("TEST")
 	if err != nil {
 		panic(err)
@@ -238,7 +238,7 @@ func TestGetUserByUUID(t *testing.T) {
 
 func TestUpdateUser(t *testing.T) {
 	// Test setup
-	ctx := context.NewAppContextTest()
+	ctx := context.Background()
 	log, err := logger.New("TEST")
 	if err != nil {
 		panic(err)
@@ -376,7 +376,7 @@ func TestUpdateUser(t *testing.T) {
 
 func TestUpdatePassword(t *testing.T) {
 	// Test setup
-	ctx := context.NewAppContextTest()
+	ctx := context.Background()
 	log, err := logger.New("TEST")
 	if err != nil {
 		panic(err)
@@ -479,7 +479,7 @@ func TestUpdatePassword(t *testing.T) {
 
 func TestUpdateEmail(t *testing.T) {
 	// Test setup
-	ctx := context.NewAppContextTest()
+	ctx := context.Background()
 	log, err := logger.New("TEST")
 	if err != nil {
 		panic(err)
@@ -585,7 +585,7 @@ func TestUpdateEmail(t *testing.T) {
 
 func TestDeleteUser(t *testing.T) {
 	// Test setup
-	ctx := context.NewAppContextTest()
+	ctx := context.Background()
 	log, err := logger.New("TEST")
 	if err != nil {
 		panic(err)
@@ -683,7 +683,7 @@ func TestDeleteUser(t *testing.T) {
 
 func TestGetUserByEmail(t *testing.T) {
 	// Test setup
-	ctx := context.NewAppContextTest()
+	ctx := context.Background()
 	log, err := logger.New("TEST")
 	if err != nil {
 		panic(err)
@@ -791,7 +791,7 @@ func TestGetUserByEmail(t *testing.T) {
 
 func TestGetUserByUsername(t *testing.T) {
 	// Test setup
-	ctx := context.NewAppContextTest()
+	ctx := context.Background()
 	log, err := logger.New("TEST")
 	if err != nil {
 		panic(err)
@@ -899,7 +899,7 @@ func TestGetUserByUsername(t *testing.T) {
 
 func TestGetAllUsers(t *testing.T) {
 	// Test setup
-	ctx := context.NewAppContextTest()
+	ctx := context.Background()
 	log, err := logger.New("TEST")
 	if err != nil {
 		panic(err)

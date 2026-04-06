@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"MydroX/anicetus/internal/common/context"
+	"context"
 	"MydroX/anicetus/internal/common/errorsutil"
 	"MydroX/anicetus/internal/common/jwt"
 	"MydroX/anicetus/internal/config"
@@ -49,7 +49,7 @@ func New(
 	}
 }
 
-func (u *usecases) Login(ctx *context.AppContext, req *dto.LoginRequest) (accessToken, refreshToken string, err error) {
+func (u *usecases) Login(ctx context.Context, req *dto.LoginRequest) (accessToken, refreshToken string, err error) {
 	switch {
 	case req.Email != "":
 		user, err := u.usersRepository.GetUserByEmail(ctx, req.Email)
@@ -76,7 +76,7 @@ func (u *usecases) Login(ctx *context.AppContext, req *dto.LoginRequest) (access
 }
 
 func login(
-	ctx *context.AppContext,
+	ctx context.Context,
 	u *usecases,
 	user *usersmodels.User,
 	s *dto.Session,
@@ -87,7 +87,7 @@ func login(
 	}
 
 	// Fetch per-user audiences
-	audiences, audErr := u.audienceManager.GetUserAudiences(ctx.StdContext(), user.UUID)
+	audiences, audErr := u.audienceManager.GetUserAudiences(ctx, user.UUID)
 	if audErr != nil {
 		u.logger.Warnw("Failed to get user audiences, using empty", "error", audErr)
 
@@ -127,7 +127,7 @@ func login(
 	return accessToken, refreshToken, nil
 }
 
-func (u *usecases) saveSession(ctx *context.AppContext, userUUID, refreshToken string, s *dto.Session) error {
+func (u *usecases) saveSession(ctx context.Context, userUUID, refreshToken string, s *dto.Session) error {
 	hashParams := argon2id.New(
 		argon2id.Iterations(u.config.Session.Hash.Iterations),
 		argon2id.Memory(u.config.Session.Hash.Memory),
@@ -164,58 +164,58 @@ func (u *usecases) saveSession(ctx *context.AppContext, userUUID, refreshToken s
 }
 
 // nolint
-func (u *usecases) Logout(ctx *context.AppContext, token string) error {
+func (u *usecases) Logout(ctx context.Context, token string) error {
 	panic("not implemented") // TODO: Implement
 }
 
 // nolint
-func (u *usecases) RefreshToken(ctx *context.AppContext, token string) (string, error) {
+func (u *usecases) RefreshToken(ctx context.Context, token string) (string, error) {
 	panic("not implemented") // TODO: Implement
 }
 
-func (u *usecases) RegisterAudience(ctx *context.AppContext, req *dto.RegisterAudienceRequest) error {
+func (u *usecases) RegisterAudience(ctx context.Context, req *dto.RegisterAudienceRequest) error {
 	metadata := map[string]any{
 		"service_name": req.ServiceName,
 		"description":  req.Description,
 		"permissions":  req.Permissions,
 	}
 
-	err := u.audienceStore.RegisterAudience(ctx.StdContext(), req.Audience, metadata)
+	err := u.audienceStore.RegisterAudience(ctx, req.Audience, metadata)
 	if err != nil {
 		return err
 	}
 
-	u.audienceManager.InvalidateAllAudiencesCache(ctx.StdContext())
+	u.audienceManager.InvalidateAllAudiencesCache(ctx)
 
 	return nil
 }
 
-func (u *usecases) RevokeAudience(ctx *context.AppContext, audience string) error {
-	err := u.audienceStore.RevokeAudience(ctx.StdContext(), audience)
+func (u *usecases) RevokeAudience(ctx context.Context, audience string) error {
+	err := u.audienceStore.RevokeAudience(ctx, audience)
 	if err != nil {
 		return err
 	}
 
-	u.audienceManager.InvalidateAllAudiencesCache(ctx.StdContext())
+	u.audienceManager.InvalidateAllAudiencesCache(ctx)
 
 	return nil
 }
 
-func (u *usecases) GetAllAudiences(ctx *context.AppContext) ([]string, error) {
-	return u.audienceManager.GetAllowedAudiences(ctx.StdContext())
+func (u *usecases) GetAllAudiences(ctx context.Context) ([]string, error) {
+	return u.audienceManager.GetAllowedAudiences(ctx)
 }
 
-func (u *usecases) GetUserAudiences(ctx *context.AppContext, userUUID string) ([]string, error) {
-	return u.audienceManager.GetUserAudiences(ctx.StdContext(), userUUID)
+func (u *usecases) GetUserAudiences(ctx context.Context, userUUID string) ([]string, error) {
+	return u.audienceManager.GetUserAudiences(ctx, userUUID)
 }
 
-func (u *usecases) AssignAudienceToUser(ctx *context.AppContext, userUUID string, req *dto.AssignAudienceRequest) error {
-	err := u.audienceStore.AssignAudienceToUser(ctx.StdContext(), userUUID, req.Audience)
+func (u *usecases) AssignAudienceToUser(ctx context.Context, userUUID string, req *dto.AssignAudienceRequest) error {
+	err := u.audienceStore.AssignAudienceToUser(ctx, userUUID, req.Audience)
 	if err != nil {
 		return err
 	}
 
-	u.audienceManager.InvalidateUserAudiencesCache(ctx.StdContext(), userUUID)
+	u.audienceManager.InvalidateUserAudiencesCache(ctx, userUUID)
 
 	return nil
 }

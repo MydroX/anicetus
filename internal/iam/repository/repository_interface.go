@@ -3,14 +3,13 @@ package repository
 import (
 	"context"
 
-	appcontext "MydroX/anicetus/internal/common/context"
 	"MydroX/anicetus/internal/iam/models"
 )
 
 //go:generate mockgen -source=repository_interface.go -destination=../mocks/mock_repository.go -package=mocks
 
 type IamStore interface {
-	SaveSession(ctx *appcontext.AppContext, session *models.Session) error
+	SaveSession(ctx context.Context, session *models.Session) error
 }
 
 type AudienceStore interface {

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"MydroX/anicetus/internal/common/context"
+	"context"
 	"MydroX/anicetus/internal/common/errorsutil"
 	"MydroX/anicetus/internal/common/jwt"
 	"MydroX/anicetus/internal/config"
@@ -85,7 +85,7 @@ func TestLogin(t *testing.T) {
 	userUUID := uuid.New().String()
 
 	t.Run("Login user with email", func(t *testing.T) {
-		ctx := context.NewAppContextTest()
+		ctx := context.Background()
 
 		p, err := passwordpkg.Hash("thisisapassword123")
 		assert.NoError(t, err)
@@ -120,7 +120,7 @@ func TestLogin(t *testing.T) {
 	})
 
 	t.Run("Login user with username", func(t *testing.T) {
-		ctx := context.NewAppContextTest()
+		ctx := context.Background()
 
 		p, err := passwordpkg.Hash("thisisapassword123")
 		assert.NoError(t, err)
@@ -156,7 +156,7 @@ func TestLogin(t *testing.T) {
 	})
 
 	t.Run("Login without email or username", func(t *testing.T) {
-		ctx := context.NewAppContextTest()
+		ctx := context.Background()
 
 		req := dto.LoginRequest{
 			Password: "thisisapassword123",
@@ -174,7 +174,7 @@ func TestLogin(t *testing.T) {
 	})
 
 	t.Run("Login email not found", func(t *testing.T) {
-		ctx := context.NewAppContextTest()
+		ctx := context.Background()
 
 		usersRepository.EXPECT().GetUserByEmail(gomock.Any(), "notfound@test.com").Return(nil, errorsutil.New(errorsutil.ErrorNotFound, "user not found", errors.New("user not found")))
 
@@ -195,7 +195,7 @@ func TestLogin(t *testing.T) {
 	})
 
 	t.Run("Login wrong password", func(t *testing.T) {
-		ctx := context.NewAppContextTest()
+		ctx := context.Background()
 
 		p, err := passwordpkg.Hash("thisisapassword123")
 		assert.NoError(t, err)

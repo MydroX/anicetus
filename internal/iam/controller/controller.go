@@ -3,7 +3,6 @@ package iam
 import (
 	"net/http"
 
-	"MydroX/anicetus/internal/common/context"
 	"MydroX/anicetus/internal/common/errorsutil"
 	"MydroX/anicetus/internal/common/response"
 	"MydroX/anicetus/internal/config"
@@ -35,31 +34,29 @@ func New(l *zap.SugaredLogger, u usecases.IamUsecasesService, c *config.Config) 
 func (c *controller) Login(ginCtx *gin.Context) {
 	var request dto.LoginRequest
 
-	ctx := context.NewAppContext(ginCtx)
-	ctx.EnsureTraceID()
 
 	if err := ginCtx.BindJSON(&request); err != nil {
-		response.BadRequest(c.logger, ctx, errorsutil.ErrorFailToBind, errorsutil.MessageFailToBind)
+		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorFailToBind, errorsutil.MessageFailToBind)
 
 		return
 	}
 
 	jwtErr := c.validate.Struct(request)
 	if jwtErr != nil {
-		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidInput, errorsutil.MessageInvalidInput)
+		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorInvalidInput, errorsutil.MessageInvalidInput)
 
 		return
 	}
 
 	if request.Username == "" && request.Email == "" {
-		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidInput, "username or email is required")
+		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorInvalidInput, "username or email is required")
 
 		return
 	}
 
-	accessToken, refreshToken, jwtErr := c.usecases.Login(ctx, &request)
+	accessToken, refreshToken, jwtErr := c.usecases.Login(ginCtx.Request.Context(), &request)
 	if jwtErr != nil {
-		response.Error(c.logger, ctx, jwtErr)
+		response.Error(c.logger, ginCtx, jwtErr)
 
 		return
 	}

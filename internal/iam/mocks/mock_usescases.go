@@ -10,8 +10,8 @@
 package mocks
 
 import (
-	context "MydroX/anicetus/internal/common/context"
 	dto "MydroX/anicetus/internal/iam/dto"
+	context "context"
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
@@ -42,7 +42,7 @@ func (m *MockIamUsecasesService) EXPECT() *MockIamUsecasesServiceMockRecorder {
 }
 
 // AssignAudienceToUser mocks base method.
-func (m *MockIamUsecasesService) AssignAudienceToUser(ctx *context.AppContext, userUUID string, req *dto.AssignAudienceRequest) error {
+func (m *MockIamUsecasesService) AssignAudienceToUser(ctx context.Context, userUUID string, req *dto.AssignAudienceRequest) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AssignAudienceToUser", ctx, userUUID, req)
 	ret0, _ := ret[0].(error)
@@ -56,7 +56,7 @@ func (mr *MockIamUsecasesServiceMockRecorder) AssignAudienceToUser(ctx, userUUID
 }
 
 // GetAllAudiences mocks base method.
-func (m *MockIamUsecasesService) GetAllAudiences(ctx *context.AppContext) ([]string, error) {
+func (m *MockIamUsecasesService) GetAllAudiences(ctx context.Context) ([]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllAudiences", ctx)
 	ret0, _ := ret[0].([]string)
@@ -71,7 +71,7 @@ func (mr *MockIamUsecasesServiceMockRecorder) GetAllAudiences(ctx any) *gomock.C
 }
 
 // GetUserAudiences mocks base method.
-func (m *MockIamUsecasesService) GetUserAudiences(ctx *context.AppContext, userUUID string) ([]string, error) {
+func (m *MockIamUsecasesService) GetUserAudiences(ctx context.Context, userUUID string) ([]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserAudiences", ctx, userUUID)
 	ret0, _ := ret[0].([]string)
@@ -86,7 +86,7 @@ func (mr *MockIamUsecasesServiceMockRecorder) GetUserAudiences(ctx, userUUID any
 }
 
 // Login mocks base method.
-func (m *MockIamUsecasesService) Login(ctx *context.AppContext, req *dto.LoginRequest) (string, string, error) {
+func (m *MockIamUsecasesService) Login(ctx context.Context, req *dto.LoginRequest) (string, string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Login", ctx, req)
 	ret0, _ := ret[0].(string)
@@ -102,7 +102,7 @@ func (mr *MockIamUsecasesServiceMockRecorder) Login(ctx, req any) *gomock.Call {
 }
 
 // Logout mocks base method.
-func (m *MockIamUsecasesService) Logout(ctx *context.AppContext, token string) error {
+func (m *MockIamUsecasesService) Logout(ctx context.Context, token string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Logout", ctx, token)
 	ret0, _ := ret[0].(error)
@@ -116,7 +116,7 @@ func (mr *MockIamUsecasesServiceMockRecorder) Logout(ctx, token any) *gomock.Cal
 }
 
 // RefreshToken mocks base method.
-func (m *MockIamUsecasesService) RefreshToken(ctx *context.AppContext, token string) (string, error) {
+func (m *MockIamUsecasesService) RefreshToken(ctx context.Context, token string) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RefreshToken", ctx, token)
 	ret0, _ := ret[0].(string)
@@ -131,7 +131,7 @@ func (mr *MockIamUsecasesServiceMockRecorder) RefreshToken(ctx, token any) *gomo
 }
 
 // RegisterAudience mocks base method.
-func (m *MockIamUsecasesService) RegisterAudience(ctx *context.AppContext, req *dto.RegisterAudienceRequest) error {
+func (m *MockIamUsecasesService) RegisterAudience(ctx context.Context, req *dto.RegisterAudienceRequest) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RegisterAudience", ctx, req)
 	ret0, _ := ret[0].(error)
@@ -145,7 +145,7 @@ func (mr *MockIamUsecasesServiceMockRecorder) RegisterAudience(ctx, req any) *go
 }
 
 // RevokeAudience mocks base method.
-func (m *MockIamUsecasesService) RevokeAudience(ctx *context.AppContext, audience string) error {
+func (m *MockIamUsecasesService) RevokeAudience(ctx context.Context, audience string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RevokeAudience", ctx, audience)
 	ret0, _ := ret[0].(error)

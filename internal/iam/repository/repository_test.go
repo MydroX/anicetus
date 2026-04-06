@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"MydroX/anicetus/internal/common/context"
+	"context"
 	"MydroX/anicetus/internal/common/errorsutil"
 	"MydroX/anicetus/internal/iam/models"
 	"MydroX/anicetus/pkg/logger"
@@ -20,7 +20,7 @@ import (
 
 func TestSaveSession(t *testing.T) {
 	// Test setup
-	ctx := context.NewAppContextTest()
+	ctx := context.Background()
 	log, err := logger.New("TEST")
 	if err != nil {
 		panic(err)

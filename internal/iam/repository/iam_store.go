@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"MydroX/anicetus/internal/common/context"
+	"context"
 	"MydroX/anicetus/internal/common/errorsutil"
 	"MydroX/anicetus/internal/common/pgxutil"
 	"MydroX/anicetus/internal/iam/models"
@@ -16,9 +16,9 @@ func NewIAMStore(l *zap.SugaredLogger, dbPool pgxutil.DBPool) IamStore {
 	}
 }
 
-func (r *repository) SaveSession(ctx *context.AppContext, session *models.Session) error {
+func (r *repository) SaveSession(ctx context.Context, session *models.Session) error {
 	_, err := r.dbPool.Exec(
-		ctx.StdContext(),
+		ctx,
 		r.queries.SaveSession(),
 		session.UUID,
 		session.UserID,

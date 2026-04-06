@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"MydroX/anicetus/internal/common/context"
+	"context"
 	"MydroX/anicetus/internal/common/errorsutil"
 	"MydroX/anicetus/internal/config"
 	"MydroX/anicetus/internal/users/dto"
@@ -33,7 +33,7 @@ func createTestUsecase(t *testing.T) (*mocks.MockUsersRepository, UsersUsecases)
 
 func Test_Create(t *testing.T) {
 	r, u := createTestUsecase(t)
-	ctx := context.NewAppContextTest()
+	ctx := context.Background()
 
 	t.Run("[V1] Create user", func(t *testing.T) {
 		request := dto.CreateUserRequest{
@@ -55,7 +55,7 @@ func Test_Create(t *testing.T) {
 			Password: "thisisapassword123",
 		}
 
-		r.EXPECT().CreateUser(gomock.Any(), gomock.Any()).DoAndReturn(func(_ *context.AppContext, user *models.User) error {
+		r.EXPECT().CreateUser(gomock.Any(), gomock.Any()).DoAndReturn(func(_ context.Context, user *models.User) error {
 			assert.Equal(t, user.Role, []string{"USER"})
 			return nil
 		})
@@ -65,7 +65,7 @@ func Test_Create(t *testing.T) {
 	})
 
 	t.Run("[V1] Create user, failed to hash password", func(t *testing.T) {
-		ctx := context.NewAppContextTest()
+		ctx := context.Background()
 
 		request := dto.CreateUserRequest{
 			Username: "test",
@@ -79,7 +79,7 @@ func Test_Create(t *testing.T) {
 	})
 
 	t.Run("[V1] Create user repository error", func(t *testing.T) {
-		ctx := context.NewAppContextTest()
+		ctx := context.Background()
 
 		request := dto.CreateUserRequest{
 			Username: "test",
@@ -100,7 +100,7 @@ func Test_Get(t *testing.T) {
 	userUUID := uuid.New().String()
 
 	t.Run("[V1] Get user", func(t *testing.T) {
-		ctx := context.NewAppContextTest()
+		ctx := context.Background()
 
 		user := models.User{
 			UUID:     userUUID,
@@ -117,7 +117,7 @@ func Test_Get(t *testing.T) {
 	})
 
 	t.Run("[V1] Get User repository error", func(t *testing.T) {
-		ctx := context.NewAppContextTest()
+		ctx := context.Background()
 
 		r.EXPECT().GetUserByUUID(gomock.Any(), userUUID).Return(nil, errorsutil.New(errorsutil.ErrorInternal, "test error", fmt.Errorf("test error")))
 		_, err := u.Get(ctx, userUUID)
@@ -128,7 +128,7 @@ func Test_Get(t *testing.T) {
 
 func Test_Update(t *testing.T) {
 	r, u := createTestUsecase(t)
-	ctx := context.NewAppContextTest()
+	ctx := context.Background()
 
 	userUUID := uuid.New().String()
 
@@ -153,7 +153,7 @@ func Test_Update(t *testing.T) {
 	})
 
 	t.Run("[V1] Update user repository error", func(t *testing.T) {
-		ctx := context.NewAppContextTest()
+		ctx := context.Background()
 
 		request := dto.UpdateUserRequest{
 			UUID:     userUUID,
@@ -181,10 +181,10 @@ func Test_UpdatePassword(t *testing.T) {
 	userUUID := uuid.New().String()
 
 	t.Run("[V1] Update password", func(t *testing.T) {
-		ctx := context.NewAppContextTest()
+		ctx := context.Background()
 		password := "passwordtest123!?"
 
-		r.EXPECT().UpdatePassword(gomock.Any(), userUUID, gomock.Any()).DoAndReturn(func(_ *context.AppContext, _ string, p string) error {
+		r.EXPECT().UpdatePassword(gomock.Any(), userUUID, gomock.Any()).DoAndReturn(func(_ context.Context, _ string, p string) error {
 			assert.NotEmpty(t, p)
 			assert.NotEqual(t, p, password)
 			return nil
@@ -196,7 +196,7 @@ func Test_UpdatePassword(t *testing.T) {
 	})
 
 	t.Run("[V1] Update password, failed to hash password", func(t *testing.T) {
-		ctx := context.NewAppContextTest()
+		ctx := context.Background()
 
 		password := "WcYVkLZaCHH5AjzVyyhPaZ0Ny1j8Yqxqu0zYHz8YtvKDzQ7cEx8cXG7VTBq55RmLUFubXPhHgaqwGyQn"
 
@@ -206,7 +206,7 @@ func Test_UpdatePassword(t *testing.T) {
 	})
 
 	t.Run("[V1] Update Repository error", func(t *testing.T) {
-		ctx := context.NewAppContextTest()
+		ctx := context.Background()
 		password := "passwordtest123!?"
 
 		r.EXPECT().UpdatePassword(gomock.Any(), userUUID, gomock.Any()).Return(errorsutil.New(errorsutil.ErrorInternal, "test error", fmt.Errorf("test error")))
@@ -224,7 +224,7 @@ func Test_UpdateEmail(t *testing.T) {
 	email := "jeon.soyeon@cube.kr"
 
 	t.Run("[V1] Update email", func(t *testing.T) {
-		ctx := context.NewAppContextTest()
+		ctx := context.Background()
 
 		r.EXPECT().UpdateEmail(gomock.Any(), userUUID, email).Return(nil)
 
@@ -234,7 +234,7 @@ func Test_UpdateEmail(t *testing.T) {
 	})
 
 	t.Run("[V1] Update email repository error", func(t *testing.T) {
-		ctx := context.NewAppContextTest()
+		ctx := context.Background()
 
 		r.EXPECT().UpdateEmail(gomock.Any(), userUUID, email).Return(errorsutil.New(errorsutil.ErrorInternal, "test error", fmt.Errorf("test error")))
 
@@ -250,7 +250,7 @@ func Test_Delete(t *testing.T) {
 	userUUID := uuid.New().String()
 
 	t.Run("[V1] Delete user", func(t *testing.T) {
-		ctx := context.NewAppContextTest()
+		ctx := context.Background()
 
 		r.EXPECT().DeleteUser(gomock.Any(), userUUID).Return(nil)
 
@@ -260,7 +260,7 @@ func Test_Delete(t *testing.T) {
 	})
 
 	t.Run("[V1] Repository error", func(t *testing.T) {
-		ctx := context.NewAppContextTest()
+		ctx := context.Background()
 
 		r.EXPECT().DeleteUser(gomock.Any(), userUUID).Return(errorsutil.New(errorsutil.ErrorInternal, "test error", fmt.Errorf("test error")))
 
@@ -275,7 +275,7 @@ func Test_GetAllUsers(t *testing.T) {
 	userUUID := uuid.New().String()
 
 	t.Run("[V1] Get all users", func(t *testing.T) {
-		ctx := context.NewAppContextTest()
+		ctx := context.Background()
 
 		users := []*models.User{
 			{
@@ -295,7 +295,7 @@ func Test_GetAllUsers(t *testing.T) {
 	})
 
 	t.Run("[V1] Get all users, repository error", func(t *testing.T) {
-		ctx := context.NewAppContextTest()
+		ctx := context.Background()
 
 		r.EXPECT().GetAllUsers(gomock.Any()).Return(nil, errorsutil.New(errorsutil.ErrorInternal, "test error", fmt.Errorf("test error")))
 

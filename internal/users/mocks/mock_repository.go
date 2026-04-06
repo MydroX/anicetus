@@ -10,8 +10,8 @@
 package mocks
 
 import (
-	context "MydroX/anicetus/internal/common/context"
 	models "MydroX/anicetus/internal/users/models"
+	context "context"
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
@@ -42,7 +42,7 @@ func (m *MockUsersRepository) EXPECT() *MockUsersRepositoryMockRecorder {
 }
 
 // CreateUser mocks base method.
-func (m *MockUsersRepository) CreateUser(ctx *context.AppContext, user *models.User) error {
+func (m *MockUsersRepository) CreateUser(ctx context.Context, user *models.User) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateUser", ctx, user)
 	ret0, _ := ret[0].(error)
@@ -56,7 +56,7 @@ func (mr *MockUsersRepositoryMockRecorder) CreateUser(ctx, user any) *gomock.Cal
 }
 
 // DeleteUser mocks base method.
-func (m *MockUsersRepository) DeleteUser(ctx *context.AppContext, uuid string) error {
+func (m *MockUsersRepository) DeleteUser(ctx context.Context, uuid string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteUser", ctx, uuid)
 	ret0, _ := ret[0].(error)
@@ -70,7 +70,7 @@ func (mr *MockUsersRepositoryMockRecorder) DeleteUser(ctx, uuid any) *gomock.Cal
 }
 
 // GetAllUsers mocks base method.
-func (m *MockUsersRepository) GetAllUsers(ctx *context.AppContext) ([]*models.User, error) {
+func (m *MockUsersRepository) GetAllUsers(ctx context.Context) ([]*models.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllUsers", ctx)
 	ret0, _ := ret[0].([]*models.User)
@@ -85,7 +85,7 @@ func (mr *MockUsersRepositoryMockRecorder) GetAllUsers(ctx any) *gomock.Call {
 }
 
 // GetUserByEmail mocks base method.
-func (m *MockUsersRepository) GetUserByEmail(ctx *context.AppContext, email string) (*models.User, error) {
+func (m *MockUsersRepository) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserByEmail", ctx, email)
 	ret0, _ := ret[0].(*models.User)
@@ -100,7 +100,7 @@ func (mr *MockUsersRepositoryMockRecorder) GetUserByEmail(ctx, email any) *gomoc
 }
 
 // GetUserByUUID mocks base method.
-func (m *MockUsersRepository) GetUserByUUID(ctx *context.AppContext, uuid string) (*models.User, error) {
+func (m *MockUsersRepository) GetUserByUUID(ctx context.Context, uuid string) (*models.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserByUUID", ctx, uuid)
 	ret0, _ := ret[0].(*models.User)
@@ -115,7 +115,7 @@ func (mr *MockUsersRepositoryMockRecorder) GetUserByUUID(ctx, uuid any) *gomock.
 }
 
 // GetUserByUsername mocks base method.
-func (m *MockUsersRepository) GetUserByUsername(ctx *context.AppContext, username string) (*models.User, error) {
+func (m *MockUsersRepository) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserByUsername", ctx, username)
 	ret0, _ := ret[0].(*models.User)
@@ -130,7 +130,7 @@ func (mr *MockUsersRepositoryMockRecorder) GetUserByUsername(ctx, username any) 
 }
 
 // UpdateEmail mocks base method.
-func (m *MockUsersRepository) UpdateEmail(ctx *context.AppContext, uuid, email string) error {
+func (m *MockUsersRepository) UpdateEmail(ctx context.Context, uuid, email string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateEmail", ctx, uuid, email)
 	ret0, _ := ret[0].(error)
@@ -144,7 +144,7 @@ func (mr *MockUsersRepositoryMockRecorder) UpdateEmail(ctx, uuid, email any) *go
 }
 
 // UpdatePassword mocks base method.
-func (m *MockUsersRepository) UpdatePassword(ctx *context.AppContext, uuid, password string) error {
+func (m *MockUsersRepository) UpdatePassword(ctx context.Context, uuid, password string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdatePassword", ctx, uuid, password)
 	ret0, _ := ret[0].(error)
@@ -158,7 +158,7 @@ func (mr *MockUsersRepositoryMockRecorder) UpdatePassword(ctx, uuid, password an
 }
 
 // UpdateUser mocks base method.
-func (m *MockUsersRepository) UpdateUser(ctx *context.AppContext, user *models.User) (*models.User, error) {
+func (m *MockUsersRepository) UpdateUser(ctx context.Context, user *models.User) (*models.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateUser", ctx, user)
 	ret0, _ := ret[0].(*models.User)

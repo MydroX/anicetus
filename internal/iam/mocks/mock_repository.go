@@ -10,9 +10,8 @@
 package mocks
 
 import (
-	context "MydroX/anicetus/internal/common/context"
 	models "MydroX/anicetus/internal/iam/models"
-	context0 "context"
+	context "context"
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
@@ -43,7 +42,7 @@ func (m *MockIamStore) EXPECT() *MockIamStoreMockRecorder {
 }
 
 // SaveSession mocks base method.
-func (m *MockIamStore) SaveSession(ctx *context.AppContext, session *models.Session) error {
+func (m *MockIamStore) SaveSession(ctx context.Context, session *models.Session) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SaveSession", ctx, session)
 	ret0, _ := ret[0].(error)
@@ -81,7 +80,7 @@ func (m *MockAudienceStore) EXPECT() *MockAudienceStoreMockRecorder {
 }
 
 // AssignAudienceToUser mocks base method.
-func (m *MockAudienceStore) AssignAudienceToUser(ctx context0.Context, userUUID, audience string) error {
+func (m *MockAudienceStore) AssignAudienceToUser(ctx context.Context, userUUID, audience string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AssignAudienceToUser", ctx, userUUID, audience)
 	ret0, _ := ret[0].(error)
@@ -95,7 +94,7 @@ func (mr *MockAudienceStoreMockRecorder) AssignAudienceToUser(ctx, userUUID, aud
 }
 
 // GetAllowedAudiences mocks base method.
-func (m *MockAudienceStore) GetAllowedAudiences(ctx context0.Context) ([]string, error) {
+func (m *MockAudienceStore) GetAllowedAudiences(ctx context.Context) ([]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllowedAudiences", ctx)
 	ret0, _ := ret[0].([]string)
@@ -110,7 +109,7 @@ func (mr *MockAudienceStoreMockRecorder) GetAllowedAudiences(ctx any) *gomock.Ca
 }
 
 // GetUserAudiences mocks base method.
-func (m *MockAudienceStore) GetUserAudiences(ctx context0.Context, userUUID string) ([]string, error) {
+func (m *MockAudienceStore) GetUserAudiences(ctx context.Context, userUUID string) ([]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserAudiences", ctx, userUUID)
 	ret0, _ := ret[0].([]string)
@@ -125,7 +124,7 @@ func (mr *MockAudienceStoreMockRecorder) GetUserAudiences(ctx, userUUID any) *go
 }
 
 // IsValidAudience mocks base method.
-func (m *MockAudienceStore) IsValidAudience(ctx context0.Context, audience string) (bool, error) {
+func (m *MockAudienceStore) IsValidAudience(ctx context.Context, audience string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsValidAudience", ctx, audience)
 	ret0, _ := ret[0].(bool)
@@ -140,7 +139,7 @@ func (mr *MockAudienceStoreMockRecorder) IsValidAudience(ctx, audience any) *gom
 }
 
 // RegisterAudience mocks base method.
-func (m *MockAudienceStore) RegisterAudience(ctx context0.Context, audience string, metadata map[string]any) error {
+func (m *MockAudienceStore) RegisterAudience(ctx context.Context, audience string, metadata map[string]any) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RegisterAudience", ctx, audience, metadata)
 	ret0, _ := ret[0].(error)
@@ -154,7 +153,7 @@ func (mr *MockAudienceStoreMockRecorder) RegisterAudience(ctx, audience, metadat
 }
 
 // RevokeAudience mocks base method.
-func (m *MockAudienceStore) RevokeAudience(ctx context0.Context, audience string) error {
+func (m *MockAudienceStore) RevokeAudience(ctx context.Context, audience string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RevokeAudience", ctx, audience)
 	ret0, _ := ret[0].(error)
@@ -168,7 +167,7 @@ func (mr *MockAudienceStoreMockRecorder) RevokeAudience(ctx, audience any) *gomo
 }
 
 // UnassignAudienceFromUser mocks base method.
-func (m *MockAudienceStore) UnassignAudienceFromUser(ctx context0.Context, userUUID, audience string) error {
+func (m *MockAudienceStore) UnassignAudienceFromUser(ctx context.Context, userUUID, audience string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UnassignAudienceFromUser", ctx, userUUID, audience)
 	ret0, _ := ret[0].(error)

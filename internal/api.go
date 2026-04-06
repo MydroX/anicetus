@@ -10,6 +10,7 @@ import (
 	iamcontroller "MydroX/anicetus/internal/iam/controller"
 	iamrepository "MydroX/anicetus/internal/iam/repository"
 	iamusecases "MydroX/anicetus/internal/iam/usecases"
+	"MydroX/anicetus/internal/middlewares"
 	userscontroller "MydroX/anicetus/internal/users/controller"
 	usersrepository "MydroX/anicetus/internal/users/repository"
 	usersusecases "MydroX/anicetus/internal/users/usecases"
@@ -40,6 +41,8 @@ func Router(logger *zap.SugaredLogger, service service) *gin.Engine {
 	if err != nil {
 		logger.Fatal("error setting trusted proxies", zap.Error(err))
 	}
+
+	router.Use(middlewares.TraceID())
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{

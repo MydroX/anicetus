@@ -1,9 +1,9 @@
 package repository
 
 import (
+	"context"
 	"fmt"
 
-	"MydroX/anicetus/internal/common/context"
 	"MydroX/anicetus/internal/common/errorsutil"
 	"MydroX/anicetus/internal/common/pgxutil"
 	"MydroX/anicetus/internal/users/models"
@@ -27,8 +27,8 @@ func New(l *zap.SugaredLogger, dbPool pgxutil.DBPool) UsersRepository {
 	}
 }
 
-func (r *repository) CreateUser(ctx *context.AppContext, user *models.User) error {
-	_, err := r.dbPool.Exec(ctx.StdContext(), r.queries.CreateUser(), user.UUID, user.Username, user.Email, user.Password, user.Role)
+func (r *repository) CreateUser(ctx context.Context, user *models.User) error {
+	_, err := r.dbPool.Exec(ctx, r.queries.CreateUser(), user.UUID, user.Username, user.Email, user.Password, user.Role)
 	if err != nil {
 		return errorsutil.SQLErrorParser(err)
 	}
@@ -36,10 +36,10 @@ func (r *repository) CreateUser(ctx *context.AppContext, user *models.User) erro
 	return nil
 }
 
-func (r *repository) GetUserByUUID(ctx *context.AppContext, uuid string) (*models.User, error) {
+func (r *repository) GetUserByUUID(ctx context.Context, uuid string) (*models.User, error) {
 	var user models.User
 
-	err := r.dbPool.QueryRow(ctx.StdContext(), r.queries.GetUserByUUID(), uuid).
+	err := r.dbPool.QueryRow(ctx, r.queries.GetUserByUUID(), uuid).
 		Scan(&user.UUID, &user.Username, &user.Email, &user.Password, &user.Role, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		return nil, errorsutil.SQLErrorParser(err)
@@ -48,8 +48,8 @@ func (r *repository) GetUserByUUID(ctx *context.AppContext, uuid string) (*model
 	return &user, nil
 }
 
-func (r *repository) UpdateUser(ctx *context.AppContext, user *models.User) (*models.User, error) {
-	err := r.dbPool.QueryRow(ctx.StdContext(), r.queries.UpdateUser(), user.Username, user.Email, user.Role, user.UUID).
+func (r *repository) UpdateUser(ctx context.Context, user *models.User) (*models.User, error) {
+	err := r.dbPool.QueryRow(ctx, r.queries.UpdateUser(), user.Username, user.Email, user.Role, user.UUID).
 		Scan(&user.UUID, &user.Username, &user.Email, &user.Password, &user.Role, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		return nil, errorsutil.SQLErrorParser(err)
@@ -58,8 +58,8 @@ func (r *repository) UpdateUser(ctx *context.AppContext, user *models.User) (*mo
 	return user, nil
 }
 
-func (r *repository) UpdatePassword(ctx *context.AppContext, uuid, password string) error {
-	res, err := r.dbPool.Exec(ctx.StdContext(), r.queries.UpdatePassword(), password, uuid)
+func (r *repository) UpdatePassword(ctx context.Context, uuid, password string) error {
+	res, err := r.dbPool.Exec(ctx, r.queries.UpdatePassword(), password, uuid)
 	if err != nil {
 		return errorsutil.SQLErrorParser(err)
 	}
@@ -71,8 +71,8 @@ func (r *repository) UpdatePassword(ctx *context.AppContext, uuid, password stri
 	return nil
 }
 
-func (r *repository) UpdateEmail(ctx *context.AppContext, uuid, email string) error {
-	res, err := r.dbPool.Exec(ctx.StdContext(), r.queries.UpdateEmail(), email, uuid)
+func (r *repository) UpdateEmail(ctx context.Context, uuid, email string) error {
+	res, err := r.dbPool.Exec(ctx, r.queries.UpdateEmail(), email, uuid)
 	if err != nil {
 		return errorsutil.SQLErrorParser(err)
 	}
@@ -84,8 +84,8 @@ func (r *repository) UpdateEmail(ctx *context.AppContext, uuid, email string) er
 	return nil
 }
 
-func (r *repository) DeleteUser(ctx *context.AppContext, uuid string) error {
-	res, err := r.dbPool.Exec(ctx.StdContext(), r.queries.DeleteUser(), uuid)
+func (r *repository) DeleteUser(ctx context.Context, uuid string) error {
+	res, err := r.dbPool.Exec(ctx, r.queries.DeleteUser(), uuid)
 	if err != nil {
 		return errorsutil.SQLErrorParser(err)
 	}
@@ -97,10 +97,10 @@ func (r *repository) DeleteUser(ctx *context.AppContext, uuid string) error {
 	return nil
 }
 
-func (r *repository) GetUserByEmail(ctx *context.AppContext, email string) (*models.User, error) {
+func (r *repository) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
 	var user models.User
 
-	err := r.dbPool.QueryRow(ctx.StdContext(), r.queries.GetUserByEmail(), email).
+	err := r.dbPool.QueryRow(ctx, r.queries.GetUserByEmail(), email).
 		Scan(&user.UUID, &user.Username, &user.Email, &user.Password, &user.Role, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		return nil, errorsutil.SQLErrorParser(err)
@@ -109,10 +109,10 @@ func (r *repository) GetUserByEmail(ctx *context.AppContext, email string) (*mod
 	return &user, nil
 }
 
-func (r *repository) GetUserByUsername(ctx *context.AppContext, username string) (*models.User, error) {
+func (r *repository) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
 	var user models.User
 
-	err := r.dbPool.QueryRow(ctx.StdContext(), r.queries.GetUserByUsername(), username).
+	err := r.dbPool.QueryRow(ctx, r.queries.GetUserByUsername(), username).
 		Scan(&user.UUID, &user.Username, &user.Email, &user.Password, &user.Role, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		return nil, errorsutil.SQLErrorParser(err)
@@ -121,8 +121,8 @@ func (r *repository) GetUserByUsername(ctx *context.AppContext, username string)
 	return &user, nil
 }
 
-func (r *repository) GetAllUsers(ctx *context.AppContext) ([]*models.User, error) {
-	rows, err := r.dbPool.Query(ctx.StdContext(), r.queries.GetAllUsers())
+func (r *repository) GetAllUsers(ctx context.Context) ([]*models.User, error) {
+	rows, err := r.dbPool.Query(ctx, r.queries.GetAllUsers())
 	if err != nil {
 		return nil, errorsutil.SQLErrorParser(err)
 	}

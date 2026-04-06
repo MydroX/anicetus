@@ -1,7 +1,7 @@
 package usecases
 
 import (
-	"MydroX/anicetus/internal/common/context"
+	"context"
 	"MydroX/anicetus/internal/common/errorsutil"
 	"MydroX/anicetus/internal/config"
 	"MydroX/anicetus/internal/users/dto"
@@ -26,7 +26,7 @@ func New(l *zap.SugaredLogger, r repository.UsersRepository, cfg *config.Config)
 	}
 }
 
-func (u *usecases) Create(ctx *context.AppContext, req *dto.CreateUserRequest) error {
+func (u *usecases) Create(ctx context.Context, req *dto.CreateUserRequest) error {
 	passwordHashed, err := passwordpkg.Hash(req.Password)
 	if err != nil {
 		return &errorsutil.AppError{Code: errorsutil.ErrorInternal, Err: err}
@@ -45,7 +45,7 @@ func (u *usecases) Create(ctx *context.AppContext, req *dto.CreateUserRequest) e
 	return err
 }
 
-func (u *usecases) Get(ctx *context.AppContext, uuid string) (*dto.GetUserResponse, error) {
+func (u *usecases) Get(ctx context.Context, uuid string) (*dto.GetUserResponse, error) {
 	user, err := u.repository.GetUserByUUID(ctx, uuid)
 	if err != nil {
 		return nil, err
@@ -61,7 +61,7 @@ func (u *usecases) Get(ctx *context.AppContext, uuid string) (*dto.GetUserRespon
 	return &res, err
 }
 
-func (u *usecases) Update(ctx *context.AppContext, userParams *dto.UpdateUserRequest) error {
+func (u *usecases) Update(ctx context.Context, userParams *dto.UpdateUserRequest) error {
 	user := models.User{
 		UUID:     userParams.UUID,
 		Username: userParams.Username,
@@ -74,7 +74,7 @@ func (u *usecases) Update(ctx *context.AppContext, userParams *dto.UpdateUserReq
 	return err
 }
 
-func (u *usecases) UpdatePassword(ctx *context.AppContext, uuid, newPassword string) error {
+func (u *usecases) UpdatePassword(ctx context.Context, uuid, newPassword string) error {
 	newPasswordCrypted, err := passwordpkg.Hash(newPassword)
 	if err != nil {
 		return &errorsutil.AppError{Code: errorsutil.ErrorInternal, Err: err}
@@ -85,19 +85,19 @@ func (u *usecases) UpdatePassword(ctx *context.AppContext, uuid, newPassword str
 	return apiErr
 }
 
-func (u *usecases) UpdateEmail(ctx *context.AppContext, uuid, email string) error {
+func (u *usecases) UpdateEmail(ctx context.Context, uuid, email string) error {
 	err := u.repository.UpdateEmail(ctx, uuid, email)
 
 	return err
 }
 
-func (u *usecases) Delete(ctx *context.AppContext, uuid string) error {
+func (u *usecases) Delete(ctx context.Context, uuid string) error {
 	err := u.repository.DeleteUser(ctx, uuid)
 
 	return err
 }
 
-func (u *usecases) GetAllUsers(ctx *context.AppContext) (*dto.GetAllUsersResponse, error) {
+func (u *usecases) GetAllUsers(ctx context.Context) (*dto.GetAllUsersResponse, error) {
 	users, err := u.repository.GetAllUsers(ctx)
 	if err != nil {
 		return nil, err
