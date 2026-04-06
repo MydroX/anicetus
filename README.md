@@ -2,11 +2,25 @@
 
 ![coverage](https://raw.githubusercontent.com/MydroX/anicetus/badges/.badges/main/coverage.svg)
 ![Go](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go&logoColor=white)
-![License](https://img.shields.io/github/license/MydroX/anicetus)
+![License](https://img.shields.io/github/license/MydroX/anicetus?v=2)
 
-Anicetus is a lightweight identity and access management (IAM) service built in Go. It provides authentication, session management, and multi-service token scoping — the core of what Keycloak does, without the weight.
+Anicetus is a lightweight, security-first identity and access management (IAM) service built in Go. It provides authentication, session management, and multi-service token scoping — the core of what Keycloak does, without the weight.
 
 > **Status:** Early development. The core auth flow works but the API is not stable yet. Contributions and feedback are welcome.
+
+## Philosophy
+
+A focused IAM service for modern backends — built for simplicity, security, and performance.
+
+- Built in Go — no JVM, no heavy runtime. A small, readable codebase with predictable performance
+- Security-first — designed with strict security principles and safe defaults from the ground up
+- One binary, one config — no XML, no complex setup, no hidden magic
+- Sane defaults — secure out of the box, configurable when needed
+- No plugins — fewer moving parts, smaller attack surface
+- Focused scope — authentication, session management, and audience scoping done right
+- Simple operations — easy to run locally or in production (Docker-ready)
+
+If you need SAML, LDAP federation, or identity brokering — Keycloak is the right choice.
 
 ## Features
 
@@ -16,14 +30,35 @@ Anicetus is a lightweight identity and access management (IAM) service built in 
 - **User management** — registration, login, CRUD operations
 - **Audience management** — register services, assign users, revoke access
 
-### Security
+## Security
 
-- HS512 JWT signing with configurable secret, issuer, and expiration bounds
-- Argon2id hashing for refresh tokens
-- bcrypt for passwords with configurable complexity rules
-- HttpOnly + Secure cookies
-- Audience validation on token parse
-- Config validation at startup (secret length, token duration bounds)
+As an IAM service, security is a core priority — not an afterthought.
+
+### Implemented
+
+- **JWT signing** — HS512 with enforced minimum 32-char secret
+- **Token duration bounds** — access tokens max 1h, refresh tokens max 30d, validated at startup
+- **Argon2id** for refresh token hashing (configurable iterations, memory, parallelism)
+- **bcrypt** (cost 14) for password hashing with configurable complexity rules
+- **HttpOnly + Secure cookies** — prevents XSS access to tokens
+- **Audience validation** — tokens are rejected if their `aud` claim doesn't match expected audiences
+- **Issuer validation** — tokens must match the configured issuer
+- **Clock skew tolerance** — configurable tolerance for time-based claims (exp, iat, nbf)
+- **Constant-time comparison** for token verification (prevents timing attacks)
+- **Parameterized SQL** throughout (no injection risk)
+- **Config validation at startup** — fails fast on weak secrets, invalid durations, or missing config
+
+### Planned
+
+- **TOTP** — time-based one-time password for two-factor authentication
+- **Separate signing keys** for access and refresh tokens
+- **Refresh token rotation** — issue new refresh token on use, invalidate the old one
+- **Rate limiting** on authentication endpoints (login, register)
+- **Uniform error responses** on login to prevent user enumeration
+- **Token revocation / blacklisting** — invalidate tokens before expiry
+- **RBAC / permissions** — role-based access control in token claims
+- **CORS configuration**
+- **Request signing** for admin endpoints
 
 ## Quick Start
 
@@ -65,39 +100,6 @@ session:
     salt_length: 16
 ```
 
-## API Endpoints
-
-### Authentication
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/register` | Register a new user |
-| POST | `/api/v1/login` | Login (returns access + refresh tokens) |
-| GET | `/api/v1/refresh` | Refresh access token |
-
-### Users
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/users/` | List all users |
-| GET | `/api/v1/users/:uuid` | Get user |
-| PUT | `/api/v1/users/:uuid` | Update user |
-| PATCH | `/api/v1/users/:uuid/email` | Update email |
-| PATCH | `/api/v1/users/:uuid/password` | Update password |
-| DELETE | `/api/v1/users/:uuid` | Delete user |
-
-### Audiences
-
-Audiences define which services a user's tokens are valid for. Assign audiences to users to control cross-service access.
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/audiences` | Register a new audience |
-| GET | `/api/v1/audiences` | List all audiences |
-| DELETE | `/api/v1/audiences/:audience` | Revoke an audience |
-| GET | `/api/v1/audiences/users/:uuid` | Get user's audiences |
-| POST | `/api/v1/audiences/users/:uuid` | Assign audience to user |
-
 ## Contributing
 
 ### Setup
@@ -134,4 +136,4 @@ Each domain follows clean architecture: `controller → usecases → repository`
 
 ## License
 
-[MIT](LICENSE)
+[Apache License 2.0](LICENSE)
