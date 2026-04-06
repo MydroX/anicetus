@@ -5,4 +5,5 @@ cmd/**/config.yaml
 vendor
 .bruno/.DS_Store
 .claude
+CLAUDE.md
 coverage
