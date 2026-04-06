@@ -6,14 +6,13 @@ import (
 
 	"MydroX/anicetus/internal/common/context"
 	"MydroX/anicetus/internal/common/errorsutil"
-	"MydroX/anicetus/internal/common/uuidutil"
 	"MydroX/anicetus/internal/config"
 	"MydroX/anicetus/internal/users/dto"
 	"MydroX/anicetus/internal/users/mocks"
 	"MydroX/anicetus/internal/users/models"
 
 	"MydroX/anicetus/pkg/logger"
-	"MydroX/anicetus/pkg/uuid"
+	"github.com/google/uuid"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -98,7 +97,7 @@ func Test_Create(t *testing.T) {
 func Test_Get(t *testing.T) {
 	r, u := createTestUsecase(t)
 
-	userUUID := uuid.NewWithPrefix(uuidutil.PrefixUser)
+	userUUID := uuid.New().String()
 
 	t.Run("[V1] Get user", func(t *testing.T) {
 		ctx := context.NewAppContextTest()
@@ -131,7 +130,7 @@ func Test_Update(t *testing.T) {
 	r, u := createTestUsecase(t)
 	ctx := context.NewAppContextTest()
 
-	userUUID := uuid.NewWithPrefix(uuidutil.PrefixUser)
+	userUUID := uuid.New().String()
 
 	t.Run("[V1] Update user", func(t *testing.T) {
 		request := dto.UpdateUserRequest{
@@ -179,7 +178,7 @@ func Test_Update(t *testing.T) {
 func Test_UpdatePassword(t *testing.T) {
 	r, u := createTestUsecase(t)
 
-	userUUID := uuid.NewWithPrefix(uuidutil.PrefixUser)
+	userUUID := uuid.New().String()
 
 	t.Run("[V1] Update password", func(t *testing.T) {
 		ctx := context.NewAppContextTest()
@@ -221,7 +220,7 @@ func Test_UpdatePassword(t *testing.T) {
 func Test_UpdateEmail(t *testing.T) {
 	r, u := createTestUsecase(t)
 
-	userUUID := uuid.NewWithPrefix(uuidutil.PrefixUser)
+	userUUID := uuid.New().String()
 	email := "jeon.soyeon@cube.kr"
 
 	t.Run("[V1] Update email", func(t *testing.T) {
@@ -248,7 +247,7 @@ func Test_UpdateEmail(t *testing.T) {
 func Test_Delete(t *testing.T) {
 	r, u := createTestUsecase(t)
 
-	userUUID := uuid.NewWithPrefix(uuidutil.PrefixUser)
+	userUUID := uuid.New().String()
 
 	t.Run("[V1] Delete user", func(t *testing.T) {
 		ctx := context.NewAppContextTest()
@@ -273,7 +272,7 @@ func Test_Delete(t *testing.T) {
 
 func Test_GetAllUsers(t *testing.T) {
 	r, u := createTestUsecase(t)
-	userUUID := uuid.NewWithPrefix(uuidutil.PrefixUser)
+	userUUID := uuid.New().String()
 
 	t.Run("[V1] Get all users", func(t *testing.T) {
 		ctx := context.NewAppContextTest()

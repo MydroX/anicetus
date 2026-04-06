@@ -7,7 +7,7 @@ import (
 	"MydroX/anicetus/internal/common/errorsutil"
 	"MydroX/anicetus/internal/common/response"
 	"MydroX/anicetus/internal/iam/dto"
-	"MydroX/anicetus/pkg/uuid"
+	"github.com/google/uuid"
 	"github.com/gin-gonic/gin"
 )
 
@@ -78,7 +78,7 @@ func (c *controller) GetUserAudiences(ginCtx *gin.Context) {
 
 	userUUID := ginCtx.Param("uuid")
 
-	if _, err := uuid.ValidateWithPrefix(userUUID); err != nil {
+	if _, err := uuid.Parse(userUUID); err != nil {
 		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidUUID, errorsutil.MessageInvalidUUID)
 
 		return
@@ -102,7 +102,7 @@ func (c *controller) AssignAudienceToUser(ginCtx *gin.Context) {
 
 	userUUID := ginCtx.Param("uuid")
 
-	if _, err := uuid.ValidateWithPrefix(userUUID); err != nil {
+	if _, err := uuid.Parse(userUUID); err != nil {
 		response.BadRequest(c.logger, ctx, errorsutil.ErrorInvalidUUID, errorsutil.MessageInvalidUUID)
 
 		return

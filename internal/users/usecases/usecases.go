@@ -3,13 +3,12 @@ package usecases
 import (
 	"MydroX/anicetus/internal/common/context"
 	"MydroX/anicetus/internal/common/errorsutil"
-	"MydroX/anicetus/internal/common/uuidutil"
 	"MydroX/anicetus/internal/config"
 	"MydroX/anicetus/internal/users/dto"
 	"MydroX/anicetus/internal/users/models"
 	"MydroX/anicetus/internal/users/repository"
 	passwordpkg "MydroX/anicetus/pkg/password"
-	uuidpkg "MydroX/anicetus/pkg/uuid"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -34,7 +33,7 @@ func (u *usecases) Create(ctx *context.AppContext, req *dto.CreateUserRequest) e
 	}
 
 	user := models.User{
-		UUID:     uuidpkg.NewWithPrefix(uuidutil.PrefixUser),
+		UUID:     uuid.Must(uuid.NewV7()).String(),
 		Username: req.Username,
 		Email:    req.Email,
 		Password: passwordHashed,

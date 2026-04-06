@@ -7,11 +7,9 @@ import (
 
 	"MydroX/anicetus/internal/common/errorsutil"
 	"MydroX/anicetus/internal/common/pgxutil"
-	uuidpkg "MydroX/anicetus/pkg/uuid"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
-
-const audienceUUIDPrefix = "aud"
 
 func NewAudienceStore(l *zap.SugaredLogger, dbPool pgxutil.DBPool) AudienceStore {
 	return &repository{
@@ -98,7 +96,7 @@ func (r *repository) RegisterAudience(ctx context.Context, audience string, meta
 		}
 	}
 
-	uuid := uuidpkg.NewWithPrefix(audienceUUIDPrefix)
+	uuid := uuid.Must(uuid.NewV7()).String()
 
 	_, err := r.dbPool.Exec(ctx, r.queries.RegisterAudience(), uuid, audience, serviceName, description, permissionsJSON)
 	if err != nil {
