@@ -29,7 +29,6 @@ type Database struct {
 }
 
 type JWT struct {
-	Secret       string       `yaml:"secret"`
 	SkewSeconds  int          `yaml:"skew"`
 	Issuer       string       `yaml:"issuer"`
 	AccessToken  AccessToken  `yaml:"access_token"`
@@ -37,11 +36,13 @@ type JWT struct {
 }
 
 type AccessToken struct {
-	Expiration int `yaml:"expiration"`
+	Secret     string `yaml:"secret"`
+	Expiration int    `yaml:"expiration"`
 }
 
 type RefreshToken struct {
-	Expiration int `yaml:"expiration"`
+	Secret     string `yaml:"secret"`
+	Expiration int    `yaml:"expiration"`
 }
 
 type Session struct {

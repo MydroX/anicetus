@@ -16,7 +16,8 @@ func TestParseAccessToken(t *testing.T) {
 	defer ctrl.Finish()
 
 	config := TokenConfig{
-		SecretKey:         "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		AccessTokenSecret:         "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		RefreshTokenSecret: "test-refresh-secret-long-enough-for-signing-jwt-tok",
 		ExpectedIssuer:    "test-issuer",
 		ExpectedAudiences: []string{"test-audience"},
 		ClockSkewSeconds:  60,
@@ -41,7 +42,7 @@ func TestParseAccessToken(t *testing.T) {
 			Permissions: permissions,
 		})
 
-		tokenString, err := token.SignedString([]byte(config.SecretKey))
+		tokenString, err := token.SignedString([]byte(config.AccessTokenSecret))
 		assert.NoError(t, err)
 
 		// Parse token
@@ -69,7 +70,7 @@ func TestParseAccessToken(t *testing.T) {
 			Permissions: []string{"read"},
 		})
 
-		tokenString, err := token.SignedString([]byte(config.SecretKey))
+		tokenString, err := token.SignedString([]byte(config.AccessTokenSecret))
 		assert.NoError(t, err)
 
 		// Parse token
@@ -94,7 +95,7 @@ func TestParseAccessToken(t *testing.T) {
 			SessionUUID: "session-456",
 		})
 
-		tokenString, err := token.SignedString([]byte(config.SecretKey))
+		tokenString, err := token.SignedString([]byte(config.AccessTokenSecret))
 		assert.NoError(t, err)
 
 		// Parse token
@@ -122,7 +123,8 @@ func TestParseToken(t *testing.T) {
 	defer ctrl.Finish()
 
 	config := TokenConfig{
-		SecretKey:         "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		AccessTokenSecret:         "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		RefreshTokenSecret: "test-refresh-secret-long-enough-for-signing-jwt-tok",
 		ExpectedIssuer:    "test-issuer",
 		ExpectedAudiences: []string{"test-audience"},
 		ClockSkewSeconds:  60,
@@ -146,7 +148,7 @@ func TestParseToken(t *testing.T) {
 			Permissions: []string{"read"},
 		})
 
-		tokenString, err := token.SignedString([]byte(config.SecretKey))
+		tokenString, err := token.SignedString([]byte(config.AccessTokenSecret))
 		assert.NoError(t, err)
 
 		// Parse generic token
@@ -175,7 +177,7 @@ func TestParseToken(t *testing.T) {
 			SessionUUID: "session-456",
 		})
 
-		tokenString, err := token.SignedString([]byte(config.SecretKey))
+		tokenString, err := token.SignedString([]byte(config.AccessTokenSecret))
 		assert.NoError(t, err)
 
 		// Parse generic token
@@ -219,7 +221,8 @@ func TestCreateAccessToken(t *testing.T) {
 	t.Run("successful token creation", func(t *testing.T) {
 		// Configure service
 		config := TokenConfig{
-			SecretKey:           "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+			AccessTokenSecret:           "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		RefreshTokenSecret: "test-refresh-secret-long-enough-for-signing-jwt-tok",
 			ExpectedIssuer:      "test-issuer",
 			AccessTokenDuration: 3600,
 		}
@@ -237,7 +240,7 @@ func TestCreateAccessToken(t *testing.T) {
 
 		// Decode and validate token
 		parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
-			return []byte(config.SecretKey), nil
+			return []byte(config.AccessTokenSecret), nil
 		})
 		assert.NoError(t, err)
 		assert.True(t, parsedToken.Valid)
@@ -267,7 +270,7 @@ func TestCreateAccessToken(t *testing.T) {
 	t.Run("missing secret key", func(t *testing.T) {
 		// Configure service with empty secret key
 		config := TokenConfig{
-			SecretKey:      "", // Empty key
+			AccessTokenSecret:      "", // Empty key
 			ExpectedIssuer: "test-issuer",
 		}
 		service := NewJWTService(config)
@@ -294,7 +297,8 @@ func TestCreateRefreshToken(t *testing.T) {
 	t.Run("successful token creation", func(t *testing.T) {
 		// Configure service
 		config := TokenConfig{
-			SecretKey:            "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+			AccessTokenSecret:            "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		RefreshTokenSecret: "test-refresh-secret-long-enough-for-signing-jwt-tok",
 			ExpectedIssuer:       "test-issuer",
 			RefreshTokenDuration: 86400, // 24 hours
 		}
@@ -312,7 +316,7 @@ func TestCreateRefreshToken(t *testing.T) {
 
 		// Decode and validate token
 		parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
-			return []byte(config.SecretKey), nil
+			return []byte(config.RefreshTokenSecret), nil
 		})
 		assert.NoError(t, err)
 		assert.True(t, parsedToken.Valid)
@@ -335,7 +339,7 @@ func TestCreateRefreshToken(t *testing.T) {
 	t.Run("missing secret key", func(t *testing.T) {
 		// Configure service with empty secret key
 		config := TokenConfig{
-			SecretKey:      "", // Empty key
+			AccessTokenSecret:      "", // Empty key
 			ExpectedIssuer: "test-issuer",
 		}
 		service := NewJWTService(config)
@@ -357,7 +361,8 @@ func TestCreateRefreshToken(t *testing.T) {
 	t.Run("empty session UUID", func(t *testing.T) {
 		// Configure service
 		config := TokenConfig{
-			SecretKey:      "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+			AccessTokenSecret:      "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		RefreshTokenSecret: "test-refresh-secret-long-enough-for-signing-jwt-tok",
 			ExpectedIssuer: "test-issuer",
 		}
 		service := NewJWTService(config)
@@ -386,7 +391,8 @@ func FuzzParseToken(f *testing.F) {
 	f.Add("eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.invalid.signature")
 
 	config := TokenConfig{
-		SecretKey:        "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		AccessTokenSecret:        "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		RefreshTokenSecret: "test-refresh-secret-long-enough-for-signing-jwt-tok",
 		ExpectedIssuer:   "test-issuer",
 		ClockSkewSeconds: 60,
 	}
@@ -423,7 +429,8 @@ func FuzzParseTokenWithStructuredInput(f *testing.F) {
 	f.Add("valid", `{"alg":"HS256","typ":"JWT"}`, `{"user_uuid":"","token_type":""}`, "valid_sig")
 
 	config := TokenConfig{
-		SecretKey:        "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		AccessTokenSecret:        "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		RefreshTokenSecret: "test-refresh-secret-long-enough-for-signing-jwt-tok",
 		ExpectedIssuer:   "test-issuer",
 		ClockSkewSeconds: 60,
 	}
@@ -475,7 +482,8 @@ func FuzzParseTokenWithValidStructure(f *testing.F) {
 	f.Add("very-long-uuid-that-might-cause-issues-with-memory-allocation", "refresh", int64(-1), "malicious-issuer", "evil-audience")
 
 	config := TokenConfig{
-		SecretKey:        "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		AccessTokenSecret:        "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		RefreshTokenSecret: "test-refresh-secret-long-enough-for-signing-jwt-tok",
 		ExpectedIssuer:   "test-issuer",
 		ClockSkewSeconds: 60,
 	}
@@ -492,7 +500,7 @@ func FuzzParseTokenWithValidStructure(f *testing.F) {
 		}
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
-		tokenString, err := token.SignedString([]byte(config.SecretKey))
+		tokenString, err := token.SignedString([]byte(config.AccessTokenSecret))
 
 		if err != nil {
 			// If we can't create the token, skip this iteration
@@ -531,7 +539,8 @@ func FuzzParseTokenClaimTypes(f *testing.F) {
 	f.Add(`{"nested":{"user_uuid":"user","token_type":"access"}}`) // nested structure
 
 	config := TokenConfig{
-		SecretKey:        "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		AccessTokenSecret:        "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		RefreshTokenSecret: "test-refresh-secret-long-enough-for-signing-jwt-tok",
 		ExpectedIssuer:   "test-issuer",
 		ClockSkewSeconds: 60,
 	}
@@ -559,7 +568,7 @@ func FuzzParseTokenClaimTypes(f *testing.F) {
 
 		// Create JWT with these claims
 		token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims(claimsMap))
-		tokenString, err := token.SignedString([]byte(config.SecretKey))
+		tokenString, err := token.SignedString([]byte(config.AccessTokenSecret))
 
 		if err != nil {
 			t.Skip("Could not create test token")
@@ -599,7 +608,8 @@ func FuzzParseTokenMaliciousPayloads(f *testing.F) {
 	f.Add("用户123") // unicode
 
 	config := TokenConfig{
-		SecretKey:        "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		AccessTokenSecret:        "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		RefreshTokenSecret: "test-refresh-secret-long-enough-for-signing-jwt-tok",
 		ExpectedIssuer:   "test-issuer",
 		ClockSkewSeconds: 60,
 	}
@@ -634,7 +644,7 @@ func FuzzParseTokenMaliciousPayloads(f *testing.F) {
 
 		for i, claims := range testCases {
 			token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
-			tokenString, err := token.SignedString([]byte(config.SecretKey))
+			tokenString, err := token.SignedString([]byte(config.AccessTokenSecret))
 
 			if err != nil {
 				// Some malicious inputs might prevent token creation
@@ -671,7 +681,7 @@ func FuzzParseTokenMaliciousPayloads(f *testing.F) {
 func TestKeyFunc(t *testing.T) {
 	t.Run("valid HMAC method", func(t *testing.T) {
 		config := TokenConfig{
-			SecretKey: "test-secret-key",
+			AccessTokenSecret: "test-secret-key",
 		}
 		service := NewJWTService(config)
 
@@ -682,14 +692,14 @@ func TestKeyFunc(t *testing.T) {
 			},
 		}
 
-		key, err := service.keyFunc(token)
+		key, err := service.keyFuncForSecret("test-secret-key")(token)
 		assert.NoError(t, err)
 		assert.Equal(t, []byte("test-secret-key"), key)
 	})
 
 	t.Run("missing secret key", func(t *testing.T) {
 		config := TokenConfig{
-			SecretKey: "",
+			AccessTokenSecret: "",
 		}
 		service := NewJWTService(config)
 
@@ -700,7 +710,7 @@ func TestKeyFunc(t *testing.T) {
 			},
 		}
 
-		key, err := service.keyFunc(token)
+		key, err := service.keyFuncForSecret("")(token)
 		assert.Error(t, err)
 		assert.Nil(t, key)
 		assert.ErrorIs(t, err, ErrMissingSecretKey)
@@ -708,7 +718,7 @@ func TestKeyFunc(t *testing.T) {
 
 	t.Run("invalid signing method", func(t *testing.T) {
 		config := TokenConfig{
-			SecretKey: "test-secret-key",
+			AccessTokenSecret: "test-secret-key",
 		}
 		service := NewJWTService(config)
 
@@ -719,7 +729,7 @@ func TestKeyFunc(t *testing.T) {
 			},
 		}
 
-		key, err := service.keyFunc(token)
+		key, err := service.keyFuncForSecret("test-secret-key")(token)
 		assert.Error(t, err)
 		assert.Nil(t, key)
 		assert.ErrorIs(t, err, ErrInvalidSigningAlg)
@@ -727,7 +737,7 @@ func TestKeyFunc(t *testing.T) {
 
 	t.Run("none algorithm", func(t *testing.T) {
 		config := TokenConfig{
-			SecretKey: "test-secret-key",
+			AccessTokenSecret: "test-secret-key",
 		}
 		service := NewJWTService(config)
 
@@ -738,7 +748,7 @@ func TestKeyFunc(t *testing.T) {
 			},
 		}
 
-		key, err := service.keyFunc(token)
+		key, err := service.keyFuncForSecret("test-secret-key")(token)
 		assert.Error(t, err)
 		assert.Nil(t, key)
 		assert.ErrorIs(t, err, ErrInvalidSigningAlg)
@@ -747,7 +757,8 @@ func TestKeyFunc(t *testing.T) {
 
 func TestParseRefreshToken(t *testing.T) {
 	config := TokenConfig{
-		SecretKey:         "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		AccessTokenSecret:         "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		RefreshTokenSecret: "test-refresh-secret-long-enough-for-signing-jwt-tok",
 		ExpectedIssuer:    "test-issuer",
 		ExpectedAudiences: []string{"test-audience"},
 		ClockSkewSeconds:  60,
@@ -766,7 +777,7 @@ func TestParseRefreshToken(t *testing.T) {
 			"session_uuid": "session-456",
 		})
 
-		tokenString, err := token.SignedString([]byte(config.SecretKey))
+		tokenString, err := token.SignedString([]byte(config.RefreshTokenSecret))
 		assert.NoError(t, err)
 
 		claims, err := service.ParseRefreshToken(tokenString)
@@ -794,7 +805,7 @@ func TestParseRefreshToken(t *testing.T) {
 			"session_uuid": "session-456",
 		})
 
-		tokenString, err := token.SignedString([]byte(config.SecretKey))
+		tokenString, err := token.SignedString([]byte(config.RefreshTokenSecret))
 		assert.NoError(t, err)
 
 		claims, err := service.ParseRefreshToken(tokenString)
@@ -812,7 +823,7 @@ func TestParseRefreshToken(t *testing.T) {
 			"token_type": string(AccessToken), // Wrong type
 		})
 
-		tokenString, err := token.SignedString([]byte(config.SecretKey))
+		tokenString, err := token.SignedString([]byte(config.RefreshTokenSecret))
 		assert.NoError(t, err)
 
 		claims, err := service.ParseRefreshToken(tokenString)
@@ -831,7 +842,7 @@ func TestParseRefreshToken(t *testing.T) {
 			// Missing user_uuid
 		})
 
-		tokenString, err := token.SignedString([]byte(config.SecretKey))
+		tokenString, err := token.SignedString([]byte(config.RefreshTokenSecret))
 		assert.NoError(t, err)
 
 		claims, err := service.ParseRefreshToken(tokenString)
@@ -850,7 +861,7 @@ func TestParseRefreshToken(t *testing.T) {
 			// Missing session_uuid
 		})
 
-		tokenString, err := token.SignedString([]byte(config.SecretKey))
+		tokenString, err := token.SignedString([]byte(config.RefreshTokenSecret))
 		assert.NoError(t, err)
 
 		claims, err := service.ParseRefreshToken(tokenString)
@@ -869,7 +880,7 @@ func TestParseRefreshToken(t *testing.T) {
 			"session_uuid": "", // Empty string
 		})
 
-		tokenString, err := token.SignedString([]byte(config.SecretKey))
+		tokenString, err := token.SignedString([]byte(config.RefreshTokenSecret))
 		assert.NoError(t, err)
 
 		claims, err := service.ParseRefreshToken(tokenString)

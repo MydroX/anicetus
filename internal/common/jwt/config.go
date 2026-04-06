@@ -39,8 +39,11 @@ const (
 
 // TokenConfig holds configuration for the JWT service
 type TokenConfig struct {
-	// Secret key used for signing tokens
-	SecretKey string
+	// AccessTokenSecret is the secret key used for signing access tokens
+	AccessTokenSecret string
+
+	// RefreshTokenSecret is the secret key used for signing refresh tokens
+	RefreshTokenSecret string
 
 	// ExpectedIssuer is the expected issuer claim value
 	ExpectedIssuer string
@@ -59,16 +62,15 @@ type TokenConfig struct {
 }
 
 func NewTokenConfigFromEnv(cfg *config.Config) (TokenConfig, error) {
-	// Validate JWT secret - mandatory for security
 	if err := validateTokenConfig(cfg); err != nil {
 		return TokenConfig{}, errors.New("invalid JWT configuration: " + err.Error())
 	}
 
-	// Create config with validated values
 	tokenCfg := TokenConfig{
-		SecretKey:            cfg.JWT.Secret,
+		AccessTokenSecret:    cfg.JWT.AccessToken.Secret,
+		RefreshTokenSecret:   cfg.JWT.RefreshToken.Secret,
 		ExpectedIssuer:       cfg.JWT.Issuer,
-		ExpectedAudiences:    []string{cfg.JWT.Issuer}, // Default to issuer as audience
+		ExpectedAudiences:    []string{cfg.JWT.Issuer},
 		ClockSkewSeconds:     cfg.JWT.SkewSeconds,
 		AccessTokenDuration:  cfg.JWT.AccessToken.Expiration,
 		RefreshTokenDuration: cfg.JWT.RefreshToken.Expiration,
@@ -78,31 +80,38 @@ func NewTokenConfigFromEnv(cfg *config.Config) (TokenConfig, error) {
 }
 
 func validateTokenConfig(cfg *config.Config) error {
-	if cfg.JWT.Secret == "" {
-		return errors.New("JWT secret is required in configuration")
+	if cfg.JWT.AccessToken.Secret == "" {
+		return errors.New("JWT access token secret is required")
 	}
 
-	// Validate secret key strength
-	if len(cfg.JWT.Secret) < minJWTSecretLength {
-		return errors.New("JWT secret must be at least 32 characters for security")
+	if len(cfg.JWT.AccessToken.Secret) < minJWTSecretLength {
+		return errors.New("JWT access token secret must be at least 32 characters")
 	}
 
-	// Validate issuer - mandatory for proper JWT validation
+	if cfg.JWT.RefreshToken.Secret == "" {
+		return errors.New("JWT refresh token secret is required")
+	}
+
+	if len(cfg.JWT.RefreshToken.Secret) < minJWTSecretLength {
+		return errors.New("JWT refresh token secret must be at least 32 characters")
+	}
+
+	if cfg.JWT.AccessToken.Secret == cfg.JWT.RefreshToken.Secret {
+		return errors.New("JWT access and refresh token secrets must be different")
+	}
+
 	if cfg.JWT.Issuer == "" {
-		return errors.New("JWT issuer is required in configuration")
+		return errors.New("JWT issuer is required")
 	}
 
-	// Security validation: Clock skew bounds
 	if cfg.JWT.SkewSeconds < minClockSkewSeconds || cfg.JWT.SkewSeconds > maxClockSkewSeconds {
 		return errors.New("JWT clock skew must be between 0 and 300 seconds")
 	}
 
-	// Security validation: Access token duration bounds
 	if cfg.JWT.AccessToken.Expiration < minAccessTokenDuration || cfg.JWT.AccessToken.Expiration > maxAccessTokenDuration {
 		return errors.New("JWT access token expiration must be between 60 and 3600 seconds")
 	}
 
-	// Security validation: Refresh token duration bounds
 	if cfg.JWT.RefreshToken.Expiration < minRefreshTokenDuration || cfg.JWT.RefreshToken.Expiration > maxRefreshTokenDuration {
 		return errors.New("JWT refresh token expiration must be between 3600 and 2592000 seconds")
 	}

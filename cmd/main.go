@@ -27,6 +27,10 @@ func main() {
 		log.Fatalf("error unmarshalling config: %v", err)
 	}
 
+	if err := appConfig.Validate(); err != nil {
+		log.Fatalf("invalid configuration: %v", err)
+	}
+
 	l, err := logger.New(appConfig.Env)
 	if err != nil {
 		log.Fatalf("error creating logger: %v", err)

@@ -44,20 +44,22 @@ func createTestUsecase(t *testing.T) (
 			},
 		},
 		JWT: config.JWT{
-			Secret:      "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
 			Issuer:      "test-issuer",
 			SkewSeconds: 60,
 			AccessToken: config.AccessToken{
+				Secret:     "test-access-secret-key-long-enough-for-jwt-signing",
 				Expiration: 3600,
 			},
 			RefreshToken: config.RefreshToken{
+				Secret:     "test-refresh-secret-key-long-enough-for-jwt-signin",
 				Expiration: 7200,
 			},
 		},
 	}
 
 	tokenConfig := jwt.TokenConfig{
-		SecretKey:            cfg.JWT.Secret,
+		AccessTokenSecret:    cfg.JWT.AccessToken.Secret,
+		RefreshTokenSecret:   cfg.JWT.RefreshToken.Secret,
 		ExpectedIssuer:       cfg.JWT.Issuer,
 		ExpectedAudiences:    []string{cfg.JWT.Issuer},
 		ClockSkewSeconds:     cfg.JWT.SkewSeconds,

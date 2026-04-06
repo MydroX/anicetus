@@ -37,7 +37,7 @@ func (s *Service) CreateAccessToken(userUUID string, permissions, audiences []st
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 
-	ss, err := token.SignedString([]byte(s.config.SecretKey))
+	ss, err := token.SignedString([]byte(s.config.AccessTokenSecret))
 	if err != nil {
 		return "", WrapError(err, "failed to sign access token")
 	}
@@ -63,7 +63,7 @@ func (s *Service) CreateRefreshToken(userUUID, sessionUUID string, audiences []s
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 
-	ss, err := token.SignedString([]byte(s.config.SecretKey))
+	ss, err := token.SignedString([]byte(s.config.RefreshTokenSecret))
 	if err != nil {
 		return "", WrapError(err, "failed to sign refresh token")
 	}
@@ -73,7 +73,7 @@ func (s *Service) CreateRefreshToken(userUUID, sessionUUID string, audiences []s
 
 // ParseAccessToken parses and validates an access token
 func (s *Service) ParseAccessToken(tokenString string) (*AccessClaims, error) {
-	claims, err := s.parseAndValidateToken(tokenString)
+	claims, err := s.parseAndValidateToken(tokenString, s.config.AccessTokenSecret)
 	if err != nil {
 		return nil, err
 	}
@@ -93,8 +93,8 @@ func (s *Service) ParseAccessToken(tokenString string) (*AccessClaims, error) {
 }
 
 // parseAndValidateToken handles the common token parsing and validation
-func (s *Service) parseAndValidateToken(tokenString string) (jwt.MapClaims, error) {
-	token, err := jwt.Parse(tokenString, s.keyFunc)
+func (s *Service) parseAndValidateToken(tokenString, secret string) (jwt.MapClaims, error) {
+	token, err := jwt.Parse(tokenString, s.keyFuncForSecret(secret))
 	if err != nil {
 		return nil, handleParseError(err, "access token")
 	}
@@ -171,7 +171,7 @@ func (_ *Service) buildAccessClaims(claims jwt.MapClaims, userUUID string, permi
 
 // ParseRefreshToken parses and validates a refresh token
 func (s *Service) ParseRefreshToken(tokenString string) (*RefreshClaims, error) {
-	claims, err := s.parseAndValidateToken(tokenString)
+	claims, err := s.parseAndValidateToken(tokenString, s.config.RefreshTokenSecret)
 	if err != nil {
 		return nil, err
 	}
@@ -232,25 +232,15 @@ func (_ *Service) buildRefreshClaims(claims jwt.MapClaims, userUUID, sessionUUID
 	}
 }
 
-// ParseToken parses a token and returns base claims without validating token type
+// ParseToken parses a token and returns base claims without validating token type.
+// It tries the access token secret first, then falls back to the refresh token secret.
 func (s *Service) ParseToken(tokenString string) (*BaseClaims, error) {
-	token, err := jwt.Parse(tokenString, s.keyFunc)
+	claims, err := s.parseAndValidateToken(tokenString, s.config.AccessTokenSecret)
 	if err != nil {
-		return nil, handleParseError(err, "token")
-	}
-
-	if !token.Valid {
-		return nil, WrapError(ErrInvalidToken, "")
-	}
-
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		return nil, WrapError(ErrInvalidClaimsType, "")
-	}
-
-	// Validate standard claims
-	if err := s.validateStandardClaims(claims); err != nil {
-		return nil, err
+		claims, err = s.parseAndValidateToken(tokenString, s.config.RefreshTokenSecret)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Extract token type with validation
@@ -277,20 +267,22 @@ func (s *Service) ParseToken(tokenString string) (*BaseClaims, error) {
 	return baseClaims, nil
 }
 
-// keyFunc validates the signing method and gets the key for verification
-func (s *Service) keyFunc(token *jwt.Token) (any, error) {
-	if s.config.SecretKey == "" {
-		return nil, ErrMissingSecretKey
-	}
+// keyFuncForSecret returns a jwt.Keyfunc that validates the signing method and uses the given secret
+func (s *Service) keyFuncForSecret(secret string) jwt.Keyfunc {
+	return func(token *jwt.Token) (any, error) {
+		if secret == "" {
+			return nil, ErrMissingSecretKey
+		}
 
-	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-		return nil, WrapError(
-			ErrInvalidSigningAlg,
-			"unexpected signing method",
-		)
-	}
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, WrapError(
+				ErrInvalidSigningAlg,
+				"unexpected signing method",
+			)
+		}
 
-	return []byte(s.config.SecretKey), nil
+		return []byte(secret), nil
+	}
 }
 
 // handleParseError handles common parse errors with better context
