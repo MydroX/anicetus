@@ -71,7 +71,7 @@ As an IAM service, security is a core priority — not an afterthought.
 ```bash
 git clone https://github.com/MydroX/anicetus.git
 cd anicetus
-make up-dev
+make up
 make migrate-up
 ```
 
@@ -106,7 +106,7 @@ session:
 
 ```bash
 # Prerequisites: Go 1.26+, Docker
-make up-dev          # Start Postgres + Valkey + app (hot reload)
+make up              # Start Postgres + Valkey + app (hot reload)
 make migrate-up      # Run database migrations
 make test            # Run tests
 make lint            # Run linter

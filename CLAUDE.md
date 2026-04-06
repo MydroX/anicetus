@@ -6,9 +6,8 @@ Lightweight, high-performance open-source IAM service (Keycloak alternative).
 
 ```bash
 make build           # Build binary
-make up-dev          # Docker Compose dev (hot reload via Air)
-make up-prod         # Docker Compose prod
-make down-dev        # Stop dev
+make up              # Start dev environment (Postgres + Valkey + app with hot reload)
+make down            # Stop environment
 ```
 
 App runs on `:3000`, Postgres on `:5400`, Valkey on `:6379`.
