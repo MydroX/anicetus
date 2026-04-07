@@ -30,6 +30,16 @@ const (
 	ErrorHashToken          = 12002 // Failed to hash token
 	ErrorCreateToken        = 12003 // Failed to create token
 
+	// Authorization errors (13xxx)
+	ErrorForbidden          = 13001 // Insufficient permissions
+	ErrorRoleNotFound       = 13002 // Role not found
+	ErrorPermissionNotFound = 13003 // Permission not found
+
+	// Session errors (14xxx)
+	ErrorSessionExpired      = 14001 // Session expired
+	ErrorSessionNotFound     = 14002 // Session not found
+	ErrorInvalidRefreshToken = 14003 // Invalid refresh token
+
 	// Database errors (99xxx)
 	ErrorUniqueViolation     = 99001 // Unique constraint violation
 	ErrorForeignKeyViolation = 99002 // Foreign key constraint violation
@@ -40,10 +50,10 @@ const (
 )
 
 const (
-	MessageFailToBind   = "Failed to bind request. Please check your request and try again"
-	MessageInvalidInput = "Invalid input. Please check your request and try again"
-	MessageInvalidUUID         = "Invalid UUID"
-	MessageInvalidCredentials  = "Invalid credentials"
+	MessageFailToBind         = "Failed to bind request. Please check your request and try again"
+	MessageInvalidInput       = "Invalid input. Please check your request and try again"
+	MessageInvalidUUID        = "Invalid UUID"
+	MessageInvalidCredentials = "Invalid credentials"
 )
 
 var errorCodeMap = map[int]int{
@@ -61,6 +71,7 @@ var errorCodeMap = map[int]int{
 	ErrorInvalidCredentials: http.StatusUnauthorized,
 
 	// 403 Forbidden
+	ErrorForbidden: http.StatusForbidden,
 
 	// 404 Not Found
 	ErrorNotFound: http.StatusNotFound,

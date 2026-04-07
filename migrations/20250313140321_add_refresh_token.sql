@@ -13,6 +13,8 @@ CREATE TABLE sessions (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     expires_at TIMESTAMP NOT NULL
 );
+
+CREATE INDEX idx_sessions_user_uuid ON sessions(user_uuid);
 -- +goose StatementEnd
 
 -- +goose Down

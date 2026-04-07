@@ -4,9 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"MydroX/anicetus/pkg/errs"
 	"MydroX/anicetus/internal/middlewares"
-
+	"MydroX/anicetus/pkg/errs"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
