@@ -80,6 +80,22 @@ func NewTokenConfigFromEnv(cfg *config.Config) (TokenConfig, error) {
 }
 
 func validateTokenConfig(cfg *config.Config) error {
+	if err := validateSecrets(cfg); err != nil {
+		return err
+	}
+
+	if cfg.JWT.Issuer == "" {
+		return errors.New("JWT issuer is required")
+	}
+
+	if cfg.JWT.SkewSeconds < minClockSkewSeconds || cfg.JWT.SkewSeconds > maxClockSkewSeconds {
+		return errors.New("JWT clock skew must be between 0 and 300 seconds")
+	}
+
+	return validateDurations(cfg)
+}
+
+func validateSecrets(cfg *config.Config) error {
 	if cfg.JWT.AccessToken.Secret == "" {
 		return errors.New("JWT access token secret is required")
 	}
@@ -100,14 +116,10 @@ func validateTokenConfig(cfg *config.Config) error {
 		return errors.New("JWT access and refresh token secrets must be different")
 	}
 
-	if cfg.JWT.Issuer == "" {
-		return errors.New("JWT issuer is required")
-	}
+	return nil
+}
 
-	if cfg.JWT.SkewSeconds < minClockSkewSeconds || cfg.JWT.SkewSeconds > maxClockSkewSeconds {
-		return errors.New("JWT clock skew must be between 0 and 300 seconds")
-	}
-
+func validateDurations(cfg *config.Config) error {
 	if cfg.JWT.AccessToken.Expiration < minAccessTokenDuration || cfg.JWT.AccessToken.Expiration > maxAccessTokenDuration {
 		return errors.New("JWT access token expiration must be between 60 and 3600 seconds")
 	}

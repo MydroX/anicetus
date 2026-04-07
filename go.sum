@@ -119,6 +119,8 @@ github.com/ugorji/go/codec v1.3.1 h1:waO7eEiFDwidsBN6agj1vJQ4AG7lh2yqXyOXqhgQuyY
 github.com/ugorji/go/codec v1.3.1/go.mod h1:pRBVtBSKl77K30Bv8R2P+cLSGaTtex6fsA2Wjqmfxj4=
 github.com/valkey-io/valkey-go v1.0.73 h1:lztOPT0amtR6mwUkeNDcLepdYFdgVpJe/99EohfrmJ4=
 github.com/valkey-io/valkey-go v1.0.73/go.mod h1:VGhZ6fs68Qrn2+OhH+6waZH27bjpgQOiLyUQyXuYK5k=
+github.com/valkey-io/valkey-go/mock v1.0.73 h1:mGwXV7m4uGGUxQ8yGVSGRDgrVQDd76IJGh/+1L5n+Y8=
+github.com/valkey-io/valkey-go/mock v1.0.73/go.mod h1:/gPl8Rnb/aI05L/O1Ss0hliwQdn1tjmTGq19hodqz1E=
 go.mongodb.org/mongo-driver/v2 v2.5.0 h1:yXUhImUjjAInNcpTcAlPHiT7bIXhshCTL3jVBkF3xaE=
 go.mongodb.org/mongo-driver/v2 v2.5.0/go.mod h1:yOI9kBsufol30iFsl1slpdq1I0eHPzybRWdyYUs8K/0=
 go.uber.org/goleak v1.3.0 h1:2K3zAYmnTNqV73imy9J1T3WC+gmCePx2hEGkimedGto=

@@ -24,7 +24,11 @@ func extractInt64Claim(claims jwt.MapClaims, key string) int64 {
 	return 0
 }
 
-func extractStringSliceClaim(claims jwt.MapClaims, key string) []string {
+//nolint:unparam // key is parameterized for consistency with other extract functions
+func extractStringSliceClaim(
+	claims jwt.MapClaims,
+	key string,
+) []string {
 	switch v := claims[key].(type) {
 	case []any:
 		var result []string

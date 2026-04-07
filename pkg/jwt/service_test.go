@@ -678,6 +678,253 @@ func FuzzParseTokenMaliciousPayloads(f *testing.F) {
 	})
 }
 
+func TestParseAccessToken_MissingTokenType(t *testing.T) {
+	config := TokenConfig{
+		AccessTokenSecret:  "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		RefreshTokenSecret: "test-refresh-secret-long-enough-for-signing-jwt-tok",
+		ExpectedIssuer:     "test-issuer",
+		ClockSkewSeconds:   60,
+	}
+	service := NewJWTService(config)
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
+		"exp":       time.Now().Add(10 * time.Minute).Unix(),
+		"iat":       time.Now().Unix(),
+		"iss":       "test-issuer",
+		"user_uuid": "user-123",
+		// Missing token_type
+	})
+	tokenString, _ := token.SignedString([]byte(config.AccessTokenSecret))
+
+	claims, err := service.ParseAccessToken(tokenString)
+	assert.Error(t, err)
+	assert.Nil(t, claims)
+	assert.ErrorIs(t, err, ErrMissingTokenType)
+}
+
+func TestParseAccessToken_MissingUserUUID(t *testing.T) {
+	config := TokenConfig{
+		AccessTokenSecret:  "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		RefreshTokenSecret: "test-refresh-secret-long-enough-for-signing-jwt-tok",
+		ExpectedIssuer:     "test-issuer",
+		ClockSkewSeconds:   60,
+	}
+	service := NewJWTService(config)
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
+		"exp":        time.Now().Add(10 * time.Minute).Unix(),
+		"iat":        time.Now().Unix(),
+		"iss":        "test-issuer",
+		"token_type": string(AccessToken),
+		// Missing user_uuid
+	})
+	tokenString, _ := token.SignedString([]byte(config.AccessTokenSecret))
+
+	claims, err := service.ParseAccessToken(tokenString)
+	assert.Error(t, err)
+	assert.Nil(t, claims)
+	assert.ErrorIs(t, err, ErrMissingUserUUID)
+}
+
+func TestParseAccessToken_EmptyUserUUID(t *testing.T) {
+	config := TokenConfig{
+		AccessTokenSecret:  "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		RefreshTokenSecret: "test-refresh-secret-long-enough-for-signing-jwt-tok",
+		ExpectedIssuer:     "test-issuer",
+		ClockSkewSeconds:   60,
+	}
+	service := NewJWTService(config)
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
+		"exp":        time.Now().Add(10 * time.Minute).Unix(),
+		"iat":        time.Now().Unix(),
+		"iss":        "test-issuer",
+		"token_type": string(AccessToken),
+		"user_uuid":  "",
+	})
+	tokenString, _ := token.SignedString([]byte(config.AccessTokenSecret))
+
+	claims, err := service.ParseAccessToken(tokenString)
+	assert.Error(t, err)
+	assert.Nil(t, claims)
+	assert.ErrorIs(t, err, ErrMissingUserUUID)
+}
+
+func TestParseAccessToken_NilPermissions(t *testing.T) {
+	config := TokenConfig{
+		AccessTokenSecret:  "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		RefreshTokenSecret: "test-refresh-secret-long-enough-for-signing-jwt-tok",
+		ExpectedIssuer:     "test-issuer",
+		ClockSkewSeconds:   60,
+	}
+	service := NewJWTService(config)
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
+		"exp":        time.Now().Add(10 * time.Minute).Unix(),
+		"iat":        time.Now().Unix(),
+		"iss":        "test-issuer",
+		"token_type": string(AccessToken),
+		"user_uuid":  "user-123",
+		// No permissions claim
+	})
+	tokenString, _ := token.SignedString([]byte(config.AccessTokenSecret))
+
+	claims, err := service.ParseAccessToken(tokenString)
+	assert.NoError(t, err)
+	assert.NotNil(t, claims)
+	assert.Empty(t, claims.Permissions)
+}
+
+func TestParseAccessToken_MixedPermissions(t *testing.T) {
+	config := TokenConfig{
+		AccessTokenSecret:  "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		RefreshTokenSecret: "test-refresh-secret-long-enough-for-signing-jwt-tok",
+		ExpectedIssuer:     "test-issuer",
+		ClockSkewSeconds:   60,
+	}
+	service := NewJWTService(config)
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
+		"exp":         time.Now().Add(10 * time.Minute).Unix(),
+		"iat":         time.Now().Unix(),
+		"iss":         "test-issuer",
+		"token_type":  string(AccessToken),
+		"user_uuid":   "user-123",
+		"permissions": []any{"read", 42, "write", true},
+	})
+	tokenString, _ := token.SignedString([]byte(config.AccessTokenSecret))
+
+	claims, err := service.ParseAccessToken(tokenString)
+	assert.NoError(t, err)
+	assert.NotNil(t, claims)
+	assert.Equal(t, []string{"read", "write"}, claims.Permissions)
+}
+
+func TestParseToken_BothSecretsFail(t *testing.T) {
+	config := TokenConfig{
+		AccessTokenSecret:  "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		RefreshTokenSecret: "test-refresh-secret-long-enough-for-signing-jwt-tok",
+		ExpectedIssuer:     "test-issuer",
+		ClockSkewSeconds:   60,
+	}
+	service := NewJWTService(config)
+
+	// Sign with a completely different key
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
+		"exp":        time.Now().Add(10 * time.Minute).Unix(),
+		"iat":        time.Now().Unix(),
+		"iss":        "test-issuer",
+		"token_type": string(AccessToken),
+		"user_uuid":  "user-123",
+	})
+	tokenString, _ := token.SignedString([]byte("completely-different-secret-key-that-wont-match-anything"))
+
+	claims, err := service.ParseToken(tokenString)
+	assert.Error(t, err)
+	assert.Nil(t, claims)
+}
+
+func TestParseToken_FallbackToRefreshSecret(t *testing.T) {
+	config := TokenConfig{
+		AccessTokenSecret:  "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		RefreshTokenSecret: "test-refresh-secret-long-enough-for-signing-jwt-tok",
+		ExpectedIssuer:     "test-issuer",
+		ClockSkewSeconds:   60,
+	}
+	service := NewJWTService(config)
+
+	// Sign with refresh secret — access secret will fail, should fallback
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
+		"exp":          time.Now().Add(10 * time.Minute).Unix(),
+		"iat":          time.Now().Unix(),
+		"iss":          "test-issuer",
+		"token_type":   string(RefreshToken),
+		"user_uuid":    "user-123",
+		"session_uuid": "session-456",
+	})
+	tokenString, _ := token.SignedString([]byte(config.RefreshTokenSecret))
+
+	claims, err := service.ParseToken(tokenString)
+	assert.NoError(t, err)
+	assert.NotNil(t, claims)
+	assert.Equal(t, "user-123", claims.UserUUID)
+	assert.Equal(t, RefreshToken, claims.TokenType)
+}
+
+func TestParseToken_MissingTokenType(t *testing.T) {
+	config := TokenConfig{
+		AccessTokenSecret:  "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		RefreshTokenSecret: "test-refresh-secret-long-enough-for-signing-jwt-tok",
+		ExpectedIssuer:     "test-issuer",
+		ClockSkewSeconds:   60,
+	}
+	service := NewJWTService(config)
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
+		"exp":       time.Now().Add(10 * time.Minute).Unix(),
+		"iat":       time.Now().Unix(),
+		"iss":       "test-issuer",
+		"user_uuid": "user-123",
+	})
+	tokenString, _ := token.SignedString([]byte(config.AccessTokenSecret))
+
+	claims, err := service.ParseToken(tokenString)
+	assert.Error(t, err)
+	assert.Nil(t, claims)
+	assert.ErrorIs(t, err, ErrMissingTokenType)
+}
+
+func TestParseToken_MissingUserUUID(t *testing.T) {
+	config := TokenConfig{
+		AccessTokenSecret:  "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		RefreshTokenSecret: "test-refresh-secret-long-enough-for-signing-jwt-tok",
+		ExpectedIssuer:     "test-issuer",
+		ClockSkewSeconds:   60,
+	}
+	service := NewJWTService(config)
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
+		"exp":        time.Now().Add(10 * time.Minute).Unix(),
+		"iat":        time.Now().Unix(),
+		"iss":        "test-issuer",
+		"token_type": string(AccessToken),
+	})
+	tokenString, _ := token.SignedString([]byte(config.AccessTokenSecret))
+
+	claims, err := service.ParseToken(tokenString)
+	assert.Error(t, err)
+	assert.Nil(t, claims)
+	assert.ErrorIs(t, err, ErrMissingUserUUID)
+}
+
+func TestCreateAccessToken_EmptyAudiences(t *testing.T) {
+	config := TokenConfig{
+		AccessTokenSecret:   "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		RefreshTokenSecret:  "test-refresh-secret-long-enough-for-signing-jwt-tok",
+		ExpectedIssuer:      "test-issuer",
+		AccessTokenDuration: 3600,
+	}
+	service := NewJWTService(config)
+
+	token, err := service.CreateAccessToken("user-123", []string{"read"}, []string{})
+	assert.NoError(t, err)
+	assert.NotEmpty(t, token)
+}
+
+func TestCreateRefreshToken_EmptySessionUUID(t *testing.T) {
+	config := TokenConfig{
+		AccessTokenSecret:    "test-secret-key-long-enough-for-signing-jwt-tokens-securely",
+		RefreshTokenSecret:   "test-refresh-secret-long-enough-for-signing-jwt-tok",
+		ExpectedIssuer:       "test-issuer",
+		RefreshTokenDuration: 86400,
+	}
+	service := NewJWTService(config)
+
+	token, err := service.CreateRefreshToken("user-123", "", []string{"aud"})
+	assert.NoError(t, err)
+	assert.NotEmpty(t, token)
+}
+
 func TestKeyFunc(t *testing.T) {
 	t.Run("valid HMAC method", func(t *testing.T) {
 		config := TokenConfig{

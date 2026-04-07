@@ -5,7 +5,7 @@ import (
 
 	app "MydroX/anicetus/internal"
 	cfg "MydroX/anicetus/internal/config"
-	valkeyCache "MydroX/anicetus/pkg/cache/valkey"
+	valkeycache "MydroX/anicetus/pkg/cache/valkey"
 	"MydroX/anicetus/pkg/config"
 	db "MydroX/anicetus/pkg/db/postgresql"
 	"MydroX/anicetus/pkg/logger"
@@ -52,7 +52,7 @@ func main() {
 
 	l.Info("connecting to valkey...")
 
-	valkeyClient, err := valkeyCache.NewClient(appConfig.Valkey.Address)
+	valkeyClient, err := valkeycache.NewClient(appConfig.Valkey.Address)
 	if err != nil {
 		l.Fatal("error connecting to valkey", zap.Error(err))
 	}

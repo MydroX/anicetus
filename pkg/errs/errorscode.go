@@ -53,7 +53,7 @@ const (
 	MessageFailToBind         = "Failed to bind request. Please check your request and try again"
 	MessageInvalidInput       = "Invalid input. Please check your request and try again"
 	MessageInvalidUUID        = "Invalid UUID"
-	MessageInvalidCredentials = "Invalid credentials"
+	MessageInvalidCredentials = "Invalid credentials" //nolint:gosec // Not a credential, just an error message
 )
 
 var errorCodeMap = map[int]int{

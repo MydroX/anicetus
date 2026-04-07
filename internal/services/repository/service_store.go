@@ -102,9 +102,9 @@ func (r *repository) RegisterService(ctx context.Context, audience string, metad
 		}
 	}
 
-	uuid := uuid.Must(uuid.NewV7()).String()
+	serviceUUID := uuid.Must(uuid.NewV7()).String()
 
-	_, err := r.dbPool.Exec(ctx, r.queries.RegisterService(), uuid, audience, serviceName, description, permissionsJSON)
+	_, err := r.dbPool.Exec(ctx, r.queries.RegisterService(), serviceUUID, audience, serviceName, description, permissionsJSON)
 	if err != nil {
 		return errs.SQLErrorParser(err)
 	}

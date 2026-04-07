@@ -197,6 +197,8 @@ func countCharacterTypes(password string) charCounts {
 			counts.number++
 		case unicode.IsPunct(char) || unicode.IsSymbol(char):
 			counts.symbol++
+		default:
+			// Other character types (e.g., spaces) are counted towards length but not specific categories
 		}
 	}
 

@@ -45,8 +45,8 @@ func (u *usecases) Create(ctx context.Context, req *dto.CreateUserRequest) error
 	return err
 }
 
-func (u *usecases) Get(ctx context.Context, uuid string) (*dto.GetUserResponse, error) {
-	user, err := u.repository.GetUserByUUID(ctx, uuid)
+func (u *usecases) Get(ctx context.Context, userUUID string) (*dto.GetUserResponse, error) {
+	user, err := u.repository.GetUserByUUID(ctx, userUUID)
 	if err != nil {
 		return nil, err
 	}
@@ -72,25 +72,25 @@ func (u *usecases) Update(ctx context.Context, userParams *dto.UpdateUserRequest
 	return err
 }
 
-func (u *usecases) UpdatePassword(ctx context.Context, uuid, newPassword string) error {
+func (u *usecases) UpdatePassword(ctx context.Context, userUUID, newPassword string) error {
 	newPasswordCrypted, err := passwordpkg.Hash(newPassword)
 	if err != nil {
 		return &errs.AppError{Code: errs.ErrorInternal, Err: err}
 	}
 
-	apiErr := u.repository.UpdatePassword(ctx, uuid, newPasswordCrypted)
+	apiErr := u.repository.UpdatePassword(ctx, userUUID, newPasswordCrypted)
 
 	return apiErr
 }
 
-func (u *usecases) UpdateEmail(ctx context.Context, uuid, email string) error {
-	err := u.repository.UpdateEmail(ctx, uuid, email)
+func (u *usecases) UpdateEmail(ctx context.Context, userUUID, email string) error {
+	err := u.repository.UpdateEmail(ctx, userUUID, email)
 
 	return err
 }
 
-func (u *usecases) Delete(ctx context.Context, uuid string) error {
-	err := u.repository.DeleteUser(ctx, uuid)
+func (u *usecases) Delete(ctx context.Context, userUUID string) error {
+	err := u.repository.DeleteUser(ctx, userUUID)
 
 	return err
 }

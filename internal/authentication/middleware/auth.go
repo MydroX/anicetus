@@ -8,6 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const bearerParts = 2
+
 func AuthMiddleware(jwtService *jwt.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenString := extractToken(c)
@@ -36,8 +38,8 @@ func extractToken(c *gin.Context) string {
 	// Try Authorization header first
 	authHeader := c.GetHeader("Authorization")
 	if authHeader != "" {
-		parts := strings.SplitN(authHeader, " ", 2)
-		if len(parts) == 2 && strings.EqualFold(parts[0], "Bearer") {
+		parts := strings.SplitN(authHeader, " ", bearerParts)
+		if len(parts) == bearerParts && strings.EqualFold(parts[0], "Bearer") {
 			return parts[1]
 		}
 	}

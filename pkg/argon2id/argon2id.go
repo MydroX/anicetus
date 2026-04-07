@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -156,7 +157,7 @@ func parseEncodedHash(encodedHash string) (*ParsedHash, error) {
 	// Split the encoded hash into parts
 	vals := strings.Split(encodedHash, "$")
 	if len(vals) != encodedHashParts {
-		return nil, fmt.Errorf("invalid hash format")
+		return nil, errors.New("invalid hash format")
 	}
 
 	// Parse parameters
@@ -208,7 +209,7 @@ func parseParams(paramsStr string) (*HashParams, error) {
 	for _, part := range paramParts {
 		pair := strings.Split(part, "=")
 		if len(pair) != hashParamPartsCount {
-			return nil, fmt.Errorf("invalid hash parameters")
+			return nil, errors.New("invalid hash parameters")
 		}
 
 		key, value := pair[0], pair[1]

@@ -62,8 +62,8 @@ func (u *usecases) UpdateRole(ctx context.Context, roleUUID string, req *dto.Upd
 	return u.repository.UpdateRole(ctx, &role)
 }
 
-func (u *usecases) DeleteRole(ctx context.Context, uuid string) error {
-	return u.repository.DeleteRole(ctx, uuid)
+func (u *usecases) DeleteRole(ctx context.Context, roleUUID string) error {
+	return u.repository.DeleteRole(ctx, roleUUID)
 }
 
 // Permissions

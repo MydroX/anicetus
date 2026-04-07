@@ -155,6 +155,7 @@ func (c *controller) GetAllPermissions(ginCtx *gin.Context) {
 
 // Role-Permission assignments
 
+//nolint:dupl // Similar structure to AssignRoleToUser but different request/response types
 func (c *controller) AssignPermissionToRole(ginCtx *gin.Context) {
 	roleUUID := ginCtx.Param("uuid")
 
@@ -214,6 +215,7 @@ func (c *controller) RemovePermissionFromRole(ginCtx *gin.Context) {
 
 // User-Role assignments
 
+//nolint:dupl // Similar structure to AssignPermissionToRole but different request/response types
 func (c *controller) AssignRoleToUser(ginCtx *gin.Context) {
 	userUUID := ginCtx.Param("uuid")
 

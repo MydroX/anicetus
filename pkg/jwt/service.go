@@ -268,7 +268,7 @@ func (s *Service) ParseToken(tokenString string) (*BaseClaims, error) {
 }
 
 // keyFuncForSecret returns a jwt.Keyfunc that validates the signing method and uses the given secret
-func (s *Service) keyFuncForSecret(secret string) jwt.Keyfunc {
+func (_ *Service) keyFuncForSecret(secret string) jwt.Keyfunc {
 	return func(token *jwt.Token) (any, error) {
 		if secret == "" {
 			return nil, ErrMissingSecretKey

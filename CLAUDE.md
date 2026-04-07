@@ -69,5 +69,9 @@ Go 1.26 | Gin | pgx/v5 (Postgres) | Valkey (cache) | golang-jwt/v5 | Argon2id + 
 
 1. OpenAPI spec — add swaggo/swag annotations to generate API docs automatically
 2. Fix security issues:
-   - No rate limiting on login
-   - Empty validate.go — no config validation for session/hash params
+  - No rate limiting on login (needs a rate limiter library/middleware)                                                                                                                                                                                                                
+  - Authorization middleware never applied / RequireRole is a no-op stub                                                                                                                                                                                                               
+  - Missing SameSite cookie attribute                                                                                                                                                                                                                                                  
+  - Access tokens remain valid after logout (needs Valkey blacklist)                                                                                                                                                                                                                   
+  - No session invalidation on password change        
+  - Empty validate.go — no config validation for session/hash params

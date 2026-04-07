@@ -55,7 +55,7 @@ func (u *usecases) Login(ctx context.Context, req *dto.LoginRequest) (accessToke
 			return "", "", errs.New(errs.ErrorInvalidCredentials, errs.MessageInvalidCredentials, nil)
 		}
 
-		return u.login(ctx, user, &req.Session, req.Password)
+		return u.authenticateUser(ctx, user, &req.Session, req.Password)
 
 	case req.Username != "":
 		user, err := u.identityRepository.GetUserByUsername(ctx, req.Username)
@@ -63,7 +63,7 @@ func (u *usecases) Login(ctx context.Context, req *dto.LoginRequest) (accessToke
 			return "", "", errs.New(errs.ErrorInvalidCredentials, errs.MessageInvalidCredentials, nil)
 		}
 
-		return u.login(ctx, user, &req.Session, req.Password)
+		return u.authenticateUser(ctx, user, &req.Session, req.Password)
 	}
 
 	return "", "", errs.New(
@@ -73,7 +73,7 @@ func (u *usecases) Login(ctx context.Context, req *dto.LoginRequest) (accessToke
 	)
 }
 
-func (u *usecases) login(
+func (u *usecases) authenticateUser(
 	ctx context.Context,
 	user *identitymodels.User,
 	s *dto.Session,
@@ -160,28 +160,9 @@ func (u *usecases) Logout(ctx context.Context, refreshToken string) error {
 }
 
 func (u *usecases) RefreshToken(ctx context.Context, refreshToken string) (newAccessToken, newRefreshToken string, err error) {
-	claims, err := u.jwtService.ParseRefreshToken(refreshToken)
+	session, err := u.validateRefreshToken(ctx, refreshToken)
 	if err != nil {
-		return "", "", errs.New(errs.ErrorUnauthorized, "invalid refresh token", err)
-	}
-
-	// Get the session
-	session, err := u.sessionStore.GetSessionByUUID(ctx, claims.SessionUUID)
-	if err != nil {
-		return "", "", errs.New(errs.ErrorUnauthorized, "session not found", err)
-	}
-
-	// Check session expiration
-	if time.Now().After(session.ExpiresAt) {
-		_ = u.sessionStore.DeleteSession(ctx, session.UUID)
-
-		return "", "", errs.New(errs.ErrorUnauthorized, "session expired", nil)
-	}
-
-	// Verify refresh token hash
-	match, err := argon2id.Verify(refreshToken, session.RefreshToken)
-	if err != nil || !match {
-		return "", "", errs.New(errs.ErrorUnauthorized, "invalid refresh token", err)
+		return "", "", err
 	}
 
 	// Fetch fresh user data
@@ -198,41 +179,65 @@ func (u *usecases) RefreshToken(ctx context.Context, refreshToken string) (newAc
 		audiences = []string{}
 	}
 
-	// Issue new tokens
-	newAccessToken, err = u.jwtService.CreateAccessToken(
-		user.UUID,
-		nil, // TODO: permissions
-		audiences,
-	)
+	return u.rotateSession(ctx, user.UUID, session, audiences)
+}
+
+func (u *usecases) validateRefreshToken(ctx context.Context, refreshToken string) (*models.Session, error) {
+	claims, err := u.jwtService.ParseRefreshToken(refreshToken)
+	if err != nil {
+		return nil, errs.New(errs.ErrorUnauthorized, "invalid refresh token", err)
+	}
+
+	session, err := u.sessionStore.GetSessionByUUID(ctx, claims.SessionUUID)
+	if err != nil {
+		return nil, errs.New(errs.ErrorUnauthorized, "session not found", err)
+	}
+
+	if time.Now().After(session.ExpiresAt) {
+		_ = u.sessionStore.DeleteSession(ctx, session.UUID)
+
+		return nil, errs.New(errs.ErrorUnauthorized, "session expired", nil)
+	}
+
+	match, err := argon2id.Verify(refreshToken, session.RefreshToken)
+	if err != nil || !match {
+		return nil, errs.New(errs.ErrorUnauthorized, "invalid refresh token", err)
+	}
+
+	return session, nil
+}
+
+func (u *usecases) rotateSession(
+	ctx context.Context,
+	userUUID string,
+	oldSession *models.Session,
+	audiences []string,
+) (accessToken, refreshToken string, err error) {
+	newAccessToken, err := u.jwtService.CreateAccessToken(userUUID, nil, audiences)
 	if err != nil {
 		return "", "", errs.New(errs.ErrorCreateToken, "failed to create access token", err)
 	}
 
 	newSessionUUID := uuid.Must(uuid.NewV7()).String()
 
-	newRefreshToken, err = u.jwtService.CreateRefreshToken(
-		user.UUID,
-		newSessionUUID,
-		audiences,
-	)
+	newRefreshToken, err := u.jwtService.CreateRefreshToken(userUUID, newSessionUUID, audiences)
 	if err != nil {
 		return "", "", errs.New(errs.ErrorCreateToken, "failed to create refresh token", err)
 	}
 
-	// Delete old session, create new one (refresh token rotation)
-	if err := u.sessionStore.DeleteSession(ctx, session.UUID); err != nil {
+	if err := u.sessionStore.DeleteSession(ctx, oldSession.UUID); err != nil {
 		return "", "", errs.New(errs.ErrorInternal, "failed to delete old session", err)
 	}
 
 	sessionDTO := &dto.Session{
-		OS:             session.OS,
-		OSVersion:      session.OSVersion,
-		Browser:        session.Browser,
-		BrowserVersion: session.BrowserVersion,
-		IPv4Address:    session.IPv4Address,
+		OS:             oldSession.OS,
+		OSVersion:      oldSession.OSVersion,
+		Browser:        oldSession.Browser,
+		BrowserVersion: oldSession.BrowserVersion,
+		IPv4Address:    oldSession.IPv4Address,
 	}
 
-	if err := u.saveSession(ctx, user.UUID, newSessionUUID, newRefreshToken, sessionDTO); err != nil {
+	if err := u.saveSession(ctx, userUUID, newSessionUUID, newRefreshToken, sessionDTO); err != nil {
 		return "", "", err
 	}
 

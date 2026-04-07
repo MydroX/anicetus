@@ -54,7 +54,7 @@ func RequireAnyPermission(permissions ...string) gin.HandlerFunc {
 // RequireRole checks that the authenticated user has ALL of the specified roles.
 // Note: This requires roles to be stored in the context (not yet implemented in JWT claims).
 // For now, this middleware is a placeholder for future role-based checks.
-func RequireRole(roles ...string) gin.HandlerFunc {
+func RequireRole(_ ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// TODO: Implement when roles are added to JWT claims or fetched from DB
 		c.Next()

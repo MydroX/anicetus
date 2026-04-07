@@ -1,3 +1,4 @@
+//revive:disable:max-public-structs
 package dto
 
 type CreateRoleRequest struct {

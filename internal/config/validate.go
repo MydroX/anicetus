@@ -15,11 +15,7 @@ func (c *Config) Validate() error {
 		return err
 	}
 
-	if err := c.Session.Hash.validate(); err != nil {
-		return err
-	}
-
-	return nil
+	return c.Session.Hash.validate()
 }
 
 func (d *Database) validate() error {
