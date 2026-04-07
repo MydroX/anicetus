@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"MydroX/anicetus/internal/common/jwt"
+	"MydroX/anicetus/pkg/jwt"
 	"MydroX/anicetus/internal/config"
 	iamcontroller "MydroX/anicetus/internal/iam/controller"
 	iamrepository "MydroX/anicetus/internal/iam/repository"

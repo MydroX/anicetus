@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"regexp"
 
-	"MydroX/anicetus/internal/common/errorsutil"
-	"MydroX/anicetus/internal/common/response"
+	"MydroX/anicetus/pkg/errs"
+	"MydroX/anicetus/pkg/httpresponse"
 	"MydroX/anicetus/internal/config"
 	"MydroX/anicetus/internal/users/dto"
 	"MydroX/anicetus/internal/users/usecases"
@@ -56,14 +56,14 @@ func (c *controller) CreateUser(ginCtx *gin.Context) {
 
 	err := ginCtx.BindJSON(&request)
 	if err != nil {
-		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorFailToBind, errorsutil.MessageFailToBind)
+		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorFailToBind, errs.MessageFailToBind)
 
 		return
 	}
 
 	err = c.validate.Struct(request)
 	if err != nil {
-		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorInvalidInput, errorsutil.MessageInvalidInput)
+		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorInvalidInput, errs.MessageInvalidInput)
 
 		return
 	}
@@ -74,7 +74,7 @@ func (c *controller) CreateUser(ginCtx *gin.Context) {
 	match := usernameRegex.MatchString(request.Username)
 	if !match {
 		// TODO: Need to change the message depending on the parameters set in rules
-		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorInvalidUsername, UsernameError)
+		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorInvalidUsername, UsernameError)
 
 		return
 	}
@@ -82,14 +82,14 @@ func (c *controller) CreateUser(ginCtx *gin.Context) {
 	err = c.passwordValidator.Validate(request.Password)
 	if err != nil {
 		// TODO: Need to change the message depending on the parameters set in rules
-		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorInvalidPassword, PasswordError)
+		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorInvalidPassword, PasswordError)
 
 		return
 	}
 
 	err = c.usecases.Create(ginCtx.Request.Context(), &request)
 	if err != nil {
-		response.Error(c.logger, ginCtx, err)
+		httpresponse.Error(c.logger, ginCtx, err)
 
 		return
 	}
@@ -102,14 +102,14 @@ func (c *controller) GetUser(ginCtx *gin.Context) {
 	userUUID := ginCtx.Param(UUID)
 
 	if _, err := uuid.Parse(userUUID); err != nil {
-		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorInvalidUUID, errorsutil.MessageInvalidUUID)
+		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorInvalidUUID, errs.MessageInvalidUUID)
 
 		return
 	}
 
 	resp, err := c.usecases.Get(ginCtx.Request.Context(), userUUID)
 	if err != nil {
-		response.Error(c.logger, ginCtx, err)
+		httpresponse.Error(c.logger, ginCtx, err)
 
 		return
 	}
@@ -123,21 +123,21 @@ func (c *controller) UpdateUser(ginCtx *gin.Context) {
 
 	err := ginCtx.BindJSON(&request)
 	if err != nil {
-		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorFailToBind, errorsutil.MessageFailToBind)
+		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorFailToBind, errs.MessageFailToBind)
 
 		return
 	}
 
 	err = c.validate.Struct(request)
 	if err != nil {
-		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorInvalidInput, errorsutil.MessageInvalidInput)
+		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorInvalidInput, errs.MessageInvalidInput)
 
 		return
 	}
 
 	apiErr := c.usecases.Update(ginCtx.Request.Context(), &request)
 	if apiErr != nil {
-		response.Error(c.logger, ginCtx, err)
+		httpresponse.Error(c.logger, ginCtx, err)
 
 		return
 	}
@@ -152,26 +152,26 @@ func (c *controller) UpdateEmail(ginCtx *gin.Context) {
 	userUUID := ginCtx.Param(UUID)
 
 	if _, err := uuid.Parse(userUUID); err != nil {
-		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorInvalidUUID, errorsutil.MessageInvalidUUID)
+		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorInvalidUUID, errs.MessageInvalidUUID)
 
 		return
 	}
 
 	if err := ginCtx.BindJSON(&request); err != nil {
-		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorFailToBind, errorsutil.MessageFailToBind)
+		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorFailToBind, errs.MessageFailToBind)
 
 		return
 	}
 
 	if err := c.validate.Struct(request); err != nil {
-		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorInvalidInput, errorsutil.MessageInvalidInput)
+		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorInvalidInput, errs.MessageInvalidInput)
 
 		return
 	}
 
 	apiErr := c.usecases.UpdateEmail(ginCtx.Request.Context(), userUUID, request.Email)
 	if apiErr != nil {
-		response.Error(c.logger, ginCtx, apiErr)
+		httpresponse.Error(c.logger, ginCtx, apiErr)
 
 		return
 	}
@@ -186,31 +186,31 @@ func (c *controller) UpdatePassword(ginCtx *gin.Context) {
 	userUUID := ginCtx.Param(UUID)
 
 	if _, err := uuid.Parse(userUUID); err != nil {
-		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorInvalidUUID, errorsutil.MessageInvalidUUID)
+		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorInvalidUUID, errs.MessageInvalidUUID)
 
 		return
 	}
 
 	if err := ginCtx.BindJSON(&request); err != nil {
-		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorFailToBind, errorsutil.MessageFailToBind)
+		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorFailToBind, errs.MessageFailToBind)
 
 		return
 	}
 
 	if err := c.validate.Struct(request); err != nil {
-		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorInvalidInput, errorsutil.MessageInvalidInput)
+		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorInvalidInput, errs.MessageInvalidInput)
 
 		return
 	}
 
 	if err := c.passwordValidator.Validate(request.Password); err != nil {
-		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorInvalidPassword, PasswordError)
+		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorInvalidPassword, PasswordError)
 
 		return
 	}
 
 	if err := c.usecases.UpdatePassword(ginCtx.Request.Context(), userUUID, request.Password); err != nil {
-		response.Error(c.logger, ginCtx, err)
+		httpresponse.Error(c.logger, ginCtx, err)
 
 		return
 	}
@@ -223,14 +223,14 @@ func (c *controller) DeleteUser(ginCtx *gin.Context) {
 	userUUID := ginCtx.Param(UUID)
 
 	if _, err := uuid.Parse(userUUID); err != nil {
-		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorInvalidUUID, errorsutil.MessageInvalidUUID)
+		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorInvalidUUID, errs.MessageInvalidUUID)
 
 		return
 	}
 
 	apiErr := c.usecases.Delete(ginCtx.Request.Context(), userUUID)
 	if apiErr != nil {
-		response.Error(c.logger, ginCtx, apiErr)
+		httpresponse.Error(c.logger, ginCtx, apiErr)
 
 		return
 	}
@@ -242,7 +242,7 @@ func (c *controller) GetAllUsers(ginCtx *gin.Context) {
 
 	resp, err := c.usecases.GetAllUsers(ginCtx.Request.Context())
 	if err != nil {
-		response.Error(c.logger, ginCtx, err)
+		httpresponse.Error(c.logger, ginCtx, err)
 
 		return
 	}

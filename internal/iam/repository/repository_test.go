@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"context"
-	"MydroX/anicetus/internal/common/errorsutil"
+	"MydroX/anicetus/pkg/errs"
 	"MydroX/anicetus/internal/iam/models"
 	"MydroX/anicetus/pkg/logger"
 
@@ -116,9 +116,9 @@ func TestSaveSession(t *testing.T) {
 			checkError: func(t *testing.T, err error) {
 				assert.Error(t, err)
 
-				var appErr *errorsutil.AppError
+				var appErr *errs.AppError
 				if assert.True(t, errors.As(err, &appErr), "Expected an AppError") {
-					assert.Equal(t, errorsutil.ErrorUniqueViolation, appErr.Code)
+					assert.Equal(t, errs.ErrorUniqueViolation, appErr.Code)
 				}
 			},
 		},
@@ -150,9 +150,9 @@ func TestSaveSession(t *testing.T) {
 			checkError: func(t *testing.T, err error) {
 				assert.Error(t, err)
 
-				var appErr *errorsutil.AppError
+				var appErr *errs.AppError
 				if assert.True(t, errors.As(err, &appErr), "Expected an AppError") {
-					assert.Equal(t, errorsutil.ErrorConstraintViolation, appErr.Code)
+					assert.Equal(t, errs.ErrorConstraintViolation, appErr.Code)
 				}
 			},
 		},

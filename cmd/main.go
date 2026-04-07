@@ -7,9 +7,8 @@ import (
 	cfg "MydroX/anicetus/internal/config"
 	valkeyCache "MydroX/anicetus/pkg/cache/valkey"
 	"MydroX/anicetus/pkg/config"
-	"MydroX/anicetus/pkg/db"
+	db "MydroX/anicetus/pkg/db/postgresql"
 	"MydroX/anicetus/pkg/logger"
-
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )

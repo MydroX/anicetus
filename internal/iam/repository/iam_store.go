@@ -2,13 +2,14 @@ package repository
 
 import (
 	"context"
-	"MydroX/anicetus/internal/common/errorsutil"
-	"MydroX/anicetus/internal/common/pgxutil"
+
 	"MydroX/anicetus/internal/iam/models"
+	"MydroX/anicetus/pkg/db/postgresql/pgx"
+	"MydroX/anicetus/pkg/errs"
 	"go.uber.org/zap"
 )
 
-func NewIAMStore(l *zap.SugaredLogger, dbPool pgxutil.DBPool) IamStore {
+func NewIAMStore(l *zap.SugaredLogger, dbPool pgx.DBPool) IamStore {
 	return &repository{
 		logger:  l,
 		dbPool:  dbPool,
@@ -33,7 +34,7 @@ func (r *repository) SaveSession(ctx context.Context, session *models.Session) e
 		session.ExpiresAt,
 	)
 	if err != nil {
-		return errorsutil.SQLErrorParser(err)
+		return errs.SQLErrorParser(err)
 	}
 
 	return nil

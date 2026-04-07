@@ -2,7 +2,7 @@ package usecases
 
 import (
 	"context"
-	"MydroX/anicetus/internal/common/errorsutil"
+	"MydroX/anicetus/pkg/errs"
 	"MydroX/anicetus/internal/config"
 	"MydroX/anicetus/internal/users/dto"
 	"MydroX/anicetus/internal/users/models"
@@ -29,7 +29,7 @@ func New(l *zap.SugaredLogger, r repository.UsersRepository, cfg *config.Config)
 func (u *usecases) Create(ctx context.Context, req *dto.CreateUserRequest) error {
 	passwordHashed, err := passwordpkg.Hash(req.Password)
 	if err != nil {
-		return &errorsutil.AppError{Code: errorsutil.ErrorInternal, Err: err}
+		return &errs.AppError{Code: errs.ErrorInternal, Err: err}
 	}
 
 	user := models.User{
@@ -77,7 +77,7 @@ func (u *usecases) Update(ctx context.Context, userParams *dto.UpdateUserRequest
 func (u *usecases) UpdatePassword(ctx context.Context, uuid, newPassword string) error {
 	newPasswordCrypted, err := passwordpkg.Hash(newPassword)
 	if err != nil {
-		return &errorsutil.AppError{Code: errorsutil.ErrorInternal, Err: err}
+		return &errs.AppError{Code: errs.ErrorInternal, Err: err}
 	}
 
 	apiErr := u.repository.UpdatePassword(ctx, uuid, newPasswordCrypted)

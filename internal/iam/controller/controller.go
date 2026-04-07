@@ -3,8 +3,8 @@ package iam
 import (
 	"net/http"
 
-	"MydroX/anicetus/internal/common/errorsutil"
-	"MydroX/anicetus/internal/common/response"
+	"MydroX/anicetus/pkg/errs"
+	"MydroX/anicetus/pkg/httpresponse"
 	"MydroX/anicetus/internal/config"
 	"MydroX/anicetus/internal/iam/dto"
 	"MydroX/anicetus/internal/iam/usecases"
@@ -36,27 +36,27 @@ func (c *controller) Login(ginCtx *gin.Context) {
 
 
 	if err := ginCtx.BindJSON(&request); err != nil {
-		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorFailToBind, errorsutil.MessageFailToBind)
+		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorFailToBind, errs.MessageFailToBind)
 
 		return
 	}
 
 	jwtErr := c.validate.Struct(request)
 	if jwtErr != nil {
-		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorInvalidInput, errorsutil.MessageInvalidInput)
+		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorInvalidInput, errs.MessageInvalidInput)
 
 		return
 	}
 
 	if request.Username == "" && request.Email == "" {
-		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorInvalidInput, "username or email is required")
+		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorInvalidInput, "username or email is required")
 
 		return
 	}
 
 	accessToken, refreshToken, jwtErr := c.usecases.Login(ginCtx.Request.Context(), &request)
 	if jwtErr != nil {
-		response.Error(c.logger, ginCtx, jwtErr)
+		httpresponse.Error(c.logger, ginCtx, jwtErr)
 
 		return
 	}

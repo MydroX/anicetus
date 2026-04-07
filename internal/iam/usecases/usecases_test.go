@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"context"
-	"MydroX/anicetus/internal/common/errorsutil"
-	"MydroX/anicetus/internal/common/jwt"
+	"MydroX/anicetus/pkg/errs"
+	"MydroX/anicetus/pkg/jwt"
 	"MydroX/anicetus/internal/config"
 	"MydroX/anicetus/internal/iam/dto"
 	iammocks "MydroX/anicetus/internal/iam/mocks"
@@ -176,7 +176,7 @@ func TestLogin(t *testing.T) {
 	t.Run("Login email not found", func(t *testing.T) {
 		ctx := context.Background()
 
-		usersRepository.EXPECT().GetUserByEmail(gomock.Any(), "notfound@test.com").Return(nil, errorsutil.New(errorsutil.ErrorNotFound, "user not found", errors.New("user not found")))
+		usersRepository.EXPECT().GetUserByEmail(gomock.Any(), "notfound@test.com").Return(nil, errs.New(errs.ErrorNotFound, "user not found", errors.New("user not found")))
 
 		req := dto.LoginRequest{
 			Email:    "notfound@test.com",

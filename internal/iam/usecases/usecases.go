@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"context"
-	"MydroX/anicetus/internal/common/errorsutil"
-	"MydroX/anicetus/internal/common/jwt"
+	"MydroX/anicetus/pkg/errs"
+	"MydroX/anicetus/pkg/jwt"
 	"MydroX/anicetus/internal/config"
 	"MydroX/anicetus/internal/iam/dto"
 	"MydroX/anicetus/internal/iam/models"
@@ -54,7 +54,7 @@ func (u *usecases) Login(ctx context.Context, req *dto.LoginRequest) (accessToke
 	case req.Email != "":
 		user, err := u.usersRepository.GetUserByEmail(ctx, req.Email)
 		if err != nil {
-			return "", "", errorsutil.New(errorsutil.ErrorInvalidCredentials, errorsutil.MessageInvalidCredentials, nil)
+			return "", "", errs.New(errs.ErrorInvalidCredentials, errs.MessageInvalidCredentials, nil)
 		}
 
 		return login(ctx, u, user, &req.Session, req.Password)
@@ -62,14 +62,14 @@ func (u *usecases) Login(ctx context.Context, req *dto.LoginRequest) (accessToke
 	case req.Username != "":
 		user, err := u.usersRepository.GetUserByUsername(ctx, req.Username)
 		if err != nil {
-			return "", "", errorsutil.New(errorsutil.ErrorInvalidCredentials, errorsutil.MessageInvalidCredentials, nil)
+			return "", "", errs.New(errs.ErrorInvalidCredentials, errs.MessageInvalidCredentials, nil)
 		}
 
 		return login(ctx, u, user, &req.Session, req.Password)
 	}
 
-	return "", "", errorsutil.New(
-		errorsutil.ErrorInvalidInput,
+	return "", "", errs.New(
+		errs.ErrorInvalidInput,
 		"username or email must be provided",
 		errors.New("username or email must be provided"),
 	)
@@ -83,7 +83,7 @@ func login(
 	reqPwd string,
 ) (accessToken, refreshToken string, err error) {
 	if !passwordpkg.CheckPasswordHash(reqPwd, user.Password) {
-		return "", "", errorsutil.New(errorsutil.ErrorInvalidCredentials, errorsutil.MessageInvalidCredentials, nil)
+		return "", "", errs.New(errs.ErrorInvalidCredentials, errs.MessageInvalidCredentials, nil)
 	}
 
 	// Fetch per-user audiences
@@ -100,8 +100,8 @@ func login(
 		audiences,
 	)
 	if err != nil {
-		return "", "", errorsutil.New(
-			errorsutil.ErrorCreateToken,
+		return "", "", errs.New(
+			errs.ErrorCreateToken,
 			"failed to create access token",
 			err,
 		)
@@ -113,8 +113,8 @@ func login(
 		audiences,
 	)
 	if err != nil {
-		return "", "", errorsutil.New(
-			errorsutil.ErrorCreateToken,
+		return "", "", errs.New(
+			errs.ErrorCreateToken,
 			"failed to create refresh token",
 			err,
 		)
@@ -138,8 +138,8 @@ func (u *usecases) saveSession(ctx context.Context, userUUID, refreshToken strin
 
 	refreshTokenHashed, hashErr := argon2id.Hash(refreshToken, hashParams)
 	if hashErr != nil {
-		return errorsutil.New(
-			errorsutil.ErrorFailedToHashPassword,
+		return errs.New(
+			errs.ErrorFailedToHashPassword,
 			"failed to hash refresh token",
 			hashErr,
 		)

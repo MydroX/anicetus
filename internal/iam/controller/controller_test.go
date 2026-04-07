@@ -12,7 +12,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
-	"MydroX/anicetus/internal/common/errorsutil"
+	"MydroX/anicetus/pkg/errs"
 	"MydroX/anicetus/internal/config"
 	"MydroX/anicetus/internal/iam/dto"
 	"MydroX/anicetus/internal/iam/mocks"
@@ -134,23 +134,23 @@ func Test_Login(t *testing.T) {
 		input := createValidLoginRequest()
 		userJSON, _ := json.Marshal(input)
 
-		userNotFoundErr := errorsutil.New(errorsutil.ErrorNotFound, "user not found", nil)
+		userNotFoundErr := errs.New(errs.ErrorNotFound, "user not found", nil)
 		s.mockUsecase.EXPECT().Login(gomock.Any(), &input).Return("", "", userNotFoundErr)
 
 		w := makeLoginRequest(s.router, string(userJSON))
 
-		var resp errorsutil.AppError
+		var resp errs.AppError
 		_ = json.Unmarshal(w.Body.Bytes(), &resp)
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
-		assert.Equal(t, errorsutil.ErrorNotFound, resp.Code)
+		assert.Equal(t, errs.ErrorNotFound, resp.Code)
 	})
 
 	t.Run("[V1] Login - Usecase error", func(t *testing.T) {
 		input := createValidLoginRequest()
 		userJSON, _ := json.Marshal(input)
 
-		internalErr := errorsutil.New(errorsutil.ErrorInternal, "internal error", nil)
+		internalErr := errs.New(errs.ErrorInternal, "internal error", nil)
 		s.mockUsecase.EXPECT().Login(gomock.Any(), &input).Return("", "", internalErr)
 
 		w := makeLoginRequest(s.router, string(userJSON))

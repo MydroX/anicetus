@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"context"
-	"MydroX/anicetus/internal/common/errorsutil"
+	"MydroX/anicetus/pkg/errs"
 	"MydroX/anicetus/internal/config"
 	"MydroX/anicetus/internal/users/dto"
 	"MydroX/anicetus/internal/users/mocks"
@@ -87,7 +87,7 @@ func Test_Create(t *testing.T) {
 			Password: "thisisapassword123",
 		}
 
-		r.EXPECT().CreateUser(gomock.Any(), gomock.Any()).Return(errorsutil.New(errorsutil.ErrorInternal, "test error", fmt.Errorf("test error")))
+		r.EXPECT().CreateUser(gomock.Any(), gomock.Any()).Return(errs.New(errs.ErrorInternal, "test error", fmt.Errorf("test error")))
 		err := u.Create(ctx, &request)
 
 		assert.NotNil(t, err)
@@ -119,7 +119,7 @@ func Test_Get(t *testing.T) {
 	t.Run("[V1] Get User repository error", func(t *testing.T) {
 		ctx := context.Background()
 
-		r.EXPECT().GetUserByUUID(gomock.Any(), userUUID).Return(nil, errorsutil.New(errorsutil.ErrorInternal, "test error", fmt.Errorf("test error")))
+		r.EXPECT().GetUserByUUID(gomock.Any(), userUUID).Return(nil, errs.New(errs.ErrorInternal, "test error", fmt.Errorf("test error")))
 		_, err := u.Get(ctx, userUUID)
 
 		assert.Error(t, err)
@@ -167,7 +167,7 @@ func Test_Update(t *testing.T) {
 			Email:    "test@test.com",
 		}
 
-		r.EXPECT().UpdateUser(gomock.Any(), user).Return(nil, errorsutil.New(errorsutil.ErrorInternal, "test error", fmt.Errorf("test error")))
+		r.EXPECT().UpdateUser(gomock.Any(), user).Return(nil, errs.New(errs.ErrorInternal, "test error", fmt.Errorf("test error")))
 
 		err := u.Update(ctx, &request)
 
@@ -209,7 +209,7 @@ func Test_UpdatePassword(t *testing.T) {
 		ctx := context.Background()
 		password := "passwordtest123!?"
 
-		r.EXPECT().UpdatePassword(gomock.Any(), userUUID, gomock.Any()).Return(errorsutil.New(errorsutil.ErrorInternal, "test error", fmt.Errorf("test error")))
+		r.EXPECT().UpdatePassword(gomock.Any(), userUUID, gomock.Any()).Return(errs.New(errs.ErrorInternal, "test error", fmt.Errorf("test error")))
 
 		err := u.UpdatePassword(ctx, userUUID, password)
 
@@ -236,7 +236,7 @@ func Test_UpdateEmail(t *testing.T) {
 	t.Run("[V1] Update email repository error", func(t *testing.T) {
 		ctx := context.Background()
 
-		r.EXPECT().UpdateEmail(gomock.Any(), userUUID, email).Return(errorsutil.New(errorsutil.ErrorInternal, "test error", fmt.Errorf("test error")))
+		r.EXPECT().UpdateEmail(gomock.Any(), userUUID, email).Return(errs.New(errs.ErrorInternal, "test error", fmt.Errorf("test error")))
 
 		err := u.UpdateEmail(ctx, userUUID, email)
 
@@ -262,7 +262,7 @@ func Test_Delete(t *testing.T) {
 	t.Run("[V1] Repository error", func(t *testing.T) {
 		ctx := context.Background()
 
-		r.EXPECT().DeleteUser(gomock.Any(), userUUID).Return(errorsutil.New(errorsutil.ErrorInternal, "test error", fmt.Errorf("test error")))
+		r.EXPECT().DeleteUser(gomock.Any(), userUUID).Return(errs.New(errs.ErrorInternal, "test error", fmt.Errorf("test error")))
 
 		err := u.Delete(ctx, userUUID)
 
@@ -297,7 +297,7 @@ func Test_GetAllUsers(t *testing.T) {
 	t.Run("[V1] Get all users, repository error", func(t *testing.T) {
 		ctx := context.Background()
 
-		r.EXPECT().GetAllUsers(gomock.Any()).Return(nil, errorsutil.New(errorsutil.ErrorInternal, "test error", fmt.Errorf("test error")))
+		r.EXPECT().GetAllUsers(gomock.Any()).Return(nil, errs.New(errs.ErrorInternal, "test error", fmt.Errorf("test error")))
 
 		_, err := u.GetAllUsers(ctx)
 

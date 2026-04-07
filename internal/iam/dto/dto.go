@@ -1,11 +1,5 @@
 package dto
 
-import (
-	"time"
-
-	"MydroX/anicetus/internal/common/models"
-)
-
 type LoginRequest struct {
 	Username string  `json:"username,omitempty" validate:"omitempty,min=4,max=18"`
 	Email    string  `json:"email,omitempty"    validate:"omitempty,email"`
@@ -13,11 +7,20 @@ type LoginRequest struct {
 	Session  Session `json:"session"`
 }
 
-type SessionLoginRequest struct {
-	Browser models.Browser `json:"browser" validate:"required"`
-	OS      models.OS      `json:"os"      validate:"required"`
-	Device  models.Device  `json:"device"  validate:"required"`
-	Time    time.Time      `json:"time"`
+type Browser struct {
+	Name          string `json:"name"`
+	Version       string `json:"version"`
+	Engine        string `json:"engine"`
+	EngineVersion string `json:"engine_version"`
+}
+
+type OS struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
+}
+
+type Device struct {
+	Name string `json:"name"`
 }
 
 type LoginResponse struct {

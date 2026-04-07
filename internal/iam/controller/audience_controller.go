@@ -3,8 +3,8 @@ package iam
 import (
 	"net/http"
 
-	"MydroX/anicetus/internal/common/errorsutil"
-	"MydroX/anicetus/internal/common/response"
+	"MydroX/anicetus/pkg/errs"
+	"MydroX/anicetus/pkg/httpresponse"
 	"MydroX/anicetus/internal/iam/dto"
 	"github.com/google/uuid"
 	"github.com/gin-gonic/gin"
@@ -15,19 +15,19 @@ func (c *controller) RegisterAudience(ginCtx *gin.Context) {
 
 
 	if err := ginCtx.BindJSON(&request); err != nil {
-		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorFailToBind, errorsutil.MessageFailToBind)
+		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorFailToBind, errs.MessageFailToBind)
 
 		return
 	}
 
 	if err := c.validate.Struct(request); err != nil {
-		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorInvalidInput, errorsutil.MessageInvalidInput)
+		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorInvalidInput, errs.MessageInvalidInput)
 
 		return
 	}
 
 	if err := c.usecases.RegisterAudience(ginCtx.Request.Context(), &request); err != nil {
-		response.Error(c.logger, ginCtx, err)
+		httpresponse.Error(c.logger, ginCtx, err)
 
 		return
 	}
@@ -39,13 +39,13 @@ func (c *controller) RevokeAudience(ginCtx *gin.Context) {
 
 	audience := ginCtx.Param("audience")
 	if audience == "" {
-		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorInvalidInput, "audience is required")
+		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorInvalidInput, "audience is required")
 
 		return
 	}
 
 	if err := c.usecases.RevokeAudience(ginCtx.Request.Context(), audience); err != nil {
-		response.Error(c.logger, ginCtx, err)
+		httpresponse.Error(c.logger, ginCtx, err)
 
 		return
 	}
@@ -57,7 +57,7 @@ func (c *controller) GetAllAudiences(ginCtx *gin.Context) {
 
 	audiences, err := c.usecases.GetAllAudiences(ginCtx.Request.Context())
 	if err != nil {
-		response.Error(c.logger, ginCtx, err)
+		httpresponse.Error(c.logger, ginCtx, err)
 
 		return
 	}
@@ -70,14 +70,14 @@ func (c *controller) GetUserAudiences(ginCtx *gin.Context) {
 	userUUID := ginCtx.Param("uuid")
 
 	if _, err := uuid.Parse(userUUID); err != nil {
-		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorInvalidUUID, errorsutil.MessageInvalidUUID)
+		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorInvalidUUID, errs.MessageInvalidUUID)
 
 		return
 	}
 
 	audiences, err := c.usecases.GetUserAudiences(ginCtx.Request.Context(), userUUID)
 	if err != nil {
-		response.Error(c.logger, ginCtx, err)
+		httpresponse.Error(c.logger, ginCtx, err)
 
 		return
 	}
@@ -92,25 +92,25 @@ func (c *controller) AssignAudienceToUser(ginCtx *gin.Context) {
 	userUUID := ginCtx.Param("uuid")
 
 	if _, err := uuid.Parse(userUUID); err != nil {
-		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorInvalidUUID, errorsutil.MessageInvalidUUID)
+		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorInvalidUUID, errs.MessageInvalidUUID)
 
 		return
 	}
 
 	if err := ginCtx.BindJSON(&request); err != nil {
-		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorFailToBind, errorsutil.MessageFailToBind)
+		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorFailToBind, errs.MessageFailToBind)
 
 		return
 	}
 
 	if err := c.validate.Struct(request); err != nil {
-		response.BadRequest(c.logger, ginCtx, errorsutil.ErrorInvalidInput, errorsutil.MessageInvalidInput)
+		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorInvalidInput, errs.MessageInvalidInput)
 
 		return
 	}
 
 	if err := c.usecases.AssignAudienceToUser(ginCtx.Request.Context(), userUUID, &request); err != nil {
-		response.Error(c.logger, ginCtx, err)
+		httpresponse.Error(c.logger, ginCtx, err)
 
 		return
 	}

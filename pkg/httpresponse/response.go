@@ -1,10 +1,10 @@
-package response
+package httpresponse
 
 import (
 	"errors"
 	"net/http"
 
-	"MydroX/anicetus/internal/common/errorsutil"
+	"MydroX/anicetus/pkg/errs"
 	"MydroX/anicetus/internal/middlewares"
 
 	"github.com/gin-gonic/gin"
@@ -20,12 +20,12 @@ type errorResponse struct {
 func Error(logger *zap.SugaredLogger, c *gin.Context, err error) {
 	traceID := middlewares.GetTraceID(c)
 
-	var apiErr *errorsutil.AppError
+	var apiErr *errs.AppError
 	if ok := errors.As(err, &apiErr); !ok {
 		logger.Errorw("unhandled error", "trace_id", traceID, "error", err)
 		c.JSON(http.StatusInternalServerError, errorResponse{
 			Message: "internal server error",
-			Code:    errorsutil.ErrorUnknownError,
+			Code:    errs.ErrorUnknownError,
 			TraceID: traceID,
 		})
 
@@ -33,7 +33,7 @@ func Error(logger *zap.SugaredLogger, c *gin.Context, err error) {
 	}
 
 	if apiErr.Code == 0 {
-		apiErr.Code = errorsutil.ErrorUnknownError
+		apiErr.Code = errs.ErrorUnknownError
 	}
 
 	httpCode := apiErr.MapErrorCodeToHTTPCode()
