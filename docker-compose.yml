@@ -1,0 +1,51 @@
+services:
+  app:
+    container_name: anicetus-app
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.dev
+    volumes:
+      - .:/app
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - anicetus
+
+  db:
+    container_name: anicetus-db
+    image: postgres:18.3-alpine3.23
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5400:5432"
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - anicetus
+
+  valkey:
+    container_name: anicetus-valkey
+    image: valkey/valkey:9.0.3-alpine3.23
+    ports:
+      - "6379:6379"
+    volumes:
+      - valkey_data:/data
+    networks:
+      - anicetus
+
+volumes:
+  postgres:
+  valkey_data:
+
+networks:
+  anicetus:

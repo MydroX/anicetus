@@ -1,5 +1,3 @@
-//revive:disable:add-constant
-
 package password
 
 import (

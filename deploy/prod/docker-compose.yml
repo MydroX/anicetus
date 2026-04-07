@@ -1,9 +1,0 @@
-services:
-  app:
-    build:
-      dockerfile: deploy/prod/Dockerfile.app
-  
-  dashboard:
-    build:
-      dockerfile: deploy/prod/Dockerfile.dashboard
-      
