@@ -72,7 +72,7 @@ func TestCreateUser(t *testing.T) {
 					WithArgs(testUser.UUID, testUser.Username, testUser.Email, testUser.Password).
 					WillReturnError(pgErr)
 			},
-			expectedError: "duplicate key value violates unique constraint",
+			expectedError: "entity already exists",
 			errorCode:     errs.ErrorUniqueViolation,
 		},
 		{
@@ -89,7 +89,7 @@ func TestCreateUser(t *testing.T) {
 					WithArgs(testUser.UUID, testUser.Username, testUser.Email, testUser.Password).
 					WillReturnError(pgErr)
 			},
-			expectedError: "null value in column \"email\" violates not-null constraint",
+			expectedError: "missing required field",
 			errorCode:     errs.ErrorNotNullViolation,
 		},
 	}
@@ -323,7 +323,7 @@ func TestUpdateUser(t *testing.T) {
 			},
 			expectedUser:    nil,
 			expectedError:   true,
-			expectedErrMsg:  "duplicate key value",
+			expectedErrMsg:  "entity already exists",
 			expectedErrCode: errs.ErrorUniqueViolation,
 		},
 	}
@@ -435,7 +435,7 @@ func TestUpdatePassword(t *testing.T) {
 					WillReturnError(pgErr)
 			},
 			expectedError:   true,
-			expectedErrMsg:  "database connection error",
+			expectedErrMsg:  "database is unavailable",
 			expectedErrCode: errs.ErrorDatabaseUnavailable,
 		},
 	}
@@ -541,7 +541,7 @@ func TestUpdateEmail(t *testing.T) {
 					WillReturnError(pgErr)
 			},
 			expectedError:   true,
-			expectedErrMsg:  "duplicate key value",
+			expectedErrMsg:  "entity already exists",
 			expectedErrCode: errs.ErrorUniqueViolation,
 		},
 	}
@@ -634,7 +634,7 @@ func TestDeleteUser(t *testing.T) {
 				errors.As(err, &appErr)
 
 				assert.Error(t, err)
-				assert.Contains(t, err.Error(), "database connection error")
+				assert.Contains(t, err.Error(), "database is unavailable")
 				assert.Equal(t, errs.ErrorDatabaseUnavailable, appErr.Code)
 			},
 		},

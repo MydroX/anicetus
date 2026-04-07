@@ -126,6 +126,7 @@ func (r *repository) GetAllUsers(ctx context.Context) ([]*models.User, error) {
 	if err != nil {
 		return nil, errs.SQLErrorParser(err)
 	}
+	defer rows.Close()
 
 	var users []*models.User
 

@@ -63,12 +63,13 @@ func Router(logger *zap.SugaredLogger, svc service, jwtService *jwt.Service) *gi
 
 	// Public routes
 	authcontroller.PublicRouter(v1, svc.authenticationController)
-	identitycontroller.Router(v1, svc.identityController)
+	identitycontroller.PublicRouter(v1, svc.identityController)
 
 	// Authenticated routes
 	authenticated := v1.Group("")
 	authenticated.Use(authmiddleware.AuthMiddleware(jwtService))
 
+	identitycontroller.AuthenticatedRouter(authenticated, svc.identityController)
 	authcontroller.AuthenticatedRouter(authenticated, svc.authenticationController)
 	authzcontroller.Router(authenticated, svc.authorizationController)
 	servicescontroller.Router(authenticated, svc.servicesController)

@@ -49,15 +49,15 @@ func SQLErrorParser(err error) error {
 
 	switch pgErr.Code {
 	case pgerrcode.AdminShutdown, pgerrcode.CrashShutdown, pgerrcode.CannotConnectNow:
-		return &AppError{Code: ErrorDatabaseUnavailable, Message: pgErr.Message, Err: err}
+		return &AppError{Code: ErrorDatabaseUnavailable, Message: "database is unavailable", Err: err}
 	case pgerrcode.UniqueViolation:
-		return &AppError{Code: ErrorUniqueViolation, Message: pgErr.Message, Err: err}
+		return &AppError{Code: ErrorUniqueViolation, Message: "entity already exists", Err: err}
 	case pgerrcode.ForeignKeyViolation:
-		return &AppError{Code: ErrorForeignKeyViolation, Message: pgErr.Message, Err: err}
+		return &AppError{Code: ErrorForeignKeyViolation, Message: "referenced entity not found", Err: err}
 	case pgerrcode.CheckViolation:
-		return &AppError{Code: ErrorConstraintViolation, Message: pgErr.Message, Err: err}
+		return &AppError{Code: ErrorConstraintViolation, Message: "constraint violation", Err: err}
 	case pgerrcode.NotNullViolation:
-		return &AppError{Code: ErrorNotNullViolation, Message: pgErr.Message, Err: err}
+		return &AppError{Code: ErrorNotNullViolation, Message: "missing required field", Err: err}
 	default:
 		return &AppError{Code: ErrorInternal, Message: "internal database error", Err: err}
 	}

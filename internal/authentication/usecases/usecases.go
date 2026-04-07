@@ -220,7 +220,9 @@ func (u *usecases) RefreshToken(ctx context.Context, refreshToken string) (newAc
 	}
 
 	// Delete old session, create new one (refresh token rotation)
-	_ = u.sessionStore.DeleteSession(ctx, session.UUID)
+	if err := u.sessionStore.DeleteSession(ctx, session.UUID); err != nil {
+		return "", "", errs.New(errs.ErrorInternal, "failed to delete old session", err)
+	}
 
 	sessionDTO := &dto.Session{
 		OS:             session.OS,

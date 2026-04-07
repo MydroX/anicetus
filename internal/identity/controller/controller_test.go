@@ -2,6 +2,7 @@ package controller
 
 import (
 	"MydroX/anicetus/pkg/errs"
+	authmiddleware "MydroX/anicetus/internal/authentication/middleware"
 	"MydroX/anicetus/internal/config"
 	"MydroX/anicetus/internal/identity/dto"
 	"MydroX/anicetus/internal/identity/mocks"
@@ -32,7 +33,7 @@ type testServer struct {
 	mockUsecase *mocks.MockIdentityUsecases
 }
 
-func testRouter(controller ControllerInterface) *gin.Engine {
+func testRouter(controller ControllerInterface, userUUID string) *gin.Engine {
 	router := gin.Default()
 
 	if err := router.SetTrustedProxies(nil); err != nil {
@@ -42,12 +43,22 @@ func testRouter(controller ControllerInterface) *gin.Engine {
 	api := router.Group("api")
 	v1 := api.Group("/v1")
 
-	Router(v1, controller)
+	PublicRouter(v1, controller)
+
+	// Simulate auth middleware by setting user UUID in context
+	authenticated := v1.Group("")
+	authenticated.Use(func(c *gin.Context) {
+		if userUUID != "" {
+			authmiddleware.SetUserUUID(c, userUUID)
+		}
+		c.Next()
+	})
+	AuthenticatedRouter(authenticated, controller)
 
 	return router
 }
 
-func newServerTest(t *testing.T) testServer {
+func newServerTest(t *testing.T, userUUID ...string) testServer {
 	log, err := logger.New("TEST")
 	if err != nil {
 		panic(err)
@@ -56,8 +67,13 @@ func newServerTest(t *testing.T) testServer {
 	ctrl := gomock.NewController(t)
 	usecasesMock := mocks.NewMockIdentityUsecases(ctrl)
 
+	authUserUUID := ""
+	if len(userUUID) > 0 {
+		authUserUUID = userUUID[0]
+	}
+
 	c := New(log, usecasesMock, &config.Config{})
-	router := testRouter(c)
+	router := testRouter(c, authUserUUID)
 
 	return testServer{
 		router:      router,
@@ -156,7 +172,7 @@ func Test_Create(t *testing.T) {
 
 	t.Run("[V1] Create - Duplicate entity", func(t *testing.T) {
 		input := dto.CreateUserRequest{
-			Username: "test@test.com",
+			Username: "testuser",
 			Email:    "test@test.com",
 			Password: "Thisisatestpassword1234!@#$",
 		}
@@ -180,7 +196,7 @@ func Test_Create(t *testing.T) {
 
 	t.Run("[V1] Create - Invalid password", func(t *testing.T) {
 		input := dto.CreateUserRequest{
-			Username: "test@test.com",
+			Username: "testuser",
 			Email:    "test@test.com",
 			Password: "passwordpassword",
 		}
@@ -246,9 +262,8 @@ func Test_Get(t *testing.T) {
 }
 
 func Test_Update(t *testing.T) {
-	s := newServerTest(t)
-
 	uuid := uuid.New().String()
+	s := newServerTest(t, uuid)
 
 	t.Run("[V1] Update with success", func(t *testing.T) {
 		user := dto.UpdateUserRequest{
@@ -312,9 +327,8 @@ func Test_Update(t *testing.T) {
 }
 
 func Test_UpdateEmail(t *testing.T) {
-	s := newServerTest(t)
-
 	uuid := uuid.New().String()
+	s := newServerTest(t, uuid)
 
 	t.Run("[V1] Update email with success", func(t *testing.T) {
 		user := dto.UpdateEmailRequest{
@@ -377,9 +391,8 @@ func Test_UpdateEmail(t *testing.T) {
 }
 
 func Test_UpdatePassword(t *testing.T) {
-	s := newServerTest(t)
-
 	uuid := uuid.New().String()
+	s := newServerTest(t, uuid)
 
 	t.Run("[V1] Update password with success", func(t *testing.T) {
 		user := dto.UpdatePasswordRequest{
@@ -455,9 +468,8 @@ func Test_UpdatePassword(t *testing.T) {
 }
 
 func Test_Delete(t *testing.T) {
-	s := newServerTest(t)
-
 	uuid := uuid.New().String()
+	s := newServerTest(t, uuid)
 
 	t.Run("[V1] Delete with success", func(t *testing.T) {
 		req, _ := http.NewRequest("DELETE", v1+users+"/"+uuid, nil)

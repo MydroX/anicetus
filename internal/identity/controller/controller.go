@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"regexp"
 
+	authmiddleware "MydroX/anicetus/internal/authentication/middleware"
 	"MydroX/anicetus/internal/config"
 	"MydroX/anicetus/internal/identity/dto"
 	"MydroX/anicetus/internal/identity/usecases"
@@ -20,9 +21,9 @@ import (
 const (
 	UUID              = "uuid"
 	UsernameError     = "username needs to be between 4 and 18 characters long and can only contain letters, numbers, and the following characters: . _ -"
-	PasswordError     = "password needs to be between 8 and 32 characters long with at least one uppercase letter, one lowercase letter, one number, and one special character"
-	passwordMinLength = 8
-	passwordMaxLength = 32
+	PasswordError     = "password needs to be between 14 and 72 characters long with at least one uppercase letter, one lowercase letter, one number, and one special character"
+	passwordMinLength = 14
+	passwordMaxLength = 72
 )
 
 type controller struct {
@@ -68,7 +69,7 @@ func (c *controller) CreateUser(ginCtx *gin.Context) {
 	}
 
 	// ^[A-Za-z0-9._-]{4,18}$  // username
-	usernameRegex, _ := regexp.Compile("[A-Za-z0-9._-]{4,18}$")
+	usernameRegex, _ := regexp.Compile("^[A-Za-z0-9._-]{4,18}$")
 
 	match := usernameRegex.MatchString(request.Username)
 	if !match {
@@ -116,6 +117,14 @@ func (c *controller) GetUser(ginCtx *gin.Context) {
 }
 
 func (c *controller) UpdateUser(ginCtx *gin.Context) {
+	userUUID := ginCtx.Param(UUID)
+
+	if authmiddleware.GetUserUUID(ginCtx) != userUUID {
+		httpresponse.Error(c.logger, ginCtx, errs.New(errs.ErrorForbidden, "you can only update your own account", nil))
+
+		return
+	}
+
 	var request dto.UpdateUserRequest
 
 	err := ginCtx.BindJSON(&request)
@@ -134,7 +143,7 @@ func (c *controller) UpdateUser(ginCtx *gin.Context) {
 
 	apiErr := c.usecases.Update(ginCtx.Request.Context(), &request)
 	if apiErr != nil {
-		httpresponse.Error(c.logger, ginCtx, err)
+		httpresponse.Error(c.logger, ginCtx, apiErr)
 
 		return
 	}
@@ -149,6 +158,12 @@ func (c *controller) UpdateEmail(ginCtx *gin.Context) {
 
 	if _, err := uuid.Parse(userUUID); err != nil {
 		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorInvalidUUID, errs.MessageInvalidUUID)
+
+		return
+	}
+
+	if authmiddleware.GetUserUUID(ginCtx) != userUUID {
+		httpresponse.Error(c.logger, ginCtx, errs.New(errs.ErrorForbidden, "you can only update your own email", nil))
 
 		return
 	}
@@ -186,6 +201,12 @@ func (c *controller) UpdatePassword(ginCtx *gin.Context) {
 		return
 	}
 
+	if authmiddleware.GetUserUUID(ginCtx) != userUUID {
+		httpresponse.Error(c.logger, ginCtx, errs.New(errs.ErrorForbidden, "you can only update your own password", nil))
+
+		return
+	}
+
 	if err := ginCtx.BindJSON(&request); err != nil {
 		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorFailToBind, errs.MessageFailToBind)
 
@@ -218,6 +239,12 @@ func (c *controller) DeleteUser(ginCtx *gin.Context) {
 
 	if _, err := uuid.Parse(userUUID); err != nil {
 		httpresponse.BadRequest(c.logger, ginCtx, errs.ErrorInvalidUUID, errs.MessageInvalidUUID)
+
+		return
+	}
+
+	if authmiddleware.GetUserUUID(ginCtx) != userUUID {
+		httpresponse.Error(c.logger, ginCtx, errs.New(errs.ErrorForbidden, "you can only delete your own account", nil))
 
 		return
 	}

@@ -64,6 +64,7 @@ func (r *repository) GetAllRoles(ctx context.Context) ([]*models.Role, error) {
 	if err != nil {
 		return nil, errs.SQLErrorParser(err)
 	}
+	defer rows.Close()
 
 	var roles []*models.Role
 
@@ -122,6 +123,7 @@ func (r *repository) GetAllPermissions(ctx context.Context) ([]*models.Permissio
 	if err != nil {
 		return nil, errs.SQLErrorParser(err)
 	}
+	defer rows.Close()
 
 	var permissions []*models.Permission
 
@@ -180,6 +182,7 @@ func (r *repository) GetRolePermissions(ctx context.Context, roleUUID string) ([
 	if err != nil {
 		return nil, errs.SQLErrorParser(err)
 	}
+	defer rows.Close()
 
 	var permissions []*models.Permission
 
@@ -225,6 +228,7 @@ func (r *repository) GetUserRoles(ctx context.Context, userUUID string) ([]*mode
 	if err != nil {
 		return nil, errs.SQLErrorParser(err)
 	}
+	defer rows.Close()
 
 	var roles []*models.Role
 
@@ -246,6 +250,7 @@ func (r *repository) GetUserPermissions(ctx context.Context, userUUID string) ([
 	if err != nil {
 		return nil, errs.SQLErrorParser(err)
 	}
+	defer rows.Close()
 
 	var permissions []string
 
